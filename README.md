@@ -43,6 +43,11 @@ jsonStream.on('value', (value) => {
     console.log('Parsed JSON value:', value);
 });
 
+// Use the value method to wait for the parsed complete JSON value event
+jsonStream.value().then((json) => {
+  console.log('Json:', json);
+});
+
 // Listen to error events
 jsonStream.on('error', (err) => {
     console.error('Parsing error:', err);
@@ -83,7 +88,6 @@ import { JsonStream } from '@sapientpro/json-stream';
 const jsonStream = new JsonStream();
 
 // Use the value method to wait for the "user" property to be parsed.
-// Note: The property path is provided with a dot-prefix (e.g., ".user")
 jsonStream.value('user').then((user) => {
     console.log('User:', user);
 });

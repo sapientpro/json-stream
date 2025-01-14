@@ -1,34 +1,33 @@
 {
   "name": "@sapientpro/json-stream",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "A JSON stream parser",
   "license": "MIT",
   "readmeFilename": "README.md",
   "author": {
     "name": "Dmyto Kulyk",
-    "email": "dmytro.kulyk@sapient.prom"
+    "email": "dmytro.kulyk@sapient.pro"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/sapientpro/json-streamd.git"
+    "url": "https://github.com/sapientpro/json-stream.git"
   },
   "bugs": {
     "url": "https://github.com/sapientpro/json-stream/issues"
   },
   "homepage": "https://github.com/sapientpro/json-stream",
-
-  "tags": [
+  "keywords": [
     "json",
     "stream",
     "parser"
   ],
   "main": "dist/cjs/index.js",
-  "module": "dist/esm/index.mjs",
+  "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
   "exports": {
     ".": {
       "require": "./dist/cjs/index.js",
-      "import": "./dist/esm/index.mjs",
+      "import": "./dist/esm/index.js",
       "types": "./dist/esm/index.d.ts"
     }
   },
