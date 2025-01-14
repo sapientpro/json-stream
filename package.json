@@ -1,0 +1,48 @@
+{
+  "name": "@sapientpro/json-stream",
+  "version": "1.0.0",
+  "description": "A JSON stream parser",
+  "license": "MIT",
+  "readmeFilename": "README.md",
+  "author": {
+    "name": "Dmyto Kulyk",
+    "email": "dmytro.kulyk@sapient.prom"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sapientpro/json-streamd.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sapientpro/json-stream/issues"
+  },
+  "homepage": "https://github.com/sapientpro/json-stream",
+
+  "tags": [
+    "json",
+    "stream",
+    "parser"
+  ],
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.mjs",
+  "types": "dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/cjs/index.js",
+      "import": "./dist/esm/index.mjs",
+      "types": "./dist/esm/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig-esm.json"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.6",
+    "typescript": "^5.7.3"
+  },
+  "files": [
+    "dist"
+  ]
+}
