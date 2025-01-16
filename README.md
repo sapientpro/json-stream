@@ -133,6 +133,114 @@ fs.createReadStream('path/to/log.json', { encoding: 'utf-8' })
   .pipe(jsonStream);
 ```
 
+### Example 4: Observing Nested Values Using observe
+
+Beyond promise and stream-based extraction, you can observe individual updates for specific JSON paths using the observe method. This is particularly useful when you need to react to updates of nested parts of a large JSON document incrementally.
+
+Assume the JSON input is:
+```json
+{
+  "order": {
+    "id": 123,
+    "items": [
+      { "name": "Widget", "qty": 4 },
+      { "name": "Gadget", "qty": 2 }
+    ]
+  }
+}
+```
+
+You can observe whenever an item is parsed from the order.items array:
+```typescript
+import { JsonStream, Any } from '@sapientpro/json-stream';
+
+const jsonStream = new JsonStream();
+
+// Use the wildcard symbol `Any` to observe each item in the items array.
+jsonStream.observe(['order', 'items', Any]).subscribe({
+  next: (data) => {
+    console.log(`Parsed item at path ${JSON.stringify(data.path)}:`, data.value);
+  },
+  error: (err) => console.error('Observation error:', err)
+});
+
+jsonStream.end(JSON.stringify({
+  order: {
+    id: 123,
+    items: [
+      { name: "Widget", qty: 4 },
+      { name: "Gadget", qty: 2 }
+    ]
+  }
+}), 'utf-8');
+```
+
+### Example 5: Observing with Rest Pattern (Rest)
+
+In some cases, you might want to observe a value alongside all its descendants. The Rest symbol allows you to capture both a nested value and its whole subtree. Given the following JSON:
+
+```json
+{
+  "data": {
+    "metrics": [10, 20, 30],
+    "status": "ok"
+  }
+}
+```
+
+The following code will observe each element in the data.metrics array as well as the complete metrics array:
+
+```typescript
+import { JsonStream, Rest } from '@sapientpro/json-stream';
+
+const jsonStream = new JsonStream();
+
+// Observe all values in the "data.metrics" and also the final complete array.
+jsonStream.observe(['data', 'metrics', Rest]).subscribe({
+  next: (data) => {
+    console.log(`Observed at path ${JSON.stringify(data.path)}:`, data.value);
+  }
+});
+
+jsonStream.end(JSON.stringify({
+  data: {
+    metrics: [10, 20, 30],
+    status: "ok"
+  }
+}), 'utf-8');
+```
+
+### Example 6: Parsing with a Start Marker
+
+If your JSON content is embedded within a larger text file, you can specify a marker token so that parsing only begins after the token is found. Consider a file where a JSON block follows a markdown code fence:
+
+````markdown
+Some introductory text...
+```json
+{"message": "Hello, world!"}
+```
+````
+
+You can configure the `JsonStream` to start parsing after the marker:
+
+```typescript
+import { JsonStream } from '@sapientpro/json-stream';
+
+const marker = '```json';
+const jsonStream = new JsonStream(marker);
+
+jsonStream.value().then((json) => {
+  console.log('Parsed JSON after marker:', json);
+});
+
+jsonStream.end(`
+Some introductory text...
+\`\`\`json
+{"message": "Hello, world!"}
+\`\`\`
+Some trailing text...`, 'utf-8');
+```
+
 ## API
 
 `new JsonStream([start: string])`
@@ -144,13 +252,19 @@ Properties
 - json: Returns the part of the JSON that has been parsed so far (a string).
 
 Methods
-- value<T = any>(name?: string): Promise<T>
+- `value<T = any>(name?: string|string[]): Promise<T>`
   
   Returns a promise that resolves with the JSON value located at the given property path.
 
 
--	stream(name: string): Readable
+- `stream(name: string|string[]): Readable`
+
   Creates and returns a Node.js Readable stream that streams out the JSON string value for a specific property as it is parsed.
+
+
+- `observe<T = any>(path?: Path): Observable<{ path: string[], value: T }>`
+
+  Returns an RxJS Observable that emits updates for the JSON value located at the given path.
 
 ### Error Handling
 
