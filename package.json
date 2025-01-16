@@ -1,6 +1,6 @@
 {
   "name": "@sapientpro/json-stream",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "A JSON stream parser",
   "license": "MIT",
   "readmeFilename": "README.md",
