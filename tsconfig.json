@@ -22,7 +22,6 @@
     "outDir": "dist/cjs",
     "target": "es2020"
   },
-  "compileOnSave": false,
   "exclude": ["node_modules", "dist"],
   "include": ["src"]
 }
