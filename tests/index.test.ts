@@ -99,8 +99,8 @@ describe('JsonStream', () => {
     jsonStream.value().then((value) => {
       expect(value).toEqual({hello: 'world'});
     });
-
-    jsonStream.end('some text before\n ```json\n{"hello":"world"}```\n some text after', 'utf-8');
+    jsonStream.write('some text before\n ```', 'utf-8');
+    jsonStream.end('json\n{"hello":"world"}```\n some text after', 'utf-8');
 
     jsonStream.on('finish', done);
   });

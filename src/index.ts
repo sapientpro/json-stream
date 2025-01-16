@@ -20,10 +20,6 @@ export class JsonStream extends Writable {
   readonly #observers: ObserverDesc = {children: {}};
 
   constructor(start: string = '', collectJson: boolean = false) {
-    let started = false
-    if (!start) {
-      started = true
-    }
     let buffer: string = ''
     let pos: number = 0;
     let continuation = Promise.withResolvers<void>();
@@ -46,6 +42,22 @@ export class JsonStream extends Writable {
       }
 
       return this.writable || pos < buffer.length;
+    }
+
+    const waitStart = async () => {
+      const length = start?.length ?? 0;
+      if (!length) return;
+      while (await next(length)) {
+        const startPos = buffer.indexOf(start, pos);
+        if (startPos >= 0) {
+          pos = startPos + start.length;
+          await skipSpaces();
+          buffer = buffer.substring(pos);
+          pos = 0;
+          break
+        }
+        pos = buffer.length - length + 1;
+      }
     }
 
     const skipSpaces = async () => {
@@ -255,12 +267,8 @@ export class JsonStream extends Writable {
     super({
       defaultEncoding: 'utf-8',
       construct(this: JsonStream, callback: (error?: (Error | null)) => void) {
-        skipSpaces()
-          .then(() => {
-            buffer = buffer.substring(pos);
-            pos = 0;
-            return parse();
-          })
+        waitStart()
+          .then(() => parse())
           .then(async (value) => {
             this.emit('value', value)
             continuation.resolve();
@@ -272,19 +280,6 @@ export class JsonStream extends Writable {
       },
       async write(this: JsonStream, chunk: Buffer | string, encoding: BufferEncoding, callback: (error?: (Error | null)) => void) {
         buffer += chunk.toString('utf-8');
-        if (!started) {
-          //cut buffer to start
-          const startPos = buffer.indexOf(start);
-          if (startPos >= 0) {
-            buffer = buffer.substring(startPos + start.length);
-            pos = 0;
-            started = true;
-          } else {
-            buffer = '';
-            callback();
-            return;
-          }
-        }
 
         continuation.promise.then(() => {
           callback()
