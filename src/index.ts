@@ -1,5 +1,6 @@
 import {Readable, Writable} from 'node:stream';
 import {firstValueFrom, Observable, Subject} from "rxjs";
+import {Suspendable} from "./suspendable";
 
 export const Any = Symbol('Any');
 export const Rest = Symbol('Rest');
@@ -22,17 +23,16 @@ export class JsonStream extends Writable {
   constructor(start: string = '', collectJson: boolean = false) {
     let buffer: string = ''
     let pos: number = 0;
-    let continuation = Promise.withResolvers<void>();
-    let process = Promise.withResolvers<void>();
+    let lastChunk = 0;
+    const suspendable = new Suspendable();
 
     const next = async (shift = 0, callback?: () => void,) => {
+      if (!this.writable && pos + shift >= buffer.length + this.writableLength - lastChunk) return true;
+
       while (pos + shift >= buffer.length) {
         callback?.();
-        const {resolve} = continuation;
-        continuation = Promise.withResolvers<void>();
-        resolve();
 
-        await process.promise;
+        await suspendable.suspend();
       }
 
       //Cleanup buffer if it's too big
@@ -41,7 +41,7 @@ export class JsonStream extends Writable {
         pos = 0;
       }
 
-      return this.writable || pos < buffer.length;
+      return pos + shift < buffer.length;
     }
 
     const waitStart = async () => {
@@ -62,7 +62,7 @@ export class JsonStream extends Writable {
 
     const skipSpaces = async () => {
       while (await next()) {
-        if (buffer.at(pos)!.trim() === '') {
+        if (buffer.at(pos)?.trim() === '') {
           ++pos;
           continue;
         }
@@ -178,11 +178,15 @@ export class JsonStream extends Writable {
       ++pos;
       const stream = path && this.#resolveDesc(path, false)?.stream;
       loop: while (await next(0, () => {
-        value += chunk;
-        stream?.push(chunk);
-        chunk = '';
+        if (chunk) {
+          value += chunk;
+          stream?.push(chunk);
+          chunk = '';
+        }
       })) {
         switch (buffer.at(pos)) {
+          case void 0:
+            throw new SyntaxError('Json syntax error at ' + pos);
           case '"':
             ++pos;
             break loop;
@@ -271,7 +275,9 @@ export class JsonStream extends Writable {
           .then(() => parse())
           .then(async (value) => {
             this.emit('value', value)
-            continuation.resolve();
+            while (!this.closed) {
+              await suspendable.suspend();
+            }
           })
           .catch((e) => {
             this.emit('error', e);
@@ -279,20 +285,15 @@ export class JsonStream extends Writable {
         callback();
       },
       async write(this: JsonStream, chunk: Buffer | string, encoding: BufferEncoding, callback: (error?: (Error | null)) => void) {
-        buffer += chunk.toString('utf-8');
-
-        continuation.promise.then(() => {
-          callback()
-        });
-
-        const {resolve} = process;
-        process = Promise.withResolvers<void>();
-        resolve();
+        const chunkStr = chunk.toString('utf-8');
+        buffer += chunkStr;
+        lastChunk = chunkStr.length;
+        await suspendable.resume(true);
+        lastChunk = 0;
+        callback();
       },
       final(this: JsonStream, callback: (error?: (Error | null)) => void) {
-        continuation.promise.then(() => {
-          callback()
-        }, callback)
+        suspendable.resume(false).then(() => callback()).catch(callback);
       },
       destroy(this: JsonStream, error: Error | null, callback: (error?: (Error | null)) => void) {
         cleanup(this.#observers);

@@ -31,7 +31,7 @@ describe('JsonStream', () => {
     jsonStream.end();
   })
 
-  test('Should emit value with parsed JSON', (done) => {
+  test('Should emit value with parsed chunked JSON', (done) => {
     const jsonStream = new JsonStream();
     jsonStream.on('value', (value) => {
       try {
@@ -65,7 +65,8 @@ describe('JsonStream', () => {
     let read = 0;
     const write = () => {
       if (jsonStream.writable) {
-        jsonStream.write(string.substring(written, written += Math.min(string.length - written, Math.ceil(Math.random() * 5))));
+        const chunk = string.substring(written, written += Math.min(string.length - written, Math.ceil(Math.random() * 5)));
+        jsonStream.write(chunk);
         if (written === string.length) {
           jsonStream.end('"}');
         }
@@ -193,5 +194,21 @@ describe('JsonStream', () => {
       ]);
     });
 
+  });
+
+  test('Should emit error if stream ends with incomplete JSON', (done) => {
+    const jsonStream = new JsonStream();
+    jsonStream.on('error', (error) => {
+      try {
+        expect(error).toBeInstanceOf(Error);
+        done();
+      } catch (err) {
+        done(err);
+      }
+    })
+    jsonStream.on('finish', () => {
+      done(new Error('Stream should not finish successfully'));
+    });
+    jsonStream.end('{"a": 123'); // Incomplete JSON
   });
 });
