@@ -23,6 +23,7 @@ export class JsonStream extends Writable {
   constructor(start: string = '', collectJson: boolean = false) {
     let buffer: string = ''
     let pos: number = 0;
+    let parsed = 0;
     let lastChunk = 0;
     const suspendable = new Suspendable();
 
@@ -37,6 +38,7 @@ export class JsonStream extends Writable {
 
       //Cleanup buffer if it's too big
       if (!collectJson && pos > 512) {
+        parsed += pos;
         buffer = buffer.substring(pos);
         pos = 0;
       }
@@ -54,6 +56,7 @@ export class JsonStream extends Writable {
           await skipSpaces();
           buffer = buffer.substring(pos);
           pos = 0;
+          parsed = 0;
           break
         }
         pos = buffer.length - length + 1;
@@ -89,7 +92,7 @@ export class JsonStream extends Writable {
             await skipSpaces();
 
             if (buffer.at(pos) !== ':') {
-              throw new SyntaxError('Json syntax error at ' + pos);
+              throw new SyntaxError('Json syntax error at ' + (pos + parsed));
             }
 
             ++pos
@@ -128,7 +131,7 @@ export class JsonStream extends Writable {
         case "t":
           await next(3);
           if (buffer.substring(pos, pos + 4) !== 'true') {
-            throw new SyntaxError('Json syntax error at ' + pos);
+            throw new SyntaxError('Json syntax error at ' + (pos + parsed));
           }
           value = true;
           pos += 4;
@@ -136,7 +139,7 @@ export class JsonStream extends Writable {
         case "f":
           await next(4);
           if (buffer.substring(pos, pos + 5) !== 'false') {
-            throw new SyntaxError('Json syntax error at ' + pos);
+            throw new SyntaxError('Json syntax error at ' + (pos + parsed));
           }
           value = false;
           pos += 5;
@@ -144,7 +147,7 @@ export class JsonStream extends Writable {
         case "n":
           await next(3);
           if (buffer.substring(pos, pos + 4) !== 'null') {
-            throw new SyntaxError('Json syntax error at ' + pos);
+            throw new SyntaxError('Json syntax error at ' + (pos + parsed));
           }
           value = null;
           pos += 4;
@@ -186,7 +189,7 @@ export class JsonStream extends Writable {
       })) {
         switch (buffer.at(pos)) {
           case void 0:
-            throw new SyntaxError('Json syntax error at ' + pos);
+            throw new SyntaxError('Json syntax error at ' + (pos + parsed));
           case '"':
             ++pos;
             break loop;
