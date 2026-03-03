@@ -1,21 +1,33 @@
 /// <reference types="jest" />
-import {finished} from "node:stream/promises";
-import {Any, JsonStream, Rest} from '../src'; // або де знаходиться ваш код
+import { finished } from "node:stream/promises";
+import { Any, JsonStream, Rest } from '../src';
+import DoneCallback = jest.DoneCallback;
 
-describe('JsonStream', () => {
-  test('Should emit value with parsed JSON', (done) => {
+
+function parserTest(json: string, expected: any) {
+  return (done: DoneCallback) => {
     const jsonStream = new JsonStream();
     jsonStream.on('value', (value) => {
       try {
-        expect(value).toEqual({hello: 'world'});
+        expect(value).toEqual(expected);
         done();
       } catch (err) {
         done(err);
       }
     });
-    jsonStream.write('{"hello":"world"}', 'utf-8');
+    jsonStream.write(json, 'utf-8');
     jsonStream.end();
-  });
+  }
+}
+
+describe('JsonStream', () => {
+  test('Should parse numbers', parserTest('123', 123));
+  test('Should parse numbers', parserTest('123.5', 123.5));
+  test('Should parse numbers', parserTest('123.5e+4', 123.5e+4));
+  test('Should parse string', parserTest('"string"', "string"));
+  test('Should parse string', parserTest('""', ""));
+  test('Should emit value with parsed JSON', parserTest('{"hello":"world"}',{ hello: 'world' }));
+
 
   test('Should emit error if JSON is invalid', (done) => {
     const jsonStream = new JsonStream();
@@ -35,7 +47,7 @@ describe('JsonStream', () => {
     const jsonStream = new JsonStream();
     jsonStream.on('value', (value) => {
       try {
-        expect(value).toEqual({hello: 'world'});
+        expect(value).toEqual({ hello: 'world' });
         done();
       } catch (err) {
         done(err);
@@ -98,7 +110,7 @@ describe('JsonStream', () => {
   test('Should parse with marker', (done) => {
     const jsonStream = new JsonStream('```json');
     jsonStream.value().then((value) => {
-      expect(value).toEqual({hello: 'world'});
+      expect(value).toEqual({ hello: 'world' });
     });
     jsonStream.write('some text before\n ```', 'utf-8');
     jsonStream.end('json\n{"hello":"world"}```\n some text after', 'utf-8');
@@ -112,7 +124,7 @@ describe('JsonStream', () => {
       jsonStream.observe(['hello']).subscribe({
         next: (value) => {
           try {
-            expect(value).toEqual({path: ['hello'], value: 'world'});
+            expect(value).toEqual({ path: ['hello'], value: 'world' });
             done();
           } catch (e) {
             done(e);
@@ -128,7 +140,7 @@ describe('JsonStream', () => {
       jsonStream.observe().subscribe({
         next: (value) => {
           try {
-            expect(value).toEqual({path: [], value: {hello: 'world'}});
+            expect(value).toEqual({ path: [], value: { hello: 'world' } });
             done();
           } catch (e) {
             done(e);
@@ -151,9 +163,9 @@ describe('JsonStream', () => {
       jsonStream.end('{"a":[1,2,3]}', 'utf-8');
       await finished(jsonStream);
       expect(values).toEqual([
-        {path: ['a', 0], value: 1},
-        {path: ['a', 1], value: 2},
-        {path: ['a', 2], value: 3}
+        { path: ['a', 0], value: 1 },
+        { path: ['a', 1], value: 2 },
+        { path: ['a', 2], value: 3 }
       ]);
     });
 
@@ -169,9 +181,9 @@ describe('JsonStream', () => {
       jsonStream.end('[{"a":1},{"a":2},{"a":3}]', 'utf-8');
       await finished(jsonStream);
       expect(values).toEqual([
-        {path: [0, 'a'], value: 1},
-        {path: [1, 'a'], value: 2},
-        {path: [2, 'a'], value: 3},
+        { path: [0, 'a'], value: 1 },
+        { path: [1, 'a'], value: 2 },
+        { path: [2, 'a'], value: 3 },
       ]);
     });
 
@@ -187,10 +199,10 @@ describe('JsonStream', () => {
       jsonStream.end('{"a":[1,2,3]}', 'utf-8');
       await finished(jsonStream);
       expect(values).toEqual([
-        {path: ['a', 0], value: 1},
-        {path: ['a', 1], value: 2},
-        {path: ['a', 2], value: 3},
-        {path: ['a'], value: [1, 2, 3]}
+        { path: ['a', 0], value: 1 },
+        { path: ['a', 1], value: 2 },
+        { path: ['a', 2], value: 3 },
+        { path: ['a'], value: [1, 2, 3] }
       ]);
     });
 
@@ -210,5 +222,20 @@ describe('JsonStream', () => {
       done(new Error('Stream should not finish successfully'));
     });
     jsonStream.end('{"a": 123'); // Incomplete JSON
+  });
+  test('Should emit error if stream ends empty JSON', (done) => {
+    const jsonStream = new JsonStream();
+    jsonStream.on('error', (error) => {
+      try {
+        expect(error).toBeInstanceOf(Error);
+        done();
+      } catch (err) {
+        done(err);
+      }
+    })
+    jsonStream.on('finish', () => {
+      done(new Error('Stream should not finish successfully'));
+    });
+    jsonStream.end(''); // Incomplete JSON
   });
 });

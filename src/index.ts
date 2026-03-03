@@ -153,27 +153,51 @@ export class JsonStream extends Writable {
           pos += 4;
           break;
         default:
-          do {
-            const str = buffer.substring(pos);
-            const match = str.match(/^(-?\d+(\.\d+)?([eE][+-]?\d+)?)([^.eE])?/);
-            if ((this.writable || this.writableLength > 0) && match && match[4] === void 0) {
-              await next(str.length + 1);
-              continue;
+          let number = await parseDidgits();
+          let char = buffer.at(pos)!;
+          if(char === '.') {
+            ++pos;
+            number += char + await parseDidgits();
+            char = buffer.at(pos)!;
+          }
+          if(['e','E'].includes(char)) {
+            pos++
+            number += char;
+            await next();
+            char = buffer.at(pos)!;
+            if (['+','-'].includes(char)) {
+              ++pos;
+              number += char;
             }
-
-            if (!match) {
-              throw new SyntaxError('Json syntax error at ' + pos);
-            }
-
-            value = Number(match[1]);
-            pos += match[1].length;
-          } while (false);
+            number += await parseDidgits();
+          }
+          value = Number(number);
       }
 
       pushValue(this.#observers, path, value);
 
       return value;
     }
+
+    const parseDidgits = async () => {
+      let digits = '';
+      while (await next()) {
+        let c = buffer.at(pos)!;
+        if(c >= '0' && c <= '9') {
+          digits += c;
+          ++pos;
+          continue;
+        }
+        break;
+      }
+
+      if(digits.length === 0) {
+        throw new SyntaxError('Json syntax error at ' + (pos + parsed));
+      }
+
+      return digits;
+    }
+
 
     const parseString = async (path?: Array<string | number>) => {
       let value = '';
