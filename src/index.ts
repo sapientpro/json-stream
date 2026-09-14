@@ -1,4 +1,5 @@
 import {Readable, Writable} from 'node:stream';
+import {StringDecoder} from 'node:string_decoder';
 import {firstValueFrom, Observable, Subject} from "rxjs";
 import {Suspendable} from "./suspendable";
 
@@ -15,6 +16,8 @@ type ObserverDesc = {
   },
 }
 
+type Callback = (error?: Error | null) => void;
+
 type Path = string | (string | number | typeof Any)[] | [...(string | number | typeof Any)[], typeof Rest];
 
 export class JsonStream extends Writable {
@@ -26,6 +29,7 @@ export class JsonStream extends Writable {
     let parsed = 0;
     let lastChunk = 0;
     const suspendable = new Suspendable();
+    const decoder = new StringDecoder('utf-8');
 
     const next = async (shift = 0, callback?: () => void,) => {
       if (!this.writable && pos + shift >= buffer.length + this.writableLength - lastChunk) return true;
@@ -153,7 +157,13 @@ export class JsonStream extends Writable {
           pos += 4;
           break;
         default:
-          let number = await parseDidgits();
+          let number = '';
+          if (buffer.at(pos) === '-') {
+            ++pos;
+            number = '-';
+            await next();
+          }
+          number += await parseDidgits();
           let char = buffer.at(pos)!;
           if(char === '.') {
             ++pos;
@@ -267,23 +277,20 @@ export class JsonStream extends Writable {
       return value;
     }
 
-    const pushValue = (observers: ObserverDesc, path: Array<string | number>, value: any, originalPath: Array<string | number> = [...path]) => {
-      if (path.length === 0) {
-        observers.observer?.next({
-          path: originalPath,
-          value
-        });
+    const pushValue = (observers: ObserverDesc, path: Array<string | number>, value: any, depth: number = 0) => {
+      if (depth === path.length) {
+        observers.observer?.next({path, value});
         return;
       }
-      const key = path.shift()!;
+      const key = path[depth]!;
       if (observers.children[key]) {
-        pushValue(observers.children[key], path, value, originalPath);
+        pushValue(observers.children[key], path, value, depth + 1);
       }
       if (observers.children[Any]) {
-        pushValue(observers.children[Any], path, value, originalPath);
+        pushValue(observers.children[Any], path, value, depth + 1);
       }
       if (observers.children[Rest]) {
-        pushValue(observers.children[Rest], [], value, originalPath);
+        pushValue(observers.children[Rest], path, value, path.length);
       }
     }
 
@@ -295,9 +302,12 @@ export class JsonStream extends Writable {
       }
     }
 
+    //Arrow functions: `this` is bound lexically to the JsonStream instance.
+    //A method shorthand would need a `this: JsonStream` annotation, which is
+    //unsound - Node types these callbacks as `this: Writable`.
     super({
       defaultEncoding: 'utf-8',
-      construct(this: JsonStream, callback: (error?: (Error | null)) => void) {
+      construct: (callback: Callback) => {
         waitStart()
           .then(() => parse())
           .then(async (value) => {
@@ -311,18 +321,18 @@ export class JsonStream extends Writable {
           });
         callback();
       },
-      async write(this: JsonStream, chunk: Buffer | string, encoding: BufferEncoding, callback: (error?: (Error | null)) => void) {
-        const chunkStr = chunk.toString('utf-8');
+      write: async (chunk: Buffer | string, encoding: BufferEncoding, callback: Callback) => {
+        const chunkStr = typeof chunk === 'string' ? chunk : decoder.write(chunk);
         buffer += chunkStr;
         lastChunk = chunkStr.length;
         await suspendable.resume(true);
         lastChunk = 0;
         callback();
       },
-      final(this: JsonStream, callback: (error?: (Error | null)) => void) {
+      final: (callback: Callback) => {
         suspendable.resume(false).then(() => callback()).catch(callback);
       },
-      destroy(this: JsonStream, error: Error | null, callback: (error?: (Error | null)) => void) {
+      destroy: (error: Error | null, callback: Callback) => {
         cleanup(this.#observers);
         callback(error);
       }
