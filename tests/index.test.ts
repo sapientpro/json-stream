@@ -1,6 +1,6 @@
 /// <reference types="jest" />
 import { finished } from "node:stream/promises";
-import { Any, JsonStream, Rest } from '../src';
+import { Any, JsonStream, Rest } from '../src/node';
 import DoneCallback = jest.DoneCallback;
 
 

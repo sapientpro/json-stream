@@ -1,5 +1,5 @@
 /// <reference types="jest" />
-import { JsonStream, Any } from '../src';
+import { JsonStream, Any } from '../src/node';
 
 const feed = async (s: JsonStream, parts: (string | Buffer)[]) => {
   for (const p of parts) await new Promise<void>(r => s.write(p as any, undefined as any, () => r()));
