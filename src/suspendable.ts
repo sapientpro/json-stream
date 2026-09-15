@@ -14,6 +14,16 @@ export class Suspendable {
     return await this._resume.promise;
   }
 
+  /**
+   * Unblocks a pending resume() when the suspended side is dead and will never
+   * call suspend() again - otherwise the writer waits on it forever.
+   */
+  release(value?: any): void {
+    const {resolve} = this._suspend;
+    this._suspend = Promise.withResolvers<any>();
+    resolve({ value });
+  }
+
   async resume(value?: any): Promise<any> {
     this.trace && this._trace('Resuming');
     this._suspended = false;

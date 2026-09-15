@@ -1,10 +1,14 @@
 import {Readable, Writable} from 'node:stream';
 import {StringDecoder} from 'node:string_decoder';
 import {firstValueFrom, Observable, Subject} from "rxjs";
-import {Suspendable} from "./suspendable";
+import {Suspendable} from "./suspendable.js";
 
 export const Any = Symbol('Any');
 export const Rest = Symbol('Rest');
+
+//Guards against a document that is nothing but opening brackets: every level
+//costs an async frame, so an unbounded one exhausts the heap.
+const MAX_DEPTH = 1000;
 
 type ObserverDesc = {
   observer?: Subject<any>,
@@ -18,42 +22,77 @@ type ObserverDesc = {
 
 type Callback = (error?: Error | null) => void;
 
-type Path = string | (string | number | typeof Any)[] | [...(string | number | typeof Any)[], typeof Rest];
+export type PathSegment = string | number;
+
+export type Path =
+  string
+  | (PathSegment | typeof Any)[]
+  | [...(PathSegment | typeof Any)[], typeof Rest];
+
+export type Emitted<T = any> = { path: PathSegment[], value: T };
+
+const newDesc = (): ObserverDesc => ({children: Object.create(null)});
+
+//Object.values misses the Any/Rest symbol keys.
+const childrenOf = (desc: ObserverDesc): ObserverDesc[] => {
+  const children = Object.values(desc.children);
+  if (desc.children[Any]) children.push(desc.children[Any]!);
+  if (desc.children[Rest]) children.push(desc.children[Rest]!);
+  return children;
+}
 
 export class JsonStream extends Writable {
-  readonly #observers: ObserverDesc = {children: {}};
+  readonly #observers: ObserverDesc = newDesc();
+  #json = '';
 
   constructor(start: string = '', collectJson: boolean = false) {
     let buffer: string = ''
     let pos: number = 0;
     let parsed = 0;
     let lastChunk = 0;
+    let done = false;
+    let failed = false;
     const suspendable = new Suspendable();
     const decoder = new StringDecoder('utf-8');
+    const path: Array<PathSegment> = [];
 
-    const next = async (shift = 0, callback?: () => void,) => {
-      if (!this.writable && pos + shift >= buffer.length + this.writableLength - lastChunk) return true;
+    const syntaxError = () => new SyntaxError('Json syntax error at ' + (pos + parsed));
 
+    //True once the writer is finished and everything it wrote has been buffered.
+    const eof = (shift = 0) =>
+      !this.writable && pos + shift >= buffer.length + this.writableLength - lastChunk;
+
+    //Cheap synchronous check. Every call site tries this before awaiting next(),
+    //so the promise machinery only runs when the buffer is actually exhausted.
+    const avail = (shift = 0) => pos + shift < buffer.length;
+
+    //Returns false when no more data will ever arrive.
+    const next = async (shift = 0) => {
       while (pos + shift >= buffer.length) {
-        callback?.();
-
+        if (eof(shift)) return false;
         await suspendable.suspend();
       }
 
       //Cleanup buffer if it's too big
-      if (!collectJson && pos > 512) {
+      if (pos > 512) {
         parsed += pos;
         buffer = buffer.substring(pos);
         pos = 0;
       }
 
-      return pos + shift < buffer.length;
+      return true;
+    }
+
+    //Fails with a syntax error rather than returning false.
+    const require = async (shift = 0) => {
+      if (avail(shift) || await next(shift)) return;
+      throw syntaxError();
     }
 
     const waitStart = async () => {
       const length = start?.length ?? 0;
       if (!length) return;
-      while (await next(length)) {
+      while (true) {
         const startPos = buffer.indexOf(start, pos);
         if (startPos >= 0) {
           pos = startPos + start.length;
@@ -61,48 +100,75 @@ export class JsonStream extends Writable {
           buffer = buffer.substring(pos);
           pos = 0;
           parsed = 0;
-          break
+          return;
         }
-        pos = buffer.length - length + 1;
+        //Keep the last length-1 characters: the marker may straddle the seam.
+        pos = Math.max(0, buffer.length - length + 1);
+        if (!await next(length - 1)) {
+          throw new SyntaxError('Start pattern ' + JSON.stringify(start) + ' not found');
+        }
       }
     }
+
+    const isSpace = (code: number) => code === 32 || code === 10 || code === 13 || code === 9;
 
     const skipSpaces = async () => {
-      while (await next()) {
-        if (buffer.at(pos)?.trim() === '') {
+      while (true) {
+        while (pos < buffer.length) {
+          if (!isSpace(buffer.charCodeAt(pos))) return;
           ++pos;
-          continue;
         }
-        break;
+        if (!await next()) return;
       }
     }
 
-    const parse = async (path: Array<string | number> = []) => {
+    const parse = async (): Promise<any> => {
+      if (path.length > MAX_DEPTH) {
+        throw new SyntaxError('Json nesting deeper than ' + MAX_DEPTH + ' at ' + (pos + parsed));
+      }
+
       await skipSpaces();
+      await require();
+
       let value: any;
       switch (buffer.at(pos)) {
         case '{': {
           pos++;
           value = {}
-          while (await next()) {
+          while (true) {
             await skipSpaces();
+            await require();
             if (buffer.at(pos) === '}') {
               ++pos;
               break;
             }
 
-            const name = await parseString();
+            const name = await parseString(false);
 
             await skipSpaces();
+            await require();
 
             if (buffer.at(pos) !== ':') {
-              throw new SyntaxError('Json syntax error at ' + (pos + parsed));
+              throw syntaxError();
             }
 
             ++pos
 
-            value[name] = await parse([...path, name]);
+            path.push(name);
+            const child = await parse();
+            path.pop();
+
+            //Plain assignment would trip the __proto__ setter instead of
+            //creating an own property, which is not what JSON.parse does.
+            Object.defineProperty(value, name, {
+              value: child,
+              enumerable: true,
+              writable: true,
+              configurable: true,
+            });
+
             await skipSpaces();
+            await require();
 
             if (buffer.at(pos) === ',') {
               ++pos;
@@ -114,15 +180,19 @@ export class JsonStream extends Writable {
           ++pos;
           let index = 0;
           value = [];
-          while (await next()) {
+          while (true) {
             await skipSpaces();
+            await require();
             if (buffer.at(pos) === ']') {
               ++pos;
               break;
             }
-            value.push(await parse([...path, index]));
+            path.push(index);
+            value.push(await parse());
+            path.pop();
             ++index;
             await skipSpaces();
+            await require();
             if (buffer.at(pos) === ',') {
               ++pos;
             }
@@ -130,106 +200,119 @@ export class JsonStream extends Writable {
           break;
         }
         case '"':
-          value = await parseString(path);
+          value = await parseString(true);
           break;
         case "t":
-          await next(3);
+          await require(3);
           if (buffer.substring(pos, pos + 4) !== 'true') {
-            throw new SyntaxError('Json syntax error at ' + (pos + parsed));
+            throw syntaxError();
           }
           value = true;
           pos += 4;
           break;
         case "f":
-          await next(4);
+          await require(4);
           if (buffer.substring(pos, pos + 5) !== 'false') {
-            throw new SyntaxError('Json syntax error at ' + (pos + parsed));
+            throw syntaxError();
           }
           value = false;
           pos += 5;
           break;
         case "n":
-          await next(3);
+          await require(3);
           if (buffer.substring(pos, pos + 4) !== 'null') {
-            throw new SyntaxError('Json syntax error at ' + (pos + parsed));
+            throw syntaxError();
           }
           value = null;
           pos += 4;
           break;
-        default:
+        default: {
           let number = '';
           if (buffer.at(pos) === '-') {
             ++pos;
             number = '-';
-            await next();
+            await require();
           }
           number += await parseDidgits();
-          let char = buffer.at(pos)!;
-          if(char === '.') {
+          if (buffer.at(pos) === '.') {
             ++pos;
-            number += char + await parseDidgits();
-            char = buffer.at(pos)!;
+            number += '.' + await parseDidgits();
           }
-          if(['e','E'].includes(char)) {
-            pos++
+          let char = buffer.at(pos);
+          if (char === 'e' || char === 'E') {
+            ++pos;
             number += char;
-            await next();
-            char = buffer.at(pos)!;
-            if (['+','-'].includes(char)) {
+            await require();
+            char = buffer.at(pos);
+            if (char === '+' || char === '-') {
               ++pos;
               number += char;
             }
             number += await parseDidgits();
           }
           value = Number(number);
+        }
       }
 
-      pushValue(this.#observers, path, value);
+      pushValue(this.#observers, value);
 
       return value;
     }
 
     const parseDidgits = async () => {
       let digits = '';
-      while (await next()) {
-        let c = buffer.at(pos)!;
-        if(c >= '0' && c <= '9') {
-          digits += c;
-          ++pos;
-          continue;
+      while (true) {
+        let end = pos;
+        while (end < buffer.length) {
+          const code = buffer.charCodeAt(end);
+          if (code < 48 || code > 57) break;
+          ++end;
         }
-        break;
+        digits += buffer.slice(pos, end);
+        pos = end;
+        //Stopped on a non-digit, or nothing more is coming.
+        if (end < buffer.length || !await next()) break;
       }
 
-      if(digits.length === 0) {
-        throw new SyntaxError('Json syntax error at ' + (pos + parsed));
+      if (digits.length === 0) {
+        throw syntaxError();
       }
 
       return digits;
     }
 
+    const parseString = async (observed: boolean) => {
+      await require();
+      if (buffer.at(pos) !== '"') {
+        throw syntaxError();
+      }
+      ++pos;
 
-    const parseString = async (path?: Array<string | number>) => {
       let value = '';
       let chunk = '';
-      ++pos;
-      const stream = path && this.#resolveDesc(path, false)?.stream;
-      loop: while (await next(0, () => {
-        if (chunk) {
-          value += chunk;
-          stream?.push(chunk);
-          chunk = '';
+      const stream = observed ? this.#resolveDesc(path, false)?.stream : undefined;
+
+      const flush = () => {
+        if (!chunk) return;
+        value += chunk;
+        stream?.push(chunk);
+        chunk = '';
+      }
+
+      loop: while (true) {
+        if (pos >= buffer.length) {
+          flush();
+          if (!await next()) throw syntaxError();
+          continue;
         }
-      })) {
+
         switch (buffer.at(pos)) {
-          case void 0:
-            throw new SyntaxError('Json syntax error at ' + (pos + parsed));
           case '"':
             ++pos;
             break loop;
           case '\\':
             ++pos;
-            await next();
+            await require();
             switch (buffer.at(pos)) {
               case 't':
                 chunk += '\t';
@@ -251,54 +334,71 @@ export class JsonStream extends Writable {
                 chunk += '\f';
                 ++pos;
                 break;
-              case 'u':
-                await next(4);
-                chunk += String.fromCharCode(parseInt(buffer.substring(pos + 1, pos + 5), 16));
+              case 'u': {
+                await require(4);
+                const hex = buffer.substring(pos + 1, pos + 5);
+                if (!/^[0-9a-fA-F]{4}$/.test(hex)) {
+                  throw syntaxError();
+                }
+                chunk += String.fromCharCode(parseInt(hex, 16));
                 pos += 5;
                 break;
+              }
               default:
                 chunk += buffer.at(pos);
                 ++pos;
                 break;
             }
             break;
-          default:
-            chunk += buffer.at(pos)!;
-            ++pos;
+          default: {
+            //Take the whole run up to the next quote or backslash in one slice:
+            //appending character by character builds a rope the GC has to walk.
+            let end = pos;
+            while (end < buffer.length) {
+              const code = buffer.charCodeAt(end);
+              if (code === 34 || code === 92) break;
+              ++end;
+            }
+            chunk += buffer.slice(pos, end);
+            pos = end;
             break;
+          }
         }
       }
-      if (chunk) {
-        value += chunk;
-        stream?.push(chunk);
-      }
+
+      flush();
       stream?.push(null);
 
       return value;
     }
 
-    const pushValue = (observers: ObserverDesc, path: Array<string | number>, value: any, depth: number = 0) => {
+    const pushValue = (observers: ObserverDesc, value: any, depth: number = 0) => {
       if (depth === path.length) {
-        observers.observer?.next({path, value});
+        observers.observer?.next({path: path.slice(), value});
         return;
       }
       const key = path[depth]!;
-      if (observers.children[key]) {
-        pushValue(observers.children[key], path, value, depth + 1);
+      if (Object.hasOwn(observers.children, key)) {
+        pushValue(observers.children[key]!, value, depth + 1);
       }
       if (observers.children[Any]) {
-        pushValue(observers.children[Any], path, value, depth + 1);
+        pushValue(observers.children[Any]!, value, depth + 1);
       }
       if (observers.children[Rest]) {
-        pushValue(observers.children[Rest], path, value, path.length);
+        pushValue(observers.children[Rest]!, value, path.length);
       }
     }
 
-    const cleanup = (observer: ObserverDesc) => {
-      observer.stream?.push(null);
-      observer.observer?.complete();
-      for (const child of Object.values(observer.children)) {
-        cleanup(child);
+    const cleanup = (observer: ObserverDesc, error?: Error | null) => {
+      if (error) {
+        observer.stream?.destroy(error);
+        observer.observer?.error(error);
+      } else {
+        observer.stream?.push(null);
+        observer.observer?.complete();
+      }
+      for (const child of childrenOf(observer)) {
+        cleanup(child, error);
       }
     }
 
@@ -311,32 +411,56 @@ export class JsonStream extends Writable {
         waitStart()
           .then(() => parse())
           .then(async (value) => {
+            done = true;
+            buffer = '';
             this.emit('value', value)
             while (!this.closed) {
               await suspendable.suspend();
             }
           })
+          //destroy() runs the cleanup below, which carries the real cause to
+          //every observer. A bare emit('error') would leave them hanging.
           .catch((e) => {
-            this.emit('error', e);
+            failed = true;
+            //A writer may be parked on resume(); nothing will ever suspend again.
+            suspendable.release();
+            this.destroy(e);
           });
         callback();
       },
       write: async (chunk: Buffer | string, encoding: BufferEncoding, callback: Callback) => {
         const chunkStr = typeof chunk === 'string' ? chunk : decoder.write(chunk);
-        buffer += chunkStr;
-        lastChunk = chunkStr.length;
-        await suspendable.resume(true);
-        lastChunk = 0;
+        if (collectJson) {
+          //Kept apart from `buffer`, which is indexed on every character and so
+          //would be flattened by V8 on every write.
+          this.#json += chunkStr;
+        }
+        //Everything after the root value is discarded; only the collector keeps it.
+        if (!done && !failed) {
+          buffer += chunkStr;
+          lastChunk = chunkStr.length;
+          await suspendable.resume(true);
+          lastChunk = 0;
+        }
         callback();
       },
       final: (callback: Callback) => {
+        if (failed) {
+          callback();
+          return;
+        }
         suspendable.resume(false).then(() => callback()).catch(callback);
       },
       destroy: (error: Error | null, callback: Callback) => {
-        cleanup(this.#observers);
+        cleanup(this.#observers, error);
         callback(error);
       }
     });
+  }
+
+  /** The raw text written to the stream. Empty unless `collectJson` was set. */
+  public get json(): string {
+    return this.#json;
   }
 
   #resolveDesc(path: Path, create: false): ObserverDesc | null
@@ -351,7 +475,7 @@ export class JsonStream extends Writable {
       if (Object.hasOwn(observer.children, key)) {
         observer = observer.children[key]!;
       } else if (create) {
-        observer = observer.children[key] = {children: {}};
+        observer = observer.children[key] = newDesc();
       } else {
         return null;
       }
@@ -359,22 +483,23 @@ export class JsonStream extends Writable {
     return observer;
   }
 
-  public observe<T = any>(path: Path = []): Observable<{ path: string[], value: T }> {
-    return (this.#resolveDesc(path).observer ??= new Subject<{ path: string[], value: T }>());
+  public observe<T = any>(path: Path = []): Observable<Emitted<T>> {
+    return (this.#resolveDesc(path).observer ??= new Subject<Emitted<T>>());
   }
 
-  public stream(path: string | string[]) {
-    if (this.#resolveDesc(path).stream) {
-      throw new Error('Stream already exists');
+  public stream(path: Path): Readable {
+    const desc = this.#resolveDesc(path);
+    if (desc.stream) {
+      throw new Error('Stream already exists for ' + JSON.stringify(path));
     }
-    return (this.#resolveDesc(path).stream = new Readable({
+    return (desc.stream = new Readable({
       encoding: 'utf-8',
       read() {
       }
     }))
   }
 
-  public async value<T = any>(path: string | string[] = []) {
+  public async value<T = any>(path: Path = []): Promise<T> {
     const {value} = await firstValueFrom(this.observe<T>(path));
     return value;
   }
