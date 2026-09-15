@@ -55,8 +55,12 @@ jsonStream.on('error', (err) => {
 
 // Pipe the file stream into our JSON stream parser
 fileStream.pipe(jsonStream);
+```
 
-// Alternatively, you can write to jsonStream directly:
+Instead of piping you can write to the stream yourself - but do one or the
+other, not both, or the document arrives twice:
+
+```typescript
 fileStream.on('data', (chunk: string) => {
     jsonStream.write(chunk, 'utf-8', () => {
         // chunk processed
@@ -117,7 +121,8 @@ import { JsonStream } from '@sapientpro/json-stream';
 const jsonStream = new JsonStream();
 
 // Get a Readable stream for the "log" property.
-// The property name should be provided without the dot, the package handles prefixing internally.
+// A string path is split on dots, so 'a.b' addresses the "b" key inside "a";
+// pass an array when a key contains a dot itself.
 const logStream = jsonStream.stream('log');
 
 // Listen to data events on the logStream
@@ -177,7 +182,7 @@ jsonStream.end(JSON.stringify({
 
 ### Example 5: Observing with Rest Pattern (Rest)
 
-In some cases, you might want to observe a value alongside all its descendants. The Rest symbol allows you to capture both a nested value and its whole subtree. Given the following JSON:
+The Rest symbol observes every value *below* a path, at any depth. It does not emit the node the path points at - only its descendants. Given the following JSON:
 
 ```json
 {
@@ -188,7 +193,7 @@ In some cases, you might want to observe a value alongside all its descendants. 
 }
 ```
 
-The following code will observe each element in the data.metrics array as well as the complete metrics array:
+The following code observes each element of the data.metrics array. Note that the complete array is not emitted - for that, observe `['data', 'metrics']` as well:
 
 ```typescript
 import { JsonStream, Rest } from '@sapientpro/json-stream';
@@ -243,32 +248,38 @@ Some trailing text...`, 'utf-8');
 
 ## API
 
-`new JsonStream([start: string])`
+`new JsonStream([start: string], [collectJson: boolean])`
 
 Creates a new instance of the JSON stream parser.
-- start (optional): A substring that indicates where to begin parsing. If provided, the parser will trim the initial data to start with this token.
+- `start` (optional): A substring that marks where to begin parsing. Everything before it is discarded. If the stream ends without containing it, the parser emits a `SyntaxError`.
+- `collectJson` (optional): Keep a copy of everything written, readable through `json`. Off by default, because it retains the whole document in memory.
 
 Properties
-- json: Returns the part of the JSON that has been parsed so far (a string).
+- `json: string` - the raw text written to the stream, or `''` unless `collectJson` was set.
+
+Types
+- `Path = string | (string | number | typeof Any)[] | [...(string | number | typeof Any)[], typeof Rest]`
+- `PathSegment = string | number`
+- `Emitted<T> = { path: PathSegment[], value: T }`
 
 Methods
-- `value<T = any>(name?: string|string[]): Promise<T>`
-  
-  Returns a promise that resolves with the JSON value located at the given property path.
+- `value<T = any>(path?: Path): Promise<T>`
+
+  Returns a promise that resolves with the JSON value located at the given path, and rejects with the `SyntaxError` if parsing fails. Call it before the value is parsed - a path that has already gone by never resolves.
 
 
-- `stream(name: string|string[]): Readable`
+- `stream(path: Path): Readable`
 
-  Creates and returns a Node.js Readable stream that streams out the JSON string value for a specific property as it is parsed.
+  Creates and returns a Node.js Readable stream carrying the JSON string value at that path as it is parsed. Throws if a stream for the same path already exists.
 
 
-- `observe<T = any>(path?: Path): Observable<{ path: string[], value: T }>`
+- `observe<T = any>(path?: Path): Observable<Emitted<T>>`
 
-  Returns an RxJS Observable that emits updates for the JSON value located at the given path.
+  Returns an RxJS Observable that emits every value parsed at the given path. Array indices arrive in `path` as numbers, not strings.
 
 ### Error Handling
 
-Any syntax errors or stream errors during parsing will be emitted via the stream’s 'error' event. Always attach an error listener to handle possible errors gracefully:
+A syntax error destroys the stream: the `'error'` event fires, every observable created with `observe` receives that error, and every promise from `value` rejects with it. Always attach an error listener, or Node will treat it as an uncaught exception:
 
 ```typescript
 jsonStream.on('error', (err) => {
@@ -283,3 +294,9 @@ Contributions and improvements are welcome! Please open an issue or submit a pul
 ## License
 
 MIT
+
+### Limits
+
+- Nesting deeper than 1000 levels is rejected with a `SyntaxError`. Every level costs an async frame, so an unbounded document would exhaust the heap.
+- The parser is deliberately lenient about trailing commas, missing commas and leading zeros. Do not rely on it to validate a document.
+- Anything written after the root value is discarded, unless `collectJson` is set.
