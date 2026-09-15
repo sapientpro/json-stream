@@ -158,14 +158,19 @@ export class JsonStream extends Writable {
             const child = await parse();
             path.pop();
 
-            //Plain assignment would trip the __proto__ setter instead of
-            //creating an own property, which is not what JSON.parse does.
-            Object.defineProperty(value, name, {
-              value: child,
-              enumerable: true,
-              writable: true,
-              configurable: true,
-            });
+            if (name === '__proto__') {
+              //Plain assignment would trip the setter instead of creating an
+              //own property, which is not what JSON.parse does. Every other
+              //name assigns correctly, and defineProperty costs 4x as much.
+              Object.defineProperty(value, name, {
+                value: child,
+                enumerable: true,
+                writable: true,
+                configurable: true,
+              });
+            } else {
+              value[name] = child;
+            }
 
             await skipSpaces();
             await require();
@@ -407,6 +412,9 @@ export class JsonStream extends Writable {
     //unsound - Node types these callbacks as `this: Writable`.
     super({
       defaultEncoding: 'utf-8',
+      //Node otherwise UTF-8 encodes every string write into a Buffer that we
+      //immediately decode back - 21us per 256KB chunk of pure waste.
+      decodeStrings: false,
       construct: (callback: Callback) => {
         waitStart()
           .then(() => parse())
