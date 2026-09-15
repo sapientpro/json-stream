@@ -79,14 +79,36 @@ describe('availability', () => {
     expect(s.destroyed).toBe(true);
   });
 
-  test('a syntax error destroys an attached readable', async () => {
+  test('a syntax error destroys a readable still being written', async () => {
     const s = new JsonStream();
     s.on('error', () => {});
     const r = s.stream('a');
-    const err = new Promise(res => r.on('error', res));
-    r.resume();
-    await feed(s, ['{"a":"ok","b": nope}']);
+    const err = (async () => {
+      try {
+        for await (const _ of r) { /* drain */ }
+      } catch (e) {
+        return e;
+      }
+    })();
+    await feed(s, ['{"a":"never closed']);
     expect(await err).toBeInstanceOf(SyntaxError);
+  });
+
+  test('a readable that already ended is not retro-errored', async () => {
+    const s = new JsonStream();
+    s.on('error', () => {});
+    const r = s.stream('a');
+    let errored = false;
+    const read = (async () => {
+      try {
+        for await (const _ of r) { /* drain */ }
+      } catch {
+        errored = true;
+      }
+    })();
+    await feed(s, ['{"a":"ok","b": nope}']);
+    await read;
+    expect(errored).toBe(false);
   });
 
   test('truncated input errors rather than hanging', async () => {

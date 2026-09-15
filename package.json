@@ -32,14 +32,11 @@
   },
   "scripts": {
     "prepare": "npm run build && npm run test",
-    "build": "tsc -p tsconfig.json && tsc -p tsconfig-esm.json && node scripts/dist-type.mjs",
+    "build": "rm -rf dist && tsc -p tsconfig.json && tsc -p tsconfig-esm.json && node scripts/dist-type.mjs",
     "test": "jest"
   },
   "engines": {
     "node": ">=22"
-  },
-  "dependencies": {
-    "rxjs": "^7.0.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",

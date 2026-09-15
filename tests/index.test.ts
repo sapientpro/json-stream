@@ -68,43 +68,29 @@ describe('JsonStream', () => {
     jsonStream.end('{"hello":"world"}', 'utf-8');
   });
 
-  //expect stream value to be 'world'
-  test('Should stream value with specified value', (done) => {
+  test('Should stream value with specified value', async () => {
     const jsonStream = new JsonStream();
     const text = jsonStream.stream('text');
     const string = "some long chunked string";
-    let written = 0;
-    let read = 0;
-    const write = () => {
-      if (jsonStream.writable) {
-        const chunk = string.substring(written, written += Math.min(string.length - written, Math.ceil(Math.random() * 5)));
-        jsonStream.write(chunk);
-        if (written === string.length) {
-          jsonStream.end('"}');
-        }
-      }
-    }
-    text.on("data", (data) => {
-      expect(data).toEqual(string.substring(read, read += data.length));
-      write();
-    })
 
-    text.on('end', () => {
-      expect(read).toEqual(string.length);
-    })
+    const read = (async () => {
+      const seen: string[] = [];
+      for await (const chunk of text) seen.push(chunk);
+      return seen;
+    })();
 
     jsonStream.write('{"text":"');
-    write();
+    for (let written = 0; written < string.length;) {
+      const next = Math.min(string.length, written + Math.ceil(Math.random() * 5));
+      jsonStream.write(string.substring(written, next));
+      written = next;
+      await new Promise(resolve => setImmediate(resolve));
+    }
+    jsonStream.end('"}');
 
-    jsonStream.on('finish', () => {
-      try {
-        expect(written).toEqual(string.length);
-        expect(read).toEqual(string.length);
-        done()
-      } catch (e) {
-        done(e);
-      }
-    })
+    const seen = await read;
+    expect(seen.join('')).toEqual(string);
+    expect(seen.length).toBeGreaterThan(1);
   });
 
   test('Should parse with marker', (done) => {
