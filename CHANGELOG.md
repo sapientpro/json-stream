@@ -4,7 +4,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## 2.0.0
 
-1.2.0 was committed but never published, so everything here is relative to **1.1.4**, the last release on npm.
+Relative to **1.1.4**, the last release on npm.
 
 The parser was rewritten as a synchronous state machine, the runtime dependency on RxJS was removed, and the package now runs in browsers. `engines` stays at `node >=22`.
 

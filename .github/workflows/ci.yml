@@ -6,7 +6,31 @@ on:
   pull_request:
 
 jobs:
-  test:
+  node:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22, 24]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      # `prepare` runs build + test
+      - run: npm ci
+      - run: node scripts/smoke.mjs
+      - name: Smoke test the packed tarball
+        run: |
+          npm pack --pack-destination /tmp
+          mkdir -p /tmp/consumer
+          cd /tmp/consumer
+          npm init -y > /dev/null
+          npm install /tmp/sapientpro-json-stream-*.tgz
+          node "$GITHUB_WORKSPACE/scripts/smoke.mjs" @sapientpro/json-stream
+
+  bun:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -14,5 +38,19 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      # `prepare` runs build + test
+      - uses: oven-sh/setup-bun@v2
       - run: npm ci
+      - run: bunx jest
+      - run: bun scripts/smoke.mjs
+
+  deno:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - uses: denoland/setup-deno@v2
+      - run: npm ci
+      - run: deno run --allow-read scripts/smoke.mjs
