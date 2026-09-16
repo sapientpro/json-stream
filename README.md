@@ -4,6 +4,8 @@
 
 `JsonParser` is the whole parser and imports nothing: it takes strings or bytes through `write`, and accepts a `ReadableStream` through `writable`. Node users who want a `Writable` to `pipe` into import `JsonStream` from `@sapientpro/json-stream/node`.
 
+Upgrading from 1.x? See the [migration guide](CHANGELOG.md#migration-from-1x).
+
 ## Installation
 
 ```bash
