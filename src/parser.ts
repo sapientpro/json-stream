@@ -71,6 +71,7 @@ export class JsonParser {
 
   #buf = '';
   #pinned = 0;
+  #snapshot: PathSegment[] | null = null;
   #pos = 0;
   #consumed = 0;
   #state: number;
@@ -252,6 +253,7 @@ export class JsonParser {
   }
 
   #emit(value: any): void {
+    this.#snapshot = null;
     this.#dispatch(this.#root, value, 0);
     // an observer may have called destroy(); do not overwrite the terminal state
     if (this.#state === FAILED) return;
@@ -285,7 +287,7 @@ export class JsonParser {
   #dispatch(node: Node, value: any, depth: number): void {
     const path = this.#path;
     if (depth === path.length) {
-      node.values?.next({path: path.slice(), value});
+      node.values?.next({path: this.#snapshot ??= path.slice(), value});
       return;
     }
     const key = path[depth]!;

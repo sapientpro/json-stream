@@ -175,3 +175,16 @@ test('decodes bytes split mid-character', () => {
   p.end();
   expect(p.root).toEqual({a: 'привіт 🎉'});
 });
+
+test('distinct paths matching one value share an identical snapshot', () => {
+  const p = new JsonParser();
+  const seen: any[] = [];
+  p.observe([Rest]).subscribe(e => seen.push(e));
+  p.observe([Any, 'a']).subscribe(e => seen.push(e));
+  feed(p, '[{"a":1}]', 2);
+  const hits = seen.filter(e => e.value === 1);
+  expect(hits).toHaveLength(2);
+  expect(hits[0].path).toEqual([0, 'a']);
+  expect(hits[1].path).toEqual([0, 'a']);
+  expect(seen.map(e => e.path.join('.'))).toEqual(['0.a', '0.a', '0']);
+});
