@@ -70,6 +70,7 @@ export class JsonParser {
   #started = false;
 
   #buf = '';
+  #pinned = 0;
   #pos = 0;
   #consumed = 0;
   #state: number;
@@ -168,6 +169,7 @@ export class JsonParser {
     } else {
       this.#buf += text;
     }
+    this.#pinned = 0;
 
     this.#running = true;
     try {
@@ -365,7 +367,7 @@ export class JsonParser {
       this.#strSinks.length = 0;
     } else {
       // Keys and ordinary values need no fragment array or final join.
-      text = this.#retainString ? this.#str : undefined;
+      text = this.#retainString ? this.#flatten(this.#str) : undefined;
     }
     this.#str = '';
     if (this.#keyMode) {
@@ -590,6 +592,19 @@ export class JsonParser {
         }
       }
     }
+  }
+
+  /**
+   * V8 makes a slice of 13 chars or more a SlicedString that pins the whole
+   * write buffer, so a short retained value can hold megabytes alive. Copying
+   * is only worth it while little of this buffer is retained: once a quarter
+   * of it is, pinning wastes at most 4x what the consumer keeps anyway.
+   */
+  #flatten(text: string): string {
+    if (text.length < 13 || this.#buf.length - text.length <= 1024) return text;
+    const copy = this.#pinned * 4 < this.#buf.length;
+    this.#pinned += text.length;
+    return copy ? (' ' + text).slice(1) : text;
   }
 
   #flushChunk(final = false): void {
