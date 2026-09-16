@@ -67,18 +67,19 @@ RxJS now belongs in your own dependencies, and only if you want operators. `subs
 - `observe(path)` returns an in-house multicast source instead of an RxJS `Observable`. `subscribe` is source compatible; `pipe` is not.
 - `rxjs` is no longer a dependency of this package.
 - `stream(path)` on a path that already has a stream no longer throws `Stream already exists`. Sources are multicast, so several readers on one path each receive every fragment.
-- `value(path)` for a path that never appears now rejects when the input ends. It used to never settle.
+- `value(path)` for a path that never appears still rejects when the input ends, but with a plain `Error` instead of RxJS's `EmptyError`. Code matching on the error class or message needs updating.
+- Nesting deeper than `maxDepth` (default 1000) is now rejected with a `SyntaxError`. 1.1.4 parsed arbitrarily deep documents, at the cost of quadratic memory. Raise `maxDepth` if you legitimately parse deeper.
+- `Emitted.path` is typed `PathSegment[]` (`(string | number)[]`) instead of `string[]`. The runtime already put numbers there for array indices; only the type was wrong.
 
 ### Added
 
-- `JsonParser` - the parser with no `node:` imports, usable in browsers, Node and Bun. 3.6 KB gzipped.
+- `JsonParser` - the parser with no `node:` imports, usable in browsers, Node and Bun. The shipped ESM core is 6.2 KB gzipped, 3.6 KB once a bundler minifies it.
 - `parser.writable` - a `WritableStream` sink, so `response.body.pipeTo(parser.writable)` works.
 - `for await` over `observe()`, `chunks()` and `stream()`.
 - `chunks()` and `stream()` accept `Any` and `Rest` paths. Wildcards previously matched no strings at all.
 - `retainRoot: false` - skip building containers nothing observes, for selecting a few items out of a large document.
 - `maxBufferedChunks` - bound the queue of an async iterator or `ReadableStream` consumer.
 - `onObserverError` - receive exceptions thrown by subscriber callbacks instead of letting them escape.
-- `maxDepth` (default 1000) - reject deeper nesting rather than exhausting the heap.
 - `new JsonStream(options)` alongside the existing `new JsonStream(start, collectJson)`.
 - `./package.json` is exported, so tooling can read the manifest.
 

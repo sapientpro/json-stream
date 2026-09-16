@@ -25,14 +25,24 @@
   "types": "dist/esm/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/esm/index.d.ts",
-      "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js"
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
     },
     "./node": {
-      "types": "./dist/esm/node.d.ts",
-      "import": "./dist/esm/node.js",
-      "require": "./dist/cjs/node.js"
+      "import": {
+        "types": "./dist/esm/node.d.ts",
+        "default": "./dist/esm/node.js"
+      },
+      "require": {
+        "types": "./dist/cjs/node.d.ts",
+        "default": "./dist/cjs/node.js"
+      }
     },
     "./package.json": "./package.json"
   },
@@ -58,5 +68,12 @@
   "files": [
     "dist",
     "CHANGELOG.md"
-  ]
+  ],
+  "typesVersions": {
+    "*": {
+      "node": [
+        "dist/cjs/node.d.ts"
+      ]
+    }
+  }
 }

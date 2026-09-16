@@ -21,14 +21,18 @@ jobs:
       # `prepare` runs build + test
       - run: npm ci
       - run: node scripts/smoke.mjs
+      - run: npx --yes @arethetypeswrong/cli --pack .
       - name: Smoke test the packed tarball
         run: |
           npm pack --pack-destination /tmp
           mkdir -p /tmp/consumer
+          # run from the consumer, or ESM self-reference resolves back to this repo
+          cp scripts/smoke.mjs /tmp/consumer/
           cd /tmp/consumer
           npm init -y > /dev/null
           npm install /tmp/sapientpro-json-stream-*.tgz
-          node "$GITHUB_WORKSPACE/scripts/smoke.mjs" @sapientpro/json-stream
+          node smoke.mjs @sapientpro/json-stream
+          node -e "require('@sapientpro/json-stream');require('@sapientpro/json-stream/node')"
 
   bun:
     runs-on: ubuntu-latest

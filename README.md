@@ -320,7 +320,7 @@ RxJS is only needed for operators. `subscribe` and `for await` work without it.
 - `start` (optional): A substring that marks where to begin parsing. Everything before it is discarded. If the stream ends without containing it, the parser emits a `SyntaxError`.
 - `collectJson` (default `false`): Keep a copy of everything written, readable through `json`.
 - `maxDepth` (default `1000`): Maximum container nesting depth.
-- `retainRoot` (default `true`): Build and retain the complete parsed tree. Set to `false` to build only values requested with `observe` or `value`; register these paths before the first `write`. Registering a container path retains its entire subtree, and registering the root retains the entire document while parsing. `root` stays `undefined` in this mode, and the Node `'value'` event carries `undefined`; use `value(path)` or `observe(path)` for selected results. Creating a value source reserves retention for that path even before subscribing; unsubscribing does not change that decision.
+- `retainRoot` (default `true`): Build and retain the complete parsed tree. Set to `false` to build only values requested with `observe` or `value`; register these paths before the first `write`, since `observe` throws once parsing has started in this mode. Registering a container path retains its entire subtree, and registering the root retains the entire document while parsing. `root` stays `undefined` in this mode, and the Node `'value'` event carries `undefined`; use `value(path)` or `observe(path)` for selected results. Creating a value source reserves retention for that path even before subscribing; unsubscribing does not change that decision.
 - `maxBufferedChunks` (default `Infinity`): Positive safe integer limiting queued entries per async iterator or `ReadableStream`. For `observe`, an entry is a complete emitted value; for `chunks` / `stream`, it is a string fragment. Overflow clears that consumer's queue, unsubscribes it and fails it with `RangeError`; parsing and other consumers continue. This limits entry count, not bytes, and does not pause the input.
 - `onObserverError` (optional): Receives exceptions thrown by synchronous `next`, `error` and `complete` callbacks. Other observers still receive notifications. By default, exceptions are rethrown in a microtask, outside parsing; provide a handler to log or otherwise handle them without an uncaught exception. Returned promises from async callbacks are not awaited.
 
@@ -333,6 +333,10 @@ Types
 - `Path = string | (string | number | typeof Any)[] | [...(string | number | typeof Any)[], typeof Rest]`
 - `PathSegment = string | number`
 - `Emitted<T> = { path: PathSegment[], value: T }`
+- `ParserOptions` - the constructor options above.
+- `Observable<T>` - what `observe` and `chunks` return: `subscribe` plus `Symbol.asyncIterator`.
+- `Observer<T> = { next?, error?, complete? }`, `Subscription = { unsubscribe() }`
+- `ObserverErrorHandler = (error: unknown) => void`
 
 Methods
 - `value<T = any>(path?: Path): Promise<T>`
@@ -370,13 +374,33 @@ Methods
 
 ### Error Handling
 
-A syntax error destroys the stream: the `'error'` event fires, every source created with `observe` or `stream` receives that error, and every promise from `value` rejects with it. Always attach an error listener, or Node will treat it as an uncaught exception:
+A syntax error destroys the parse: every source created with `observe`, `chunks` or `stream` receives the error, and every promise from `value` rejects with it.
+
+How the error reaches you depends on the entry point. `JsonParser.write()` and `end()` **throw synchronously**, and every later call rethrows the same error; `pipeTo(parser.writable)` rejects with it.
+
+```typescript
+try {
+    parser.write(chunk);
+} catch (err) {
+    console.error('Invalid JSON:', err);
+}
+```
+
+`JsonStream` emits `'error'` instead. Always attach a listener, or Node will treat it as an uncaught exception:
 
 ```typescript
 jsonStream.on('error', (err) => {
     console.error('Error encountered:', err);
 });
 ```
+
+Exceptions thrown by your own `next` / `error` / `complete` callbacks do not abort parsing; they reach `onObserverError`, or are rethrown in a microtask if you did not supply one. To stop parsing from inside a callback, call `destroy(error)` - calling `write()` or `end()` there throws instead.
+
+### Limits
+
+- Nesting deeper than 1000 levels is rejected with a `SyntaxError`, so a hostile document cannot exhaust the stack.
+- The parser is deliberately lenient. It accepts trailing commas, missing commas, leading zeros, unknown escapes (`\x` yields `x`) and raw control characters inside strings. Every escape JSON does define - `\" \\ \/ \b \f \n \r \t \uXXXX`, surrogate pairs included - decodes exactly as `JSON.parse` does, at any chunk boundary. Do not rely on the parser to validate a document.
+- Anything written after the root value is discarded, unless `collectJson` is set.
 
 ## Memory and performance
 
@@ -396,7 +420,7 @@ Each selected item is complete when emitted. Unselected containers and string va
 
 Async iteration subscribes on the first `next()` call; start the consuming loop before feeding input. Breaking out of a loop unsubscribes it. On a source error, queued values are discarded and the iterator rejects on its next read.
 
-Run `npm run benchmark` to build once and run the full matrix sequentially in Node and Bun (both must be installed). Use `npm run benchmark:node` or `npm run benchmark:bun` for just one runtime. The combined command also generates [the comparison report](benchmarks/results/comparison.md); each runtime writes its raw samples summary to `benchmarks/results/node.json` or `bun.json`.
+Run `npm run benchmark` to build once and run the full matrix sequentially in Node and Bun (both must be installed). Use `npm run benchmark:node` or `npm run benchmark:bun` for just one runtime. The combined command also writes a comparison report and each runtime's raw sample summary under `benchmarks/results/`, which is not checked in.
 
 The matrix covers:
 
@@ -419,9 +443,3 @@ Contributions and improvements are welcome! Please open an issue or submit a pul
 ## License
 
 MIT
-
-### Limits
-
-- Nesting deeper than 1000 levels is rejected with a `SyntaxError`, so a hostile document cannot exhaust the stack.
-- The parser is deliberately lenient. It accepts trailing commas, missing commas, leading zeros, unknown escapes (`\x` yields `x`) and raw control characters inside strings. Every escape JSON does define - `\" \\ \/ \b \f \n \r \t \uXXXX`, surrogate pairs included - decodes exactly as `JSON.parse` does, at any chunk boundary. Do not rely on the parser to validate a document.
-- Anything written after the root value is discarded, unless `collectJson` is set.
