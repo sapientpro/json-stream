@@ -64,6 +64,34 @@ test('still emits a lone trailing surrogate at the end of a string', () => {
   expect(p.root.s).toBe('a' + String.fromCharCode(0xD800));
 });
 
+test('destroy from an observer aborts the parse', () => {
+  const p = new JsonParser();
+  let seen: any = null;
+  p.observe([Any]).subscribe({
+    next: e => { if (e.value === 1) p.destroy(new Error('stop')); },
+    error: e => { seen = e; },
+  });
+  p.write('[1,2]');
+  expect(seen).toEqual(new Error('stop'));
+  expect(p.finished).toBe(false);
+  expect(p.root).toBeUndefined();
+  expect(() => p.write('x')).toThrow('stop');
+});
+
+test.each(['write', 'end'] as const)('%s from an observer throws instead of corrupting state', (method) => {
+  const p = new JsonParser();
+  let inner: Error | null = null;
+  p.observe([Any]).subscribe(e => {
+    if (e.value !== 1) return;
+    try { method === 'write' ? p.write('9') : p.end(); } catch (err) { inner = err as Error; }
+  });
+  p.write('[1,2]');
+  p.end();
+  expect(inner).toBeInstanceOf(Error);
+  expect((inner as unknown as Error).message).toMatch(/re-entered from an observer callback/);
+  expect(p.root).toEqual([1, 2]);
+});
+
 test('observes wildcard and rest', () => {
   const p = new JsonParser();
   const any: any[] = [], rest: any[] = [];

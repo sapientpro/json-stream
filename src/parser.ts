@@ -88,6 +88,7 @@ export class JsonParser {
   #value: any;
   #failure: Error | null = null;
   #writable: WritableStream<Uint8Array | string> | null = null;
+  #running = false;
 
   constructor({start = '', collectJson = false, maxDepth = 1000, retainRoot = true,
     maxBufferedChunks = Infinity, onObserverError}: ParserOptions = {}) {
@@ -149,6 +150,7 @@ export class JsonParser {
   }
 
   write(chunk: string | Uint8Array): void {
+    if (this.#running) throw new Error('write() re-entered from an observer callback; use destroy() to stop');
     if (this.#state === FAILED) throw this.#failure!;
     this.#started = true;
 
@@ -167,15 +169,26 @@ export class JsonParser {
       this.#buf += text;
     }
 
-    this.#run();
+    this.#running = true;
+    try {
+      this.#run();
+    } finally {
+      this.#running = false;
+    }
   }
 
   end(): void {
+    if (this.#running) throw new Error('end() re-entered from an observer callback; use destroy() to stop');
     if (this.#state === FAILED) throw this.#failure!;
     if (this.#state === END) return this.#complete();
 
-    if (this.#state === NUM) this.#closeNumber();
-    else if (this.#state === LIT) this.#closeLiteral();
+    this.#running = true;
+    try {
+      if (this.#state === NUM) this.#closeNumber();
+      else if (this.#state === LIT) this.#closeLiteral();
+    } finally {
+      this.#running = false;
+    }
 
     if (this.#state !== END) {
       this.#fail(this.#state === SEEK
@@ -238,6 +251,8 @@ export class JsonParser {
 
   #emit(value: any): void {
     this.#dispatch(this.#root, value, 0);
+    // an observer may have called destroy(); do not overwrite the terminal state
+    if (this.#state === FAILED) return;
 
     const frame = this.#stack[this.#stack.length - 1];
     if (!frame) {

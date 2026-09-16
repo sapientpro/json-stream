@@ -98,6 +98,7 @@ RxJS now belongs in your own dependencies, and only if you want operators. `subs
 - The ESM build could not be imported at all (`ERR_MODULE_NOT_FOUND`); only `require` worked.
 - A `chunks()` fragment could end between the halves of a surrogate pair, so a consumer encoding each fragment separately got `U+FFFD`.
 - `Subject.error(undefined)` reached subscribers as `complete()`.
+- `destroy(error)` called from inside an observer callback was ignored: `#emit` overwrote the aborted state, parsing continued to the end and the parser reported success with a complete `root`. Re-entrant `write()` and `end()` now throw instead of corrupting parser state; `destroy()` remains the way to stop early.
 - `JsonStream` re-emitted `'value'` on every write after the root had closed.
 
 ### Performance
