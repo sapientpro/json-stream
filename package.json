@@ -39,7 +39,11 @@
   "scripts": {
     "prepare": "npm run build && npm run test",
     "build": "rm -rf dist && tsc -p tsconfig.json && tsc -p tsconfig-esm.json && node scripts/dist-type.mjs",
-    "test": "jest"
+    "test": "jest",
+    "benchmark": "npm run build && node --expose-gc scripts/benchmark.mjs && bun scripts/benchmark.mjs && node scripts/benchmark-report.mjs",
+    "benchmark:regression": "node --expose-gc scripts/benchmark-regression.mjs && bun scripts/benchmark-regression.mjs",
+    "benchmark:node": "npm run build && node --expose-gc scripts/benchmark.mjs",
+    "benchmark:bun": "npm run build && bun scripts/benchmark.mjs"
   },
   "engines": {
     "node": ">=22"

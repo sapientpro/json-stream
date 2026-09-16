@@ -1,25 +1,28 @@
 import {Writable} from 'node:stream';
-import {Emitted, JsonParser, Path} from "./parser.js";
+import {Emitted, JsonParser, ParserOptions, Path} from "./parser.js";
 import {Observable} from "./subject.js";
 
 export {Any, Rest, JsonParser} from "./parser.js";
 export type {Path, PathSegment, Emitted, ParserOptions} from "./parser.js";
-export type {Observable, Observer, Subscription} from "./subject.js";
+export type {Observable, Observer, Subscription, ObserverErrorHandler} from "./subject.js";
 
 type Callback = (error?: Error | null) => void;
 
 export class JsonStream extends Writable {
   readonly #parser: JsonParser;
 
-  constructor(start: string = '', collectJson: boolean = false) {
-    const parser = new JsonParser({start, collectJson});
+  constructor(start?: string, collectJson?: boolean);
+  constructor(options?: ParserOptions);
+  constructor(start: string | ParserOptions = '', collectJson: boolean = false) {
+    const parser = new JsonParser(typeof start === 'string' ? {start, collectJson} : start);
     super({
       defaultEncoding: 'utf-8',
       decodeStrings: false,
       write: (chunk: Buffer | string, encoding: BufferEncoding, callback: Callback) => {
         try {
-          parser.write(typeof chunk === 'string' ? chunk : new Uint8Array(chunk));
-          if (parser.finished) this.emit('value', parser.root);
+          const wasFinished = parser.finished;
+          parser.write(chunk);
+          if (!wasFinished && parser.finished) this.emit('value', parser.root);
         } catch (e) {
           return callback(e as Error);
         }

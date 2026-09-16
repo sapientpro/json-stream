@@ -1,4 +1,4 @@
-import {firstValue, Observable, Subject, toReadableStream} from "./subject.js";
+import {firstValue, Observable, Subject, SubjectOptions, toReadableStream, validateBufferLimit} from "./subject.js";
 
 export const Any = Symbol('Any');
 export const Rest = Symbol('Rest');
@@ -12,10 +12,12 @@ export type Path =
 
 export type Emitted<T = any> = { path: PathSegment[], value: T };
 
-export type ParserOptions = {
+export type ParserOptions = SubjectOptions & {
   start?: string;
   collectJson?: boolean;
   maxDepth?: number;
+  /** Keep the complete root tree. When false, retain only observed values. */
+  retainRoot?: boolean;
 };
 
 type Node = {
@@ -37,6 +39,8 @@ const QUOTE = 34, BACKSLASH = 92, LBRACE = 123, RBRACE = 125, LBRACKET = 91,
   RBRACKET = 93, COMMA = 44, COLON_CH = 58, MINUS = 45, PLUS = 43, DOT = 46,
   ZERO = 48, NINE = 57, LOWER_E = 101, UPPER_E = 69;
 
+// Use the native scanner only after a short prefix; tiny strings need no match allocation.
+const STRING_END = /["\\]/g;
 const HEX4 = /^[0-9a-fA-F]{4}$/;
 const NUMBER = /^-?\d+(\.\d+)?([eE][+-]?\d+)?$/;
 
@@ -61,6 +65,9 @@ export class JsonParser {
   readonly #start: string;
   readonly #collect: boolean;
   readonly #maxDepth: number;
+  readonly #retainRoot: boolean;
+  readonly #subjectOptions: SubjectOptions;
+  #started = false;
 
   #buf = '';
   #pos = 0;
@@ -70,8 +77,10 @@ export class JsonParser {
   #path: PathSegment[] = [];
   #acc = '';
   #str = '';
-  #sent = 0;
-  #strSink: Subject<string> | null = null;
+  #parts: string[] | null = null;
+  #hasChunks = false;
+  #retainString = true;
+  #strSinks: {subject: Subject<string>, wildcard: boolean}[] = [];
   #keyMode = false;
   #decoder: InstanceType<typeof TextDecoder> | null = null;
   #json = '';
@@ -80,7 +89,11 @@ export class JsonParser {
   #failure: Error | null = null;
   #writable: WritableStream<Uint8Array | string> | null = null;
 
-  constructor({start = '', collectJson = false, maxDepth = 1000}: ParserOptions = {}) {
+  constructor({start = '', collectJson = false, maxDepth = 1000, retainRoot = true,
+    maxBufferedChunks = Infinity, onObserverError}: ParserOptions = {}) {
+    validateBufferLimit(maxBufferedChunks);
+    this.#retainRoot = retainRoot;
+    this.#subjectOptions = {maxBufferedChunks, onObserverError};
     this.#start = start;
     this.#collect = collectJson;
     this.#maxDepth = maxDepth;
@@ -92,7 +105,7 @@ export class JsonParser {
     return this.#json;
   }
 
-  /** The completed root value, or undefined while parsing. */
+  /** The completed root value, or undefined while parsing / with retainRoot disabled. */
   get root(): any {
     return this.#value;
   }
@@ -102,14 +115,18 @@ export class JsonParser {
   }
 
   observe<T = any>(path: Path = []): Observable<Emitted<T>> {
+    if (!this.#retainRoot && this.#started && !this.#done && !this.#failure) {
+      throw new Error('Register value observers before writing when retainRoot is false');
+    }
     const node = this.#node(path);
-    return (node.values ??= this.#seal(new Subject<Emitted>())) as Subject<Emitted<T>>;
+    return (node.values ??= this.#seal(new Subject<Emitted>(this.#subjectOptions))) as Subject<Emitted<T>>;
   }
 
   /** Pieces of the string value at `path`, as they are parsed. */
   chunks(path: Path): Observable<string> {
+    this.#hasChunks = true;
     const node = this.#node(path);
-    return (node.chunks ??= this.#seal(new Subject<string>()));
+    return (node.chunks ??= this.#seal(new Subject<string>(this.#subjectOptions)));
   }
 
   /** Sink for `response.body.pipeTo(parser.writable)`. */
@@ -123,7 +140,7 @@ export class JsonParser {
 
   /** Same as `chunks`, as a web stream. */
   stream(path: Path): ReadableStream<string> {
-    return toReadableStream(this.chunks(path));
+    return toReadableStream(this.chunks(path), this.#subjectOptions.maxBufferedChunks);
   }
 
   async value<T = any>(path: Path = []): Promise<T> {
@@ -133,6 +150,7 @@ export class JsonParser {
 
   write(chunk: string | Uint8Array): void {
     if (this.#state === FAILED) throw this.#failure!;
+    this.#started = true;
 
     const text = typeof chunk === 'string'
       ? chunk
@@ -173,15 +191,12 @@ export class JsonParser {
     else this.#complete();
   }
 
-  #node(path: Path, create: false): Node | null
-  #node(path: Path, create?: true): Node
-  #node(path: Path, create = true): Node | null {
+  #node(path: Path): Node {
     const segments = typeof path === 'string' ? path.split('.') : path;
     let node = this.#root;
     for (const key of segments) {
       if (Object.hasOwn(node.children, key)) node = node.children[key]!;
-      else if (create) node = node.children[key] = newNode();
-      else return null;
+      else node = node.children[key] = newNode();
     }
     return node;
   }
@@ -226,23 +241,23 @@ export class JsonParser {
 
     const frame = this.#stack[this.#stack.length - 1];
     if (!frame) {
-      this.#value = value;
+      if (this.#retainRoot) this.#value = value;
       this.#state = END;
       this.#buf = '';
       this.#pos = 0;
       return;
     }
     if (frame.isArray) {
-      frame.container.push(value);
+      frame.container?.push(value);
       this.#path[this.#path.length - 1] = ++frame.count;
       this.#state = ARR_NEXT;
     } else {
       // __proto__ is an accessor on Object.prototype; assigning would move the
       // prototype instead of creating an own property.
-      if (frame.key === '__proto__') {
+      if (frame.container !== undefined && frame.key === '__proto__') {
         Object.defineProperty(frame.container, frame.key,
           {value, enumerable: true, writable: true, configurable: true});
-      } else {
+      } else if (frame.container !== undefined) {
         frame.container[frame.key] = value;
       }
       this.#path.pop();
@@ -262,11 +277,41 @@ export class JsonParser {
     if (node.children[Rest]) this.#dispatch(node.children[Rest]!, value, path.length);
   }
 
+  #findChunkSinks(node: Node, depth: number, wildcard = false): void {
+    if (depth === this.#path.length) {
+      if (node.chunks && !node.chunks.closed) this.#strSinks.push({subject: node.chunks, wildcard});
+      return;
+    }
+    const key = this.#path[depth]!;
+    if (Object.hasOwn(node.children, key)) this.#findChunkSinks(node.children[key]!, depth + 1, wildcard);
+    if (node.children[Any]) this.#findChunkSinks(node.children[Any]!, depth + 1, true);
+    if (node.children[Rest]) this.#findChunkSinks(node.children[Rest]!, this.#path.length, true);
+  }
+
+  #match(node: Node, depth: number, visit: (node: Node, wildcard: boolean) => void, wildcard = false): void {
+    if (depth === this.#path.length) {
+      visit(node, wildcard);
+      return;
+    }
+    const key = this.#path[depth]!;
+    if (Object.hasOwn(node.children, key)) this.#match(node.children[key]!, depth + 1, visit, wildcard);
+    if (node.children[Any]) this.#match(node.children[Any]!, depth + 1, visit, true);
+    if (node.children[Rest]) visit(node.children[Rest]!, true);
+  }
+
+  #shouldRetain(): boolean {
+    if (this.#retainRoot || this.#stack[this.#stack.length - 1]?.container !== undefined) return true;
+    let observed = false;
+    this.#match(this.#root, 0, node => { if (node.values) observed = true; });
+    return observed;
+  }
+
   #open(isArray: boolean): void {
     if (this.#stack.length >= this.#maxDepth) {
       this.#fail(new SyntaxError('Json nesting deeper than ' + this.#maxDepth));
     }
-    this.#stack.push({container: isArray ? [] : {}, isArray, key: '', count: 0});
+    const container = this.#shouldRetain() ? (isArray ? [] : {}) : undefined;
+    this.#stack.push({container, isArray, key: '', count: 0});
     if (isArray) this.#path.push(0);
     this.#state = isArray ? VALUE : OBJ_FIRST;
   }
@@ -294,19 +339,25 @@ export class JsonParser {
   }
 
   #closeString(): void {
-    this.#flushChunk(true);
-    const text = this.#str;
+    let text: string | undefined;
+    if (this.#strSinks.length) {
+      this.#flushChunk(true);
+      text = this.#retainString ? this.#parts?.join('') ?? '' : undefined;
+      this.#parts = null;
+      for (const {subject, wildcard} of this.#strSinks) {
+        if (!wildcard) subject.complete();
+      }
+      this.#strSinks.length = 0;
+    } else {
+      // Keys and ordinary values need no fragment array or final join.
+      text = this.#retainString ? this.#str : undefined;
+    }
     this.#str = '';
-    this.#sent = 0;
     if (this.#keyMode) {
-      this.#stack[this.#stack.length - 1]!.key = text;
-      this.#path.push(text);
+      this.#stack[this.#stack.length - 1]!.key = text!;
+      this.#path.push(text!);
       this.#state = COLON;
       return;
-    }
-    if (this.#strSink) {
-      this.#strSink.complete();
-      this.#strSink = null;
     }
     this.#emit(text);
   }
@@ -361,7 +412,8 @@ export class JsonParser {
               } else if (code === QUOTE) {
                 ++pos;
                 this.#keyMode = false;
-                this.#strSink = this.#node(this.#path, false)?.chunks ?? null;
+                this.#retainString = this.#retainRoot || this.#shouldRetain();
+                if (this.#hasChunks) this.#findChunkSinks(this.#root, 0);
                 this.#state = STR;
               } else if ((code >= ZERO && code <= NINE) || code === MINUS) {
                 this.#acc = '';
@@ -385,7 +437,7 @@ export class JsonParser {
               }
               ++pos;
               this.#keyMode = true;
-              this.#strSink = null;
+              this.#retainString = true;
               this.#state = STR;
               break;
             case COLON:
@@ -416,10 +468,15 @@ export class JsonParser {
 
         case STR: {
           let end = pos;
-          while (end < len) {
+          const scanEnd = Math.min(len, pos + 32);
+          while (end < scanEnd) {
             const code = buf.charCodeAt(end);
             if (code === QUOTE || code === BACKSLASH) break;
             ++end;
+          }
+          if (end === scanEnd && end < len) {
+            STRING_END.lastIndex = end;
+            end = STRING_END.exec(buf)?.index ?? len;
           }
           if (end > pos) {
             this.#str += buf.slice(pos, end);
@@ -443,6 +500,7 @@ export class JsonParser {
 
         case ESC: {
           if (pos >= len) {
+            this.#flushChunk();
             this.#pos = pos;
             return;
           }
@@ -465,6 +523,7 @@ export class JsonParser {
           this.#acc += buf.slice(pos, pos + take);
           pos += take;
           if (this.#acc.length < 4) {
+            this.#flushChunk();
             this.#pos = pos;
             return;
           }
@@ -519,15 +578,20 @@ export class JsonParser {
   }
 
   #flushChunk(final = false): void {
-    if (!this.#strSink) return;
+    if (!this.#strSinks.length) {
+      if (!this.#retainString) this.#str = '';
+      return;
+    }
     let end = this.#str.length;
-    // a chunk must not end mid surrogate pair: encoded alone the half becomes U+FFFD
-    if (!final && end > this.#sent) {
+    // Retain only a trailing high surrogate until its partner arrives.
+    if (!final && end) {
       const last = this.#str.charCodeAt(end - 1);
       if (last >= 0xD800 && last <= 0xDBFF) --end;
     }
-    if (end <= this.#sent) return;
-    this.#strSink.next(this.#str.slice(this.#sent, end));
-    this.#sent = end;
+    if (!end) return;
+    const chunk = this.#str.slice(0, end);
+    this.#str = this.#str.slice(end);
+    if (this.#retainString) (this.#parts ??= []).push(chunk);
+    for (const {subject} of this.#strSinks) subject.next(chunk);
   }
 }

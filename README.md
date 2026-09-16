@@ -222,7 +222,7 @@ import { JsonStream, Rest } from '@sapientpro/json-stream/node';
 
 const jsonStream = new JsonStream();
 
-// Observe all values in the "data.metrics" and also the final complete array.
+// Observe the descendants of "data.metrics" (not the array itself).
 jsonStream.observe(['data', 'metrics', Rest]).subscribe({
   next: (data) => {
     console.log(`Observed at path ${JSON.stringify(data.path)}:`, data.value);
@@ -312,14 +312,20 @@ RxJS is only needed for operators. `subscribe` and `for await` work without it.
 
 ## API
 
-`new JsonParser({ start?: string, collectJson?: boolean, maxDepth?: number })` - from `@sapientpro/json-stream`
+`new JsonParser(options?: ParserOptions)` - from `@sapientpro/json-stream`
 
-`new JsonStream([start: string], [collectJson: boolean])` - from `@sapientpro/json-stream/node`, a Node `Writable` wrapping the same parser.
+`new JsonStream(options?: ParserOptions)` or `new JsonStream([start: string], [collectJson: boolean])` - from `@sapientpro/json-stream/node`, a Node `Writable` wrapping the same parser.
 - `start` (optional): A substring that marks where to begin parsing. Everything before it is discarded. If the stream ends without containing it, the parser emits a `SyntaxError`.
-- `collectJson` (optional): Keep a copy of everything written, readable through `json`. Off by default, because it retains the whole document in memory.
+- `collectJson` (default `false`): Keep a copy of everything written, readable through `json`.
+- `maxDepth` (default `1000`): Maximum container nesting depth.
+- `retainRoot` (default `true`): Build and retain the complete parsed tree. Set to `false` to build only values requested with `observe` or `value`; register these paths before the first `write`. Registering a container path retains its entire subtree, and registering the root retains the entire document while parsing. `root` stays `undefined` in this mode, and the Node `'value'` event carries `undefined`; use `value(path)` or `observe(path)` for selected results. Creating a value source reserves retention for that path even before subscribing; unsubscribing does not change that decision.
+- `maxBufferedChunks` (default `Infinity`): Positive safe integer limiting queued entries per async iterator or `ReadableStream`. For `observe`, an entry is a complete emitted value; for `chunks` / `stream`, it is a string fragment. Overflow clears that consumer's queue, unsubscribes it and fails it with `RangeError`; parsing and other consumers continue. This limits entry count, not bytes, and does not pause the input.
+- `onObserverError` (optional): Receives exceptions thrown by synchronous `next`, `error` and `complete` callbacks. Other observers still receive notifications. By default, exceptions are rethrown in a microtask, outside parsing; provide a handler to log or otherwise handle them without an uncaught exception. Returned promises from async callbacks are not awaited.
 
 Properties
 - `json: string` - the raw text written to the stream, or `''` unless `collectJson` was set.
+- `root: any` - completed root value (`JsonParser` only), or `undefined` before completion / when `retainRoot` is `false`.
+- `finished: boolean` - whether the root has finished parsing (`JsonParser` only).
 
 Types
 - `Path = string | (string | number | typeof Any)[] | [...(string | number | typeof Any)[], typeof Rest]`
@@ -329,12 +335,16 @@ Types
 Methods
 - `value<T = any>(path?: Path): Promise<T>`
 
-  Returns a promise that resolves with the JSON value located at the given path, and rejects with the `SyntaxError` if parsing fails. Call it before the value is parsed - a path that has already gone by never resolves.
+  Returns a promise that resolves with the JSON value located at the given path, and rejects with the `SyntaxError` if parsing fails. Call it before the value is parsed. A missing or already-passed value rejects when the input ends.
 
 
 - `stream(path: Path): ReadableStream<string>`
 
-  A web stream carrying the JSON string value at that path as it is parsed. The parser cannot pause, so a reader slower than the input queues in memory.
+  A web stream carrying string fragments as they are parsed. Exact paths close after the first matching string. `Any` and `Rest` paths emit fragments from every matching string in document order and close when the input ends; fragments do not include paths or delimiters between strings. Use `observe` if you need value boundaries. A slow reader queues in memory; use `maxBufferedChunks` to bound its queue.
+
+- `chunks(path: Path): Observable<string>`
+
+  `JsonParser` only. The observable form of `stream`, with the same path and completion semantics.
 
 
 - `writable: WritableStream<Uint8Array | string>`
@@ -365,6 +375,40 @@ jsonStream.on('error', (err) => {
     console.error('Error encountered:', err);
 });
 ```
+
+## Memory and performance
+
+By default, incremental parsing still builds the whole object tree, even when `collectJson` is off. For large arrays, select individual items and disable root retention:
+
+```typescript
+const parser = new JsonParser({
+    retainRoot: false,
+    maxBufferedChunks: 256,
+    onObserverError: error => console.error('Observer failed:', error),
+});
+parser.observe(['items', Any]).subscribe(({ value }) => processItem(value));
+await response.body.pipeTo(parser.writable);
+```
+
+Each selected item is complete when emitted. Unselected containers and string values are not accumulated across input chunks. Memory still includes the current input chunk, selected subtrees, object keys, tokens, and consumer queues. A root or broad container subscription can therefore retain substantial data even with `retainRoot: false`. `collectJson: true` independently retains the raw input.
+
+Async iteration subscribes on the first `next()` call; start the consuming loop before feeding input. Breaking out of a loop unsubscribes it. On a source error, queued values are discarded and the iterator rejects on its next read.
+
+Run `npm run benchmark` to build once and run the full matrix sequentially in Node and Bun (both must be installed). Use `npm run benchmark:node` or `npm run benchmark:bun` for just one runtime. The combined command also generates [the comparison report](benchmarks/results/comparison.md); each runtime writes its raw samples summary to `benchmarks/results/node.json` or `bun.json`.
+
+The matrix covers:
+
+- ASCII, Unicode, escapes, integers, decimals/exponents, booleans/null, mixed objects, wide objects, small strings, empty containers, nested arrays and small responses.
+- String and UTF-8 Buffer input, with chunks of 1, 16, 1024 and 65536 units or the whole document. String units are UTF-16 code units; Buffer units are bytes.
+- Exact, `Any` and `Rest` subscriptions, string chunks, `retainRoot` and `collectJson` options.
+- Direct writes, a Web WritableStream writer, the Node Writable wrapper, async iterators and a ReadableStream consumer.
+- String scaling up to 8 MiB and retained memory for 50,000 selected objects with 1 KiB payloads, supplied as independent UTF-8 Buffers.
+
+Run `npm run benchmark:regression` for a HEAD-versus-working-tree comparison on Node and Bun. It compiles temporary snapshots identically (native private fields, matching the ESM target), then runs every workload/version in a fresh process with ten warmups and nine measured samples. It covers 200,000 numbers/short strings, wide objects, object arrays, a large string, and streamed strings at 2/4/8 MiB. Reports are saved as `benchmarks/results/regression-{node,bun}.{json,md}`. No checkout or tracked source is changed. The HEAD streamed-string cases can take a few minutes because they exercise the old quadratic behavior.
+
+Each timing scenario has two warmups and five measured samples; reports include median, min/max and UTF-8 MiB/s. Small responses use batches of 1000 parses per sample. Fixture generation, chunk slicing and correctness assertions are outside timing; parser creation, subscription setup and UTF-8 decoding are included. Results are checked against `JSON.parse` or expected counts/checksums. `JSON.parse` itself is a whole-document baseline over an already-decoded string, not an equivalent streaming API. Async scenarios measure queueing/draining without network or artificial consumer delays.
+
+Memory results are median retained heap deltas after forced GC over three runs, not peak RSS. Node uses `--expose-gc` and Bun uses `Bun.gc(true)`. Heap accounting differs between engines, and tiny or negative deltas can reflect GC noise. No machine-dependent performance threshold is enforced.
 
 ## Contributing
 
