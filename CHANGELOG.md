@@ -101,15 +101,21 @@ RxJS now belongs in your own dependencies, and only if you want operators. `subs
 - `Subject.error(undefined)` reached subscribers as `complete()`.
 - `destroy(error)` called from inside an observer callback was ignored: `#emit` overwrote the aborted state, parsing continued to the end and the parser reported success with a complete `root`. Re-entrant `write()` and `end()` now throw instead of corrupting parser state; `destroy()` remains the way to stop early.
 - `JsonStream` re-emitted `'value'` on every write after the root had closed.
+- A retained string value kept the entire write buffer alive: V8 makes a slice of 13 characters or more a `SlicedString` pointing at its parent, so one short `id` held on to megabytes of surrounding JSON.
 
 ### Performance
 
-Measured against 1.1.4 on the same payloads, 64 KB chunks, median of five runs.
+Measured against 1.1.4 through the same `JsonStream` API, same payloads, 64 KB
+chunks, best of five runs on Node 26.8.2 and Bun 1.4.2 (Apple silicon).
 
 | | Node 1.1.4 | Node 2.0.0 | Bun 1.1.4 | Bun 2.0.0 |
 |---|---|---|---|---|
-| wide object | 13.2 MB/s | 102 MB/s | 12.2 MB/s | 130 MB/s |
-| array of objects | 12.6 MB/s | 114 MB/s | 10.8 MB/s | 108 MB/s |
-| long strings | 8.6 MB/s | 909 MB/s | 21.1 MB/s | 2370 MB/s |
+| wide object (1.1 MB) | 10.9 MB/s | 88.8 MB/s | 10.7 MB/s | 128.5 MB/s |
+| array of objects (2.5 MB) | 11.2 MB/s | 109.4 MB/s | 9.9 MB/s | 93.7 MB/s |
+| two 2 MB strings | 6.9 MB/s | 28140 MB/s | 20.7 MB/s | 9190 MB/s |
+
+The string row is scan-bound: a long string is located with `indexOf` and built
+without touching each character, so its throughput depends on the payload far
+more than the other two.
 
 Parsing no longer suspends per value; it runs to the end of each `write()` over an explicit stack.
