@@ -33,7 +33,8 @@
       "types": "./dist/esm/node.d.ts",
       "import": "./dist/esm/node.js",
       "require": "./dist/cjs/node.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "scripts": {
     "prepare": "npm run build && npm run test",
