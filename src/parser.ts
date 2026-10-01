@@ -42,7 +42,6 @@ const QUOTE = 34, BACKSLASH = 92, LBRACE = 123, RBRACE = 125, LBRACKET = 91,
 // Use the native scanner only after a short prefix; tiny strings need no match allocation.
 const STRING_END = /["\\]/g;
 const HEX4 = /^[0-9a-fA-F]{4}$/;
-const NUMBER = /^-?\d+(\.\d+)?([eE][+-]?\d+)?$/;
 
 const newNode = (): Node => ({children: Object.create(null)});
 
@@ -78,6 +77,9 @@ export class JsonParser {
   #stack: Frame[] = [];
   #path: PathSegment[] = [];
   #acc = '';
+  // Numeric phases: required integer, integer, required fraction, fraction,
+  // optional exponent sign, required exponent, exponent, malformed.
+  #numPhase = 0;
   #str = '';
   #parts: string[] | null = null;
   #hasChunks = false;
@@ -344,7 +346,9 @@ export class JsonParser {
   #closeNumber(): void {
     const text = this.#acc;
     this.#acc = '';
-    if (!NUMBER.test(text)) this.#fail(this.#syntaxError());
+    const phase = this.#numPhase;
+    this.#numPhase = 0;
+    if (phase !== 1 && phase !== 3 && phase !== 6) this.#fail(this.#syntaxError());
     this.#emit(Number(text));
   }
 
@@ -435,8 +439,62 @@ export class JsonParser {
                 if (this.#hasChunks) this.#findChunkSinks(this.#root, 0);
                 this.#state = STR;
               } else if ((code >= ZERO && code <= NINE) || code === MINUS) {
-                this.#acc = '';
-                this.#state = NUM;
+                const start = pos, negative = code === MINUS;
+                let finish = pos + (negative ? 1 : 0), digits = 0, integer = 0;
+                while (finish < len && digits < 8) {
+                  const digit = buf.charCodeAt(finish);
+                  if (digit < ZERO || digit > NINE) break;
+                  integer = integer * 10 + digit - ZERO;
+                  ++finish; ++digits;
+                }
+                let next = buf.charCodeAt(finish);
+                if (digits && finish < len && (next === COMMA || next === RBRACE || next === RBRACKET || isSpace(next))) {
+                  pos = finish; this.#pos = pos; this.#acc = '';
+                  this.#emit(negative ? -integer : integer);
+                  break;
+                }
+                // Grammar transitions occur between runs, never on each digit.
+                while (finish < len) {
+                  const digit = buf.charCodeAt(finish);
+                  if (digit < ZERO || digit > NINE) break;
+                  ++finish; ++digits;
+                }
+                let valid = digits > 0;
+                let phase = valid ? 1 : 0;
+                next = buf.charCodeAt(finish);
+                if (valid && next === DOT) {
+                  const fractionStart = ++finish;
+                  phase = 2;
+                  while (finish < len) {
+                    const digit = buf.charCodeAt(finish);
+                    if (digit < ZERO || digit > NINE) break;
+                    ++finish;
+                  }
+                  valid = finish > fractionStart;
+                  if (valid) phase = 3;
+                  next = buf.charCodeAt(finish);
+                }
+                if (valid && (next === LOWER_E || next === UPPER_E)) {
+                  ++finish;
+                  phase = 4;
+                  const sign = buf.charCodeAt(finish);
+                  if (sign === PLUS || sign === MINUS) { ++finish; phase = 5; }
+                  const exponentStart = finish;
+                  while (finish < len) {
+                    const digit = buf.charCodeAt(finish);
+                    if (digit < ZERO || digit > NINE) break;
+                    ++finish;
+                  }
+                  valid = finish > exponentStart;
+                  if (valid) phase = 6;
+                  next = buf.charCodeAt(finish);
+                }
+                if (valid && finish < len && (next === COMMA || next === RBRACE || next === RBRACKET || isSpace(next))) {
+                  pos = finish; this.#pos = pos; this.#acc = '';
+                  this.#emit(Number(buf.slice(start, finish)));
+                  break;
+                }
+                this.#acc = buf.slice(start, finish); this.#numPhase = phase; pos = finish; this.#state = NUM;
               } else {
                 this.#acc = '';
                 this.#state = LIT;
@@ -557,22 +615,33 @@ export class JsonParser {
         }
 
         case NUM: {
-          let end = pos;
+          let end = pos, phase = this.#numPhase;
           while (end < len) {
             const code = buf.charCodeAt(end);
-            if ((code >= ZERO && code <= NINE) || code === MINUS || code === PLUS
-              || code === DOT || code === LOWER_E || code === UPPER_E) ++end;
+            if (phase !== 7 && code >= ZERO && code <= NINE) {
+              // One grammar transition per digit run, not per digit.
+              if (phase === 0) phase = 1;
+              else if (phase === 2) phase = 3;
+              else if (phase === 4 || phase === 5) phase = 6;
+              do {
+                ++end;
+                if (end >= len) break;
+                const digit = buf.charCodeAt(end);
+                if (digit < ZERO || digit > NINE) break;
+              } while (true);
+              continue;
+            }
+            if (phase === 1 && code === DOT) phase = 2;
+            else if ((phase === 1 || phase === 3) && (code === LOWER_E || code === UPPER_E)) phase = 4;
+            else if (phase === 4 && (code === PLUS || code === MINUS)) phase = 5;
+            else if (code === MINUS || code === PLUS || code === DOT || code === LOWER_E || code === UPPER_E || (code >= ZERO && code <= NINE)) phase = 7;
             else break;
+            ++end;
           }
-          if (end > pos) {
-            this.#acc += buf.slice(pos, end);
-            pos = end;
-          }
-          if (pos >= len) {
-            this.#pos = pos;
-            return;
-          }
+          this.#numPhase = phase;
+          if (end > pos) { this.#acc += buf.slice(pos, end); pos = end; }
           this.#pos = pos;
+          if (pos >= len) return;
           this.#closeNumber();
           break;
         }
