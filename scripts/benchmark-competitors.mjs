@@ -110,7 +110,10 @@ async function adapter(id, mode, bytes, capture = false) {
       for (const chunk of chunks) each(parser(decoder ? decoder.decode(chunk, {stream: true}) : chunk), consume);
       if (decoder) { const tail = decoder.decode(); if (tail) each(parser(tail), consume); }
       each(parser(defs.none), consume);
-      return {value: asm?.current, count, sum, length, decoded: capture ? parts.join('') : undefined, holder: asm};
+      // Keep the whole pipeline alive during retained-heap sampling, including
+      // selective modes that have no assembler.
+      return {value: asm?.current, count, sum, length, decoded: capture ? parts.join('') : undefined,
+        holder: {parser, asm, select, array, decoder}};
     };
   }
   if (id === 'json-web-streams') {
