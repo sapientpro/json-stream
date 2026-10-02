@@ -20,7 +20,7 @@
     "types": ["node"],
     "module": "commonjs",
     "outDir": "dist/cjs",
-    "target": "es2020"
+    "target": "es2022"
   },
   "exclude": ["node_modules", "dist"],
   "include": ["src"]
