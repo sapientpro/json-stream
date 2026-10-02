@@ -553,7 +553,7 @@ export class JsonParser {
             end = STRING_END.exec(buf)?.index ?? len;
           }
           if (end > pos) {
-            this.#str += buf.slice(pos, end);
+            if (this.#retainString || this.#strSinks.length) this.#str += buf.slice(pos, end);
             pos = end;
           }
           if (pos >= len) {
@@ -585,8 +585,10 @@ export class JsonParser {
             this.#state = UESC;
             break;
           }
-          this.#str += ch === 'n' ? '\n' : ch === 't' ? '\t' : ch === 'r' ? '\r'
-            : ch === 'b' ? '\b' : ch === 'f' ? '\f' : ch;
+          if (this.#retainString || this.#strSinks.length) {
+            this.#str += ch === 'n' ? '\n' : ch === 't' ? '\t' : ch === 'r' ? '\r'
+              : ch === 'b' ? '\b' : ch === 'f' ? '\f' : ch;
+          }
           ++pos;
           this.#state = STR;
           break;
@@ -605,7 +607,9 @@ export class JsonParser {
             this.#pos = pos;
             this.#fail(this.#syntaxError());
           }
-          this.#str += String.fromCharCode(parseInt(this.#acc, 16));
+          if (this.#retainString || this.#strSinks.length) {
+            this.#str += String.fromCharCode(parseInt(this.#acc, 16));
+          }
           this.#acc = '';
           this.#state = STR;
           break;
