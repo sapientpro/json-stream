@@ -43,6 +43,19 @@ const QUOTE = 34, BACKSLASH = 92, LBRACE = 123, RBRACE = 125, LBRACKET = 91,
 const STRING_END = /["\\]/g;
 const HEX4 = /^[0-9a-fA-F]{4}$/;
 
+const hexDigit = (code: number): number => {
+  if (code >= 48 && code <= 57) return code - 48;
+  if (code >= 65 && code <= 70) return code - 55;
+  if (code >= 97 && code <= 102) return code - 87;
+  return -1;
+};
+
+const readHex4 = (buf: string, pos: number): number => {
+  const a = hexDigit(buf.charCodeAt(pos)), b = hexDigit(buf.charCodeAt(pos + 1));
+  const c = hexDigit(buf.charCodeAt(pos + 2)), d = hexDigit(buf.charCodeAt(pos + 3));
+  return (a | b | c | d) < 0 ? -1 : (a << 12) | (b << 8) | (c << 4) | d;
+};
+
 const newNode = (): Node => ({children: Object.create(null)});
 
 const childrenOf = (node: Node): Node[] => {
@@ -586,6 +599,17 @@ export class JsonParser {
           }
           const ch = buf[pos]!;
           if (ch === 'u') {
+            if (pos + 5 <= len) {
+              const value = readHex4(buf, pos + 1);
+              pos += 5;
+              if (value < 0) {
+                this.#pos = pos;
+                this.#fail(this.#syntaxError());
+              }
+              if (this.#retainString || this.#strSinks.length) this.#str += String.fromCharCode(value);
+              this.#state = STR;
+              break;
+            }
             ++pos;
             this.#acc = '';
             this.#state = UESC;
