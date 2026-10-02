@@ -71,7 +71,14 @@ export class Subject<T> implements Observable<T> {
 
   next(value: T): void {
     if (this.#closed) return;
-    for (const observer of this.#observers) this.#notify(() => observer.next?.(value));
+    for (const observer of this.#observers) {
+      try {
+        observer.next?.(value);
+      } catch (error) {
+        try { this.#onObserverError(error); }
+        catch (reporterError) { reportUnhandledError(reporterError); }
+      }
+    }
   }
 
   error(error: any): void {
