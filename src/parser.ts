@@ -426,6 +426,47 @@ export class JsonParser {
     this.#emit(text);
   }
 
+  #scanString(buf: string, pos: number, len: number): number {
+    let str = this.#str;
+    const retain = this.#retainString || this.#strSinks.length > 0;
+    for (;;) {
+      const end = scanStringEnd(buf, pos, len);
+      if (retain && end > pos) str += buf.slice(pos, end);
+      pos = end;
+      if (pos >= len) {
+        this.#str = str; this.#flushChunk(); this.#pos = pos;
+        return pos;
+      }
+      if (buf.charCodeAt(pos) === QUOTE) {
+        ++pos; this.#pos = pos; this.#str = str; this.#closeString();
+        return pos;
+      }
+      ++pos; this.#state = ESC;
+      if (pos >= len) {
+        this.#str = str; this.#flushChunk(); this.#pos = pos;
+        return pos;
+      }
+      const ch = buf[pos]!;
+      if (ch === 'u') {
+        if (pos + 5 > len) {
+          ++pos; this.#acc = ''; this.#state = UESC; this.#str = str; if (pos >= len) this.#flushChunk(); this.#pos = pos;
+          return pos;
+        }
+        const value = readHex4(buf, pos + 1);
+        pos += 5;
+        if (value < 0) {
+          this.#str = str; this.#pos = pos; this.#fail(this.#syntaxError());
+        }
+        if (retain) str += String.fromCharCode(value);
+      } else {
+        if (retain) str += ch === 'n' ? '\n' : ch === 't' ? '\t' : ch === 'r' ? '\r'
+          : ch === 'b' ? '\b' : ch === 'f' ? '\f' : ch;
+        ++pos;
+      }
+      this.#state = STR;
+    }
+  }
+
   #run(): void {
     const buf = this.#buf;
     const len = buf.length;
@@ -607,8 +648,8 @@ export class JsonParser {
             this.#pos = pos;
             this.#closeString();
           } else {
-            ++pos;
-            this.#state = ESC;
+            pos = this.#scanString(buf, pos, len);
+            if (pos >= len) return;
           }
           break;
         }
