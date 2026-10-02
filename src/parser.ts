@@ -310,23 +310,18 @@ export class JsonParser {
     if (node.children[Rest]) this.#findChunkSinks(node.children[Rest]!, this.#path.length, true);
   }
 
-  #match(node: Node, depth: number, visit: (node: Node, wildcard: boolean) => void, wildcard = false): void {
-    if (depth === this.#path.length) {
-      visit(node, wildcard);
-      return;
-    }
-    const key = this.#path[depth]!;
-    const exact = node.children[key];
-    if (exact) this.#match(exact, depth + 1, visit, wildcard);
-    if (node.children[Any]) this.#match(node.children[Any]!, depth + 1, visit, true);
-    if (node.children[Rest]) visit(node.children[Rest]!, true);
+  #hasValueSink(node: Node, depth: number): boolean {
+    if (depth === this.#path.length) return !!node.values;
+    const exact = node.children[this.#path[depth]!];
+    if (exact && this.#hasValueSink(exact, depth + 1)) return true;
+    const any = node.children[Any];
+    if (any && this.#hasValueSink(any, depth + 1)) return true;
+    return !!node.children[Rest]?.values;
   }
 
   #shouldRetain(): boolean {
     if (this.#retainRoot || this.#stack[this.#stack.length - 1]?.container !== undefined) return true;
-    let observed = false;
-    this.#match(this.#root, 0, node => { if (node.values) observed = true; });
-    return observed;
+    return this.#hasValueSink(this.#root, 0);
   }
 
   #open(isArray: boolean): void {
