@@ -94,7 +94,8 @@ const scanStringEnd = (buf: string, pos: number, len: number): number => {
   }
   if (end < len) {
     STRING_END.lastIndex = end;
-    return STRING_END.exec(buf)?.index ?? len;
+    // Each match is one code unit, so lastIndex points just past the delimiter.
+    return STRING_END.test(buf) ? STRING_END.lastIndex - 1 : len;
   }
   return end;
 };
