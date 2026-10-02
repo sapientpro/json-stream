@@ -1,14 +1,14 @@
 /// <reference types="jest" />
 import {JsonParser} from '../src/parser';
 
-test('a split immediately after u delivers the preceding string fragment', () => {
+test.each(['', '0', '01', '012'])('partial Unicode escape %s delivers the preceding fragment synchronously', hex => {
   const parser = new JsonParser({retainRoot: false}), pieces: string[] = [];
   parser.chunks('text').subscribe(piece => pieces.push(piece));
-  parser.write('{"text":"prefix\\u');
+  parser.write('{"text":"prefix\\u' + hex);
   expect(pieces).toEqual(['prefix']);
-  parser.write('D83D\\uDE00tail"}');
+  parser.write('0123'.slice(hex.length) + 'tail"}');
   parser.end();
-  expect(pieces).toEqual(['prefix', '😀tail']);
+  expect(pieces).toEqual(['prefix', '\u0123tail']);
 });
 
 test('mixed escape spans preserve roots and fragments at every byte split', () => {

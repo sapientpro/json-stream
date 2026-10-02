@@ -449,6 +449,7 @@ export class JsonParser {
       const ch = buf[pos]!;
       if (ch === 'u') {
         if (pos + 5 > len) {
+          // The caller resumes UESC in this same write when hex digits remain.
           ++pos; this.#acc = ''; this.#state = UESC; this.#str = str; if (pos >= len) this.#flushChunk(); this.#pos = pos;
           return pos;
         }
