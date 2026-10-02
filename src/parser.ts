@@ -56,6 +56,21 @@ const readHex4 = (buf: string, pos: number): number => {
   return (a | b | c | d) < 0 ? -1 : (a << 12) | (b << 8) | (c << 4) | d;
 };
 
+// Returns 1/2/3 for true/false/null, or 0 for the incremental path.
+const readLiteral = (buf: string, pos: number, len: number): number => {
+  const first = buf.charCodeAt(pos);
+  let literal = 0;
+  if (first === 116 && buf.charCodeAt(pos + 1) === 114 && buf.charCodeAt(pos + 2) === 117 && buf.charCodeAt(pos + 3) === 101) literal = 1;
+  else if (first === 102 && buf.charCodeAt(pos + 1) === 97 && buf.charCodeAt(pos + 2) === 108 && buf.charCodeAt(pos + 3) === 115 && buf.charCodeAt(pos + 4) === 101) literal = 2;
+  else if (first === 110 && buf.charCodeAt(pos + 1) === 117 && buf.charCodeAt(pos + 2) === 108 && buf.charCodeAt(pos + 3) === 108) literal = 3;
+  if (!literal) return 0;
+  const end = pos + (literal === 2 ? 5 : 4);
+  // A token at the chunk boundary must wait for continuation or end().
+  if (end >= len) return 0;
+  const next = buf.charCodeAt(end);
+  return next >= 97 && next <= 122 ? 0 : literal;
+};
+
 const newNode = (): Node => ({children: Object.create(null)});
 
 const childrenOf = (node: Node): Node[] => {
@@ -523,7 +538,14 @@ export class JsonParser {
                 this.#acc = buf.slice(start, finish); this.#numPhase = phase; pos = finish; this.#state = NUM;
               } else {
                 this.#acc = '';
-                this.#state = LIT;
+                const literal = pos + 4 < len ? readLiteral(buf, pos, len) : 0;
+                if (literal) {
+                  pos += literal === 2 ? 5 : 4;
+                  this.#pos = pos;
+                  this.#emit(literal === 1 ? true : literal === 2 ? false : null);
+                } else {
+                  this.#state = LIT;
+                }
               }
               break;
             case OBJ_FIRST:
