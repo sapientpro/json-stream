@@ -213,8 +213,7 @@ export class JsonParser {
     const segments = typeof path === 'string' ? path.split('.') : path;
     let node = this.#root;
     for (const key of segments) {
-      if (Object.hasOwn(node.children, key)) node = node.children[key]!;
-      else node = node.children[key] = newNode();
+      node = node.children[key] ??= newNode();
     }
     return node;
   }
@@ -293,7 +292,8 @@ export class JsonParser {
       return;
     }
     const key = path[depth]!;
-    if (Object.hasOwn(node.children, key)) this.#dispatch(node.children[key]!, value, depth + 1);
+    const exact = node.children[key];
+    if (exact) this.#dispatch(exact, value, depth + 1);
     if (node.children[Any]) this.#dispatch(node.children[Any]!, value, depth + 1);
     if (node.children[Rest]) this.#dispatch(node.children[Rest]!, value, path.length);
   }
@@ -304,7 +304,8 @@ export class JsonParser {
       return;
     }
     const key = this.#path[depth]!;
-    if (Object.hasOwn(node.children, key)) this.#findChunkSinks(node.children[key]!, depth + 1, wildcard);
+    const exact = node.children[key];
+    if (exact) this.#findChunkSinks(exact, depth + 1, wildcard);
     if (node.children[Any]) this.#findChunkSinks(node.children[Any]!, depth + 1, true);
     if (node.children[Rest]) this.#findChunkSinks(node.children[Rest]!, this.#path.length, true);
   }
@@ -315,7 +316,8 @@ export class JsonParser {
       return;
     }
     const key = this.#path[depth]!;
-    if (Object.hasOwn(node.children, key)) this.#match(node.children[key]!, depth + 1, visit, wildcard);
+    const exact = node.children[key];
+    if (exact) this.#match(exact, depth + 1, visit, wildcard);
     if (node.children[Any]) this.#match(node.children[Any]!, depth + 1, visit, true);
     if (node.children[Rest]) visit(node.children[Rest]!, true);
   }
