@@ -55,6 +55,22 @@ const childrenOf = (node: Node): Node[] => {
 const isSpace = (code: number) =>
   code === 32 || code === 10 || code === 13 || code === 9;
 
+// Keep the string scanner outside the state-machine loop.
+const scanStringEnd = (buf: string, pos: number, len: number): number => {
+  let end = pos;
+  const scanEnd = Math.min(len, pos + 32);
+  while (end < scanEnd) {
+    const code = buf.charCodeAt(end);
+    if (code === QUOTE || code === BACKSLASH) return end;
+    ++end;
+  }
+  if (end < len) {
+    STRING_END.lastIndex = end;
+    return STRING_END.exec(buf)?.index ?? len;
+  }
+  return end;
+};
+
 /**
  * Incremental JSON parser. Synchronous and transport free: feed it text or
  * bytes, it runs to the end of what it has and returns.
@@ -541,17 +557,7 @@ export class JsonParser {
         }
 
         case STR: {
-          let end = pos;
-          const scanEnd = Math.min(len, pos + 32);
-          while (end < scanEnd) {
-            const code = buf.charCodeAt(end);
-            if (code === QUOTE || code === BACKSLASH) break;
-            ++end;
-          }
-          if (end === scanEnd && end < len) {
-            STRING_END.lastIndex = end;
-            end = STRING_END.exec(buf)?.index ?? len;
-          }
+          const end = scanStringEnd(buf, pos, len);
           if (end > pos) {
             if (this.#retainString || this.#strSinks.length) this.#str += buf.slice(pos, end);
             pos = end;
