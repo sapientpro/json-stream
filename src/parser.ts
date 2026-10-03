@@ -1,3 +1,24 @@
+// Reuse single Unicode units on Bun, where repeated conversion and concatenation
+// are expensive. Other runtimes retain the native conversion path.
+const unicodeUnit = (() => {
+  if (typeof (globalThis as {Bun?: unknown}).Bun === 'undefined') return String.fromCharCode;
+  const codes = new Int32Array(64).fill(-1);
+  const strings: string[] = new Array(64).fill('');
+  let misses = 0, cooldown = 0;
+  return (value: number): string => {
+    if (value < 256) return String.fromCharCode(value);
+    if (cooldown > 0) { --cooldown; return String.fromCharCode(value); }
+    const slot = value & 63;
+    if (codes[slot] === value) { misses = 0; return strings[slot]!; }
+    const text = String.fromCharCode(value);
+    codes[slot] = value;
+    strings[slot] = text;
+    // Avoid repeated lookup/update costs for diverse or colliding characters.
+    if (++misses === 16) { misses = 0; cooldown = 512; }
+    return text;
+  };
+})();
+
 import {firstValue, Observable, Subject, SubjectOptions, toReadableStream, validateBufferLimit} from "./subject.js";
 
 export const Any = Symbol('Any');
@@ -629,7 +650,7 @@ export class JsonParser {
                 this.#pos = pos;
                 this.#fail(this.#syntaxError());
               }
-              if (this.#retainString || this.#strSinks.length) this.#str += String.fromCharCode(value);
+              if (this.#retainString || this.#strSinks.length) this.#str += unicodeUnit(value);
               this.#state = STR;
               break;
             }
@@ -661,7 +682,7 @@ export class JsonParser {
             this.#fail(this.#syntaxError());
           }
           if (this.#retainString || this.#strSinks.length) {
-            this.#str += String.fromCharCode(parseInt(this.#acc, 16));
+            this.#str += unicodeUnit(parseInt(this.#acc, 16));
           }
           this.#acc = '';
           this.#state = STR;
