@@ -44,11 +44,9 @@ export type ParserOptions = SubjectOptions & {
 type Node = {
   values?: Subject<Emitted>,
   chunks?: Subject<string>,
-  children: {
-    [key: string]: Node,
-    [Any]?: Node,
-    [Rest]?: Node
-  },
+  children: {[key: string]: Node},
+  any: Node | undefined,
+  rest: Node | undefined,
 }
 
 type Frame = { container: any, isArray: boolean, key: string, count: number };
@@ -92,12 +90,12 @@ const readLiteral = (buf: string, pos: number, len: number): number => {
   return next >= 97 && next <= 122 ? 0 : literal;
 };
 
-const newNode = (): Node => ({children: Object.create(null)});
+const newNode = (): Node => ({children: Object.create(null), any: undefined, rest: undefined});
 
 const childrenOf = (node: Node): Node[] => {
   const out = Object.values(node.children);
-  if (node.children[Any]) out.push(node.children[Any]!);
-  if (node.children[Rest]) out.push(node.children[Rest]!);
+  if (node.any) out.push(node.any!);
+  if (node.rest) out.push(node.rest!);
   return out;
 }
 
@@ -279,7 +277,9 @@ export class JsonParser {
     const segments = typeof path === 'string' ? path.split('.') : path;
     let node = this.#root;
     for (const key of segments) {
-      node = node.children[key] ??= newNode();
+      node = key === Any ? node.any ??= newNode()
+        : key === Rest ? node.rest ??= newNode()
+        : node.children[key] ??= newNode();
     }
     return node;
   }
@@ -360,8 +360,8 @@ export class JsonParser {
     const key = path[depth]!;
     const exact = node.children[key];
     if (exact) this.#dispatch(exact, value, depth + 1);
-    if (node.children[Any]) this.#dispatch(node.children[Any]!, value, depth + 1);
-    if (node.children[Rest]) this.#dispatch(node.children[Rest]!, value, path.length);
+    if (node.any) this.#dispatch(node.any!, value, depth + 1);
+    if (node.rest) this.#dispatch(node.rest!, value, path.length);
   }
 
   #findChunkSinks(node: Node, depth: number, wildcard = false): void {
@@ -372,17 +372,17 @@ export class JsonParser {
     const key = this.#path[depth]!;
     const exact = node.children[key];
     if (exact) this.#findChunkSinks(exact, depth + 1, wildcard);
-    if (node.children[Any]) this.#findChunkSinks(node.children[Any]!, depth + 1, true);
-    if (node.children[Rest]) this.#findChunkSinks(node.children[Rest]!, this.#path.length, true);
+    if (node.any) this.#findChunkSinks(node.any!, depth + 1, true);
+    if (node.rest) this.#findChunkSinks(node.rest!, this.#path.length, true);
   }
 
   #hasValueSink(node: Node, depth: number): boolean {
     if (depth === this.#path.length) return !!node.values;
     const exact = node.children[this.#path[depth]!];
     if (exact && this.#hasValueSink(exact, depth + 1)) return true;
-    const any = node.children[Any];
+    const any = node.any;
     if (any && this.#hasValueSink(any, depth + 1)) return true;
-    return !!node.children[Rest]?.values;
+    return !!node.rest?.values;
   }
 
   #shouldRetain(): boolean {
