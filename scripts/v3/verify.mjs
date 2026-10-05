@@ -26,6 +26,14 @@ for(const [Parser,oracle,fixtures] of [
   const root={skip:{deep:[{unused:'😀'.repeat(4)}]},items:Array.from({length:1+random(8)},(_,id)=>({id,text:'€😀'+random(1000),n:random(10)/7}))};
   const text=Parser===JsonParser?JSON.stringify(root):JSON5.stringify(root),bytes=new TextEncoder().encode(text);
   for(const size of [1,2,3,7,64,1024]) {
+   // Preserve closed sibling containers and prior roots across depth/type reuse and reset.
+   const retained=new Parser();
+   for(let at=0;at<bytes.length;at+=size)retained.write(bytes.subarray(at,at+size));
+   const priorRoot=retained.root;deepStrictEqual(priorRoot,root);retained.reset();
+   const next={mixed:[[{id:i}],{nested:[{},[],null]},[false,{last:i}]],empty:{}};
+   const nextBytes=new TextEncoder().encode(JSON.stringify(next));
+   for(let at=0;at<nextBytes.length;at+=size)retained.write(nextBytes.subarray(at,at+size));
+   retained.end();deepStrictEqual(retained.root,next);deepStrictEqual(priorRoot,root);++checks;
    const p=new Parser({retainRoot:false}),values=[],paths=[],fragments=[],ends=[];
    p.onValue(['items',Any],(v,path)=>{values.push(v);paths.push(path);});
    p.onString(['items',Any,'text'],{next:(v,path)=>fragments.push([v,path]),end:path=>ends.push(path)});

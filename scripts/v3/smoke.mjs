@@ -40,3 +40,11 @@ const escapeStress={s:'x'.repeat(96)+'\\\n\t"😀'.repeat(200)};
 const stressParser=new JsonParser();let stressText='';stressParser.onString(['s'],v=>stressText+=v);
 const stressInput=JSON.stringify(escapeStress);for(let pos=0;pos<stressInput.length;pos+=512)stressParser.write(stressInput.slice(pos,pos+512));stressParser.end();deepStrictEqual(stressParser.root,escapeStress);strictEqual(stressText,escapeStress.s);
 console.log('PASS: complete escape runs and streaming fragments');
+
+// Alternating sibling container types must preserve previously emitted roots.
+for(const Parser of [JsonParser,Json5Parser]) {
+ const tree={items:[{a:[1,{b:2}]},[],{c:{d:[]}},[{},null,false]],last:{}};
+ const reuse=new Parser();reuse.write(JSON.stringify(tree));const first=reuse.root;reuse.reset();
+ reuse.write('[{},[1,2],{"next":true},[]]');reuse.end();
+ deepStrictEqual(first,tree);deepStrictEqual(reuse.root,[{},[1,2],{next:true},[]]);
+}
