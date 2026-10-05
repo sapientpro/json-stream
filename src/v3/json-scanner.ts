@@ -85,7 +85,7 @@ export class JsonScanner extends ParserCore {
         this._numPhase = 0;
         if (!JSON_NUMBER.test(text))
             this._fail(this._syntaxError());
-        this._emit(Number(text));
+        if (IS_V8) this._emitNumber(text, 0, text.length); else this._emit(Number(text));
     }
     protected _closeLiteral(): void {
         const text = this._acc;
@@ -223,7 +223,7 @@ export class JsonScanner extends ParserCore {
                                     pos = finish;
                                     this._pos = pos;
                                     this._acc = '';
-                                    this._emit(Number(buf.slice(start, finish)));
+                                    if (IS_V8) this._emitNumber(buf, start, finish); else this._emit(Number(buf.slice(start, finish)));
                                     break;
                                 }
                                 this._acc = buf.slice(start, finish);
