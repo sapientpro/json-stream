@@ -56,6 +56,19 @@ const summary=({root,count,sum,length,pathSum,lastPath})=>({root,count,sum,lengt
 const expected=summary(probe);
 for(let i=0;i<job.warmups;i++)run();
 const samples=[];
-for(let sample=0;sample<7;sample++){if(typeof Bun!=='undefined')Bun.gc(true);else globalThis.gc?.();const start=performance.now();let result;for(let i=0;i<job.iterations;i++)result=run();samples.push((performance.now()-start)/job.iterations);deepStrictEqual(summary(result),expected);}
+// Wall time remains the throughput metric. CPU time only exposes scheduling noise;
+// runtime helper threads can make the ratio exceed one, so it is not a correction.
+const cpuSamples=[];
+let readCpu;
+try { if(typeof process.cpuUsage==='function'){process.cpuUsage();readCpu=()=>process.cpuUsage();} } catch {}
+for(let sample=0;sample<7;sample++){
+ if(typeof Bun!=='undefined')Bun.gc(true);else globalThis.gc?.();
+ const cpuStart=readCpu?.(),start=performance.now();let result;
+ for(let i=0;i<job.iterations;i++)result=run();
+ const elapsed=performance.now()-start,cpuEnd=readCpu?.();
+ samples.push(elapsed/job.iterations);
+ if(cpuStart&&cpuEnd){const cpuMs=(cpuEnd.user-cpuStart.user+cpuEnd.system-cpuStart.system)/1000;cpuSamples.push({cpuMsPerParse:cpuMs/job.iterations,cpuToWallRatio:cpuMs/elapsed});}
+ deepStrictEqual(summary(result),expected);
+}
 const medianMs=[...samples].sort((a,b)=>a-b)[3];
-console.log(JSON.stringify({...job,bytes:bytes.length,medianMs,mbps:bytes.length/medianMs/1000,samplesMs:samples}));
+console.log(JSON.stringify({...job,bytes:bytes.length,medianMs,mbps:bytes.length/medianMs/1000,samplesMs:samples,cpuSamples:readCpu?cpuSamples:null}));

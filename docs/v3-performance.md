@@ -251,3 +251,18 @@ Supplementary Deno/package compatibility is verified, but Deno is not a performa
 
 
 LLM-oriented `onString` measurements with 32/128/1024-byte chunks and first-delivery tests: [LLM string streaming](v3-llm-performance.md).
+
+## CPU scheduling diagnostics
+
+The v3 worker records process CPU time alongside each wall-time sample when
+`process.cpuUsage()` is supported. The JSON contains `cpuSamples`, with CPU
+milliseconds per parse and the CPU/wall ratio; unsupported runtimes report `null`.
+Throughput still uses wall time, with unchanged warmups, GC placement and result
+checks. CPU diagnostics do not normalize throughput or discard samples.
+
+The report counts samples below an 80% CPU/wall ratio and shows the range. This
+is a heuristic for time spent waiting to execute. A low count does not prove
+idle hardware: runtime helper threads may push the ratio above 100%, and CPU
+frequency or thermal effects are not detected. Very short samples can be noisy.
+Repeat comparisons under competing compilation or other heavy work before using
+their deltas to accept or reject an optimization. Older result files still work.

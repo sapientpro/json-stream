@@ -116,6 +116,13 @@ All numbers are decimal MB/s. Alternating fresh processes, serial workers; parse
 
 The initial Node 128-unit LLM run contained one −44.7% process pair. Five fresh alternating pairs with 320 warmups and 64 iterations per sample did not reproduce that magnitude: Node median 166.9 → 169.6 MB/s (+1.6%, pair range −5.0…+12.2%). Bun repeat median 239.4 → 214.5 MB/s (−10.4%, pair range −10.4…+8.9%). Initial Bun median was −5.0%. Text-input throughput remains variable; these results do not establish performance parity.
 
+A subsequent five-pair Bun repeat, while the user confirmed heavy CPU load,
+reversed the sign to +8.8% (pair range −9.6…+28.3%). A process snapshot showed
+CLion and multiple compiler workers competing for CPU. This does not prove a
+speedup or invalidate every earlier sample; the 128-unit text regression remains
+unconfirmed pending an unloaded repeat. New reports include
+[CPU scheduling diagnostics](v3-performance.md#cpu-scheduling-diagnostics).
+
 Object/selection regressions up to roughly 6% on Node and 4% on Bun remain visible in these controls. LLM byte input stayed within −2.4…+6.8% across the measured cases.
 
 ## Rejected root-only shortcut
