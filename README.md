@@ -404,6 +404,8 @@ Exceptions thrown by your own `next` / `error` / `complete` callbacks do not abo
 
 ## Memory and performance
 
+See the [2.0.1 release comparison](benchmarks/releases/2.0.1.md) for the full Node/Bun matrix against 2.0.0, including raw samples and known regressions.
+
 Run `npm run benchmark:competitors` to compare this package with pinned dev-only versions of `@streamparser/json`, `stream-json`, `json-web-streams` and `json-stream-lite` in Node and Bun. The matrix covers 12 data shapes with string/UTF-8 input, different chunk sizes, selected array items, decoded string fragments (or cumulative previews), and retained heap. Each package/scenario runs in a fresh process. Correctness failures and unsupported features are recorded instead of receiving valid performance scores. Results are generated locally in `benchmarks/results/competitors.md`, with raw samples in `competitors-node.json` and `competitors-bun.json` in the same directory. See [the capability matrix](benchmarks/capabilities.md) for API differences and sources. For one runtime use `benchmark:competitors:node` or `benchmark:competitors:bun`; generate the combined report with `node scripts/benchmark-competitors-report.mjs` after running both. These commands can take several minutes, especially for packages that reparse incomplete root values.
 
 By default, incremental parsing still builds the whole object tree, even when `collectJson` is off. For large arrays, select individual items and disable root retention:
