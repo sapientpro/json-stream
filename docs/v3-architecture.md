@@ -16,7 +16,7 @@ never have to absorb new subscriptions.
 
 Selected object/array values are built completely. Ancestor retention propagates
 to children. A root consumer therefore requires the whole tree. String-only
-consumers accumulate fragments; a value consumer or root retention additionally
+consumers accumulate fragments; a value consumer (including a $ subscription) additionally
 requires the complete string. Fragment cancellation removes the active sink and
 preserves any already accumulated pieces needed by retained values. Path arrays
 are concrete owned snapshots, not mutable parser stack views.
@@ -24,8 +24,9 @@ are concrete owned snapshots, not mutable parser stack views.
 When there are no reachable consumers at the first write, the core selects simpler
 open/emit methods once. On V8 it also applies to value-only root subscriptions; on Bun those use the
 ordinary builder, which is faster in paired measurements. The no-consumer path
-creates retained containers without selector
-transitions, concrete paths or callback dispatch. This selection stays fixed for
+validates structure without materializing unrequested containers or values.
+A V8 root-value subscription uses the same simple builder with full retention,
+without child selector transitions or concrete paths. This selection stays fixed for
 the document. It applies to both dialects without a released 2.x fallback.
 
 Web and Node wrappers adapt input pacing to the synchronous core. String output

@@ -1,6 +1,6 @@
 # LLM string streaming baseline
 
-Baseline: PR18 (`ba97d14e0636078c0997ecf2c765bdab5fc0b3d7`). This follow-up changes benchmark/test coverage only; parser source is unchanged.
+Baseline: PR18 (`ba97d14e0636078c0997ecf2c765bdab5fc0b3d7`). These measurements predate the subscription-only API change; they use the PR18 scanner. The current equivalent is `onString('$.text', callback)` without a retention option.
 
 Primary LLM workload: a JSON object with metadata followed by a long `text` field containing Ukrainian text, emoji, newlines, quoted code and backslashes. `onString(['text'])` receives decoded fragments with `retainRoot: false`. The escape-heavy fixture is a separate stress case. Fixture definitions live in `scripts/v3/benchmark-worker.mjs`.
 

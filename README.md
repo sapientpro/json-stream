@@ -7,10 +7,10 @@ This checkout contains the **unpublished 3.0 development candidate**.
 For the published API, see [2.0.1](https://github.com/sapientpro/json-stream/tree/2.0.1).
 
 ```ts
-import {JsonParser, Any} from '@sapientpro/json-stream';
+import {JsonParser} from '@sapientpro/json-stream';
 
-const parser = new JsonParser({retainRoot: false});
-parser.onValue(['items', Any, 'id'], (value, path) => {
+const parser = new JsonParser();
+parser.onValue('$.items[*].id', (value, path) => {
   console.log(value, path);
 });
 parser.write('{"items":[{"id":42}]}');
@@ -29,6 +29,7 @@ controls input pacing. Use JSONL or prefix managers to consume multiple document
 - [JSON Lines and prefixed documents](docs/v3.md#json-lines-and-prefixed-documents)
 - [Architecture and tradeoffs](docs/v3-architecture.md)
 - [Performance measurements](docs/v3-performance.md)
+- [Subscription API before/after measurements](docs/v3-subscriptions-performance.md)
 
 ## Development
 

@@ -260,7 +260,7 @@ export class Json5Scanner extends ParserCore {
                         ++pos;
                         this._quote = code;
                         this._keyMode = true;
-                        this._retainString = this._retainRoot || this._needsKey();
+                        this._retainString = this._needsKey();
                         this._state = STR;
                     }
                     else {

@@ -31,14 +31,22 @@ export class JsonStream extends Writable {
     readonly #parser: Parser;
     constructor(options: FormatOptions = {}) {
         const parser = createParser(options);
+        let valueSubscription: Subscription | undefined;
+        let pending = false, pendingValue: any, inputStarted = false;
+        const emitValue = () => {
+            if (pending && parser.rootReady) {
+                const value = pendingValue;
+                pending = false; pendingValue = undefined;
+                this.emit('value', value);
+            }
+        };
         super({
             decodeStrings: false,
             write: (chunk: string | Buffer, _encoding, done) => {
                 try {
-                    const ready = parser.rootReady;
+                    inputStarted = true;
                     parser.write(chunk);
-                    if (!ready && parser.rootReady)
-                        this.emit('value', parser.root);
+                    emitValue();
                     done();
                 }
                 catch (error) {
@@ -47,29 +55,37 @@ export class JsonStream extends Writable {
             },
             final: done => {
                 try {
-                    const ready = parser.rootReady;
+                    inputStarted = true;
                     parser.end();
-                    if (!ready && parser.rootReady)
-                        this.emit('value', parser.root);
+                    emitValue();
                     done();
                 }
                 catch (error) {
                     done(error as Error);
                 }
             },
-            destroy: (error, done) => { parser.destroy(error); done(error); },
+            destroy: (error, done) => { pending = false; pendingValue = undefined; parser.destroy(error); done(error); },
         });
         this.#parser = parser;
+        // A Node value listener is an explicit subscription to the root value.
+        this.on('newListener', event => {
+            if (event === 'value' && inputStarted)
+                throw new Error('Register value listeners before the first write');
+            if (event === 'value' && !valueSubscription)
+                valueSubscription = parser.onValue('$', value => { pendingValue = value; pending = true; });
+        });
+        this.on('removeListener', event => {
+            if (event === 'value' && !this.listenerCount('value')) {
+                valueSubscription?.unsubscribe(); valueSubscription = undefined;
+                pending = false; pendingValue = undefined;
+            }
+        });
     }
-    get root(): any { return this.#parser.root; }
     get rootReady(): boolean { return this.#parser.rootReady; }
     get json(): string { return this.#parser.json; }
     get parsed(): boolean { return this.#parser.finished; }
     onValue<T = any>(path: PathInput, callback: ValueCallback<T> | CallbackObserver<T>): Subscription { return this.#parser.onValue(path, callback); }
     onString(path: PathInput, callback: ValueCallback<string> | CallbackObserver<string>): Subscription { return this.#parser.onString(path, callback); }
-    getValue<T = any>(path: PathInput = []): Promise<T> { return this.#parser.getValue(path); }
-    onValueJsonPath<T = any>(query: string, callback: ValueCallback<T> | CallbackObserver<T>): Subscription { return this.#parser.onValueJsonPath(query, callback); }
-    onStringJsonPath(query: string, callback: ValueCallback<string> | CallbackObserver<string>): Subscription { return this.#parser.onStringJsonPath(query, callback); }
-    getValueJsonPath<T = any>(query: string): Promise<T> { return this.#parser.getValueJsonPath(query); }
+    getValue<T = any>(path: PathInput = '$'): Promise<T> { return this.#parser.getValue(path); }
     stringStream(path: PathInput): ReadableStream<string> { return this.#parser.stringStream(path); }
 }

@@ -1,3 +1,4 @@
+import {captureRoot, capturedRoot} from './v3-capture';
 import {test,expect} from '@jest/globals';
 import {JsonParser,JsonLinesParser,PrefixedJsonParser} from '../src/v3/index';
 const encoder=new TextEncoder();
@@ -8,25 +9,25 @@ const expected=JSON.parse(input);
 test('batched complete escapes preserve values, fragments and surrogate cuts at every byte split',()=>{
     const bytes=encoder.encode(input);
     for(let cut=0;cut<=bytes.length;cut++) {
-        const p=new JsonParser();let text='';const pieces:string[]=[];p.onString(['s'],v=>{text+=v;pieces.push(v);});
-        p.write(bytes.subarray(0,cut));p.write(bytes.subarray(cut));p.end();expect(p.root).toEqual(expected);expect(text).toBe(expected.s);
+        const p=captureRoot(new JsonParser());let text='';const pieces:string[]=[];p.onString(['s'],v=>{text+=v;pieces.push(v);});
+        p.write(bytes.subarray(0,cut));p.write(bytes.subarray(cut));p.end();expect(capturedRoot(p)).toEqual(expected);expect(text).toBe(expected.s);
         for(let i=0;i<pieces.length-1;i++)expect(pieces[i]!.charCodeAt(pieces[i]!.length-1)).not.toBe(0xd83d);
     }
 });
 
 test('control characters and invalid/truncated escapes after eligible runs are rejected',()=>{
     for(const bad of [...Array.from({length:32},(_,n)=>String.fromCharCode(n)),'\\q','\\u12xz','\\u123','\\u','\\']) {
-      for(const retainRoot of [false,true]) {
-        const p=new JsonParser({retainRoot});if(!retainRoot)p.onString(['ignored'],()=>{});const text='{"ignored":"'+'x'.repeat(96)+'\\n'+'y'.repeat(96)+bad+'z'.repeat(300)+'"}';
+      for(const observeValue of [false,true]) {
+        const p=new JsonParser({});if(observeValue)p.onValue('$',()=>{});else p.onString(['ignored'],()=>{});const text='{"ignored":"'+'x'.repeat(96)+'\\n'+'y'.repeat(96)+bad+'z'.repeat(300)+'"}';
         expect(()=>{p.write(text);p.end();}).toThrow(SyntaxError);
       }
     }
 });
 
 test('batching protects canceled fragments and retained values across reset and prefix boundaries',()=>{
-    const p=new JsonParser();let calls=0;const sub=p.onString(['s'],()=>{calls++;sub.unsubscribe();});
-    for(let pos=0;pos<input.length;pos+=512)p.write(input.slice(pos,pos+512));expect(calls).toBe(1);expect(p.root).toEqual(expected);p.reset();
-    p.write(input);p.end();expect(p.root).toEqual(expected);expect(calls).toBe(1);
+    const p=captureRoot(new JsonParser());let calls=0;const sub=p.onString(['s'],()=>{calls++;sub.unsubscribe();});
+    for(let pos=0;pos<input.length;pos+=512)p.write(input.slice(pos,pos+512));expect(calls).toBe(1);expect(capturedRoot(p)).toEqual(expected);p.reset();
+    p.write(input);p.end();expect(capturedRoot(p)).toEqual(expected);expect(calls).toBe(1);
     for(const manager of [new JsonLinesParser(),new PrefixedJsonParser('@')]) {
         const values:unknown[]=[];manager.onRecord(v=>values.push(v));
         manager.write(manager instanceof JsonLinesParser?input+'\n'+input:'@'+input+'@'+input);manager.end();expect(values).toEqual([expected,expected]);

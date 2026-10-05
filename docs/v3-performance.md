@@ -1,6 +1,6 @@
 # 3.0 candidate performance
 
-These are local measurements, not release guarantees. Node26.10.0/Bun1.4.2,
+These are historical local measurements, not release guarantees. The subscription-only API now requests complete values through `$`; the `root` workload labels below describe the older measured API. Node26.10.0/Bun1.4.2,
 UTF-8 byte input, 1KiB/64KiB chunks, serial fresh processes, parser setup and
 registration included. Callbacks consume concrete paths; fixture outputs are
 checked. JSON fixture sizes and workload/mode definitions live in

@@ -150,7 +150,7 @@ export class JsonScanner extends ParserCore {
                             else if (code === QUOTE) {
                                 ++pos;
                                 this._keyMode = false;
-                                this._retainString = this._retainRoot || this._shouldRetain();
+                                this._retainString = this._shouldRetain();
                                 if (this._hasChunks)
                                     this._findChunkSinks(this._root, 0);
                                 this._state = STR;
@@ -258,7 +258,7 @@ export class JsonScanner extends ParserCore {
                             }
                             ++pos;
                             this._keyMode = true;
-                            this._retainString = this._retainRoot || this._needsKey();
+                            this._retainString = this._needsKey();
                             this._state = STR;
                             break;
                         case COLON:

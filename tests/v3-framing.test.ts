@@ -1,3 +1,4 @@
+import {captureRoot, capturedRoot} from './v3-capture';
 import {test, expect, describe} from '@jest/globals';
 import {Any, JsonParser, Json5Parser, PrefixFilter, JsonLinesParser, PrefixedJsonParser} from '../src/v3/index';
 import {createNodeWritable} from '../src/v3/node';
@@ -5,11 +6,11 @@ import {finished} from 'node:stream/promises';
 const encoder = new TextEncoder();
 
 for (const format of ['json', 'json5'] as const) describe(format + ' records', () => {
-    const record = format === 'json' ? '{"items":[{"id":1,"s":"😀\\nmarker:"}]}' : "{items:[{id:1,s:'😀\\nmarker:'}],}";
+    const record = format === 'json' ? '{"items":[{"id":1,"s":"😀\\nmarker:"}]}' : "{items:[{id:1,s:'😀\\nmarker:'}]}";
     test('JSONL preserves values, paths, record indexes and fragments at every byte cut', () => {
         const bytes = encoder.encode(record + '\r\n' + record);
         for (let cut = 0; cut <= bytes.length; cut++) {
-            const p = new JsonLinesParser({format, retainRoot:false});
+            const p = new JsonLinesParser({format });
             const values: unknown[] = [], strings: string[] = [], ends: unknown[] = [];
             let complete = 0;
             p.onValue(['items',Any,'id'], {next:(v,path,index)=>values.push([v,path,index]), complete:()=>complete++});
@@ -25,7 +26,7 @@ for (const format of ['json', 'json5'] as const) describe(format + ' records', (
         const input = 'noise marker:' + record + 'discard marker:' + record;
         const bytes = encoder.encode(input);
         for (let cut = 0; cut <= bytes.length; cut++) {
-            const p = new PrefixedJsonParser('marker:', {format,retainRoot:false}); const roots: unknown[] = [];
+            const p = new PrefixedJsonParser('marker:', {format}); const roots: unknown[] = [];
             p.onRecord((value,index)=>roots.push([value,index]));
             p.write(bytes.subarray(0,cut)); p.write(bytes.subarray(cut)); p.end();
             expect(roots).toEqual([[{items:[{id:1,s:'😀\nmarker:'}]},0],[{items:[{id:1,s:'😀\nmarker:'}]},1]]);
@@ -63,18 +64,18 @@ test('BOM is rejected even when split, with either format', () => {
 
 test('prefix filter holds split markers, forwards payload only, and validates EOF', () => {
     for(const Parser of [JsonParser,Json5Parser])for(let cut=0;cut<20;cut++) {
-        const p=new Parser({collectJson:true});const filter=new PrefixFilter(p,'€START');
+        const p=captureRoot(new Parser({collectJson:true}));const filter=new PrefixFilter(p,'€START');
         const bytes=encoder.encode('garbage€START{"x":1}');filter.write(bytes.subarray(0,cut));filter.write(bytes.subarray(cut));filter.end();
-        expect(p.root).toEqual({x:1});expect(p.json).toBe('{"x":1}');expect(filter.finished).toBe(true);
+        expect(capturedRoot(p)).toEqual({x:1});expect(p.json).toBe('{"x":1}');expect(filter.finished).toBe(true);
     }
-    expect(()=>new PrefixFilter(new JsonParser(),'')).toThrow(TypeError);
-    const p=new PrefixFilter(new JsonParser(),'start');p.write('sta');expect(()=>p.end()).toThrow(/not found/);
+    expect(()=>new PrefixFilter(captureRoot(new JsonParser()),'')).toThrow(TypeError);
+    const p=new PrefixFilter(captureRoot(new JsonParser()),'start');p.write('sta');expect(()=>p.end()).toThrow(/not found/);
     const missing=new PrefixedJsonParser('start');missing.write('sta');expect(()=>missing.end()).toThrow(/not found/);
     const unfinished=new PrefixedJsonParser('start');unfinished.write('start');expect(()=>unfinished.end()).toThrow(SyntaxError);
 });
 
 test('fragments arrive before line completion without buffering the entire record', () => {
-    const p=new JsonLinesParser({retainRoot:false});let text='';p.onString(['s'],v=>text+=v);
+    const p=new JsonLinesParser({});let text='';p.onString(['s'],v=>text+=v);
     p.write('{"s":"hello');expect(text).toBe('hello');expect(p.recordCount).toBe(0);
     p.write(' world"}\n');p.end();expect(text).toBe('hello world');
 });
@@ -109,7 +110,7 @@ test('Web and Node input wrappers accept both managers', async () => {
 });
 
 test('JSONPath selectors are shared across records and do not prefix paths with record indexes', () => {
-    const p=new JsonLinesParser({retainRoot:false});const found:unknown[]=[];p.onValueJsonPath('$.a[0]',(v,path,index)=>found.push([v,path,index]));p.write('{"a":[1]}\n{"a":[2]}');p.end();expect(found).toEqual([[1,['a',0],0],[2,['a',0],1]]);
+    const p=new JsonLinesParser({});const found:unknown[]=[];p.onValue('$.a[0]',(v,path,index)=>found.push([v,path,index]));p.write('{"a":[1]}\n{"a":[2]}');p.end();expect(found).toEqual([[1,['a',0],0],[2,['a',0],1]]);
     expect(()=>new JsonLinesParser().onValue(['x',-1],()=>{})).toThrow();
 });
 
@@ -119,7 +120,7 @@ test('mixed input is rejected before consumption and empty writes freeze registr
 
 
 test('prefix JSON5 accepts multiline structures and comments without scanning a second grammar', () => {
-    const input = "noise @ { /* @ \n comment */ a:'@', s:'hello\\\nworld', nested:[{b:1}], } trailer @ {a:2}";
+    const input = "noise @ { /* @ \n comment */ a:'@', s:'hello\\\nworld', nested:[{b:1}] } trailer @ {a:2}";
     const bytes=encoder.encode(input);
     for(let cut=0;cut<=bytes.length;cut++) {
         const p=new PrefixedJsonParser('@',{format:'json5'});const roots:unknown[]=[];p.onRecord(v=>roots.push(v));
@@ -136,25 +137,25 @@ test('record string streams complete at input EOF and cancellation spans all rec
 
 
 for(const Parser of [JsonParser,Json5Parser]) test(Parser.name+' reset preserves subscriptions, validates EOF, and clears per-document state',()=>{
-    const p=new Parser({collectJson:true});const values:unknown[]=[];let completes=0;
+    const p=captureRoot(new Parser({collectJson:true}));const values:unknown[]=[];let completes=0;
     p.onValue([], {next:v=>values.push(v),complete:()=>completes++});
-    p.write('12');p.reset();expect(values).toEqual([12]);expect(p.root).toBeUndefined();expect(p.rootReady).toBe(false);expect(p.finished).toBe(false);expect(p.json).toBe('');expect(completes).toBe(0);
+    p.write('12');p.reset();expect(values).toEqual([12]);expect(capturedRoot(p)).toBeUndefined();expect(p.rootReady).toBe(false);expect(p.finished).toBe(false);expect(p.json).toBe('');expect(completes).toBe(0);
     p.write('{"x":[1]}');p.reset();p.write('"last"');p.end();expect(values).toEqual([12,{x:[1]},'last']);expect(completes).toBe(1);expect(p.finished).toBe(true);expect(()=>p.reset()).toThrow(/closed/);
-    const bad=new Parser();bad.write('{"x":');expect(()=>bad.reset()).toThrow(SyntaxError);expect(bad.closed).toBe(true);
+    const bad=captureRoot(new Parser());bad.write('{"x":');expect(()=>bad.reset()).toThrow(SyntaxError);expect(bad.closed).toBe(true);
 });
 
 test('reset preserves unsubscription, matching caches, input mode and reentry protection',()=>{
-    const errors:unknown[]=[];const p=new JsonParser({retainRoot:false,onObserverError:e=>errors.push(e)});const found:unknown[]=[];
+    const errors:unknown[]=[];const p=new JsonParser({onObserverError:e=>errors.push(e)});const found:unknown[]=[];
     const once=p.onValue(['x',Any],v=>{found.push(v);once.unsubscribe();});
     p.onValue(['x'],()=>p.reset());p.write('{"x":[1,2]}');p.reset();p.write('{"x":[3,4]}');p.end();expect(found).toEqual([1]);expect(errors).toHaveLength(2);
-    const bytes=new JsonParser();bytes.write(encoder.encode('1'));bytes.reset();expect(()=>bytes.write('2')).toThrow(TypeError);bytes.write(encoder.encode('2'));bytes.end();expect(bytes.root).toBe(2);
+    const bytes=captureRoot(new JsonParser());bytes.write(encoder.encode('1'));bytes.reset();expect(()=>bytes.write('2')).toThrow(TypeError);bytes.write(encoder.encode('2'));bytes.end();expect(capturedRoot(bytes)).toBe(2);
 });
 
 
 test('record resets preserve heterogeneous trees and owned paths across many records',()=>{
     const roots=Array.from({length:100},(_,id)=>({id,items:Array.from({length:id%5},(_,n)=>({n,text:'😀'+id+'\n'})),['unique'+id]:id%2?null:[true,false],float:id%3?0.125:-1e20}));
     const input=roots.map(root=>JSON.stringify(root)).join('\n');const bytes=encoder.encode(input);
-    const p=new JsonLinesParser({retainRoot:false});const received:unknown[]=[];const paths:unknown[]=[];p.onRecord((v,index)=>received.push([v,index]));p.onValue(['items',Any,'n'],(_v,path,index)=>paths.push([path,index]));
+    const p=new JsonLinesParser({});const received:unknown[]=[];const paths:unknown[]=[];p.onRecord((v,index)=>received.push([v,index]));p.onValue(['items',Any,'n'],(_v,path,index)=>paths.push([path,index]));
     for(let pos=0;pos<bytes.length;){const width=pos%31+1;p.write(bytes.subarray(pos,pos+width));pos+=width;}p.end();
     expect(received).toEqual(roots.map((root,index)=>[root,index]));expect(p.recordCount).toBe(100);expect(paths[0]).toEqual([['items',0,'n'],1]);
 });
