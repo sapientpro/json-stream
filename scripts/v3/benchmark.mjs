@@ -19,6 +19,6 @@ for(let repetition=0;repetition<repetitions;repetition++)for(const size of sizes
  const job={...version,dataset,mode,size,repetition,warmups,iterations,input:option('--input','bytes'),syntax:option('--syntax','json')};
  const cmdArgs=engine==='deno'?['run','--cached-only','--allow-read',worker,JSON.stringify(job)]:[...(engine==='node'?['--expose-gc']:[]),worker,JSON.stringify(job)];
  const result=JSON.parse(execFileSync(bin,cmdArgs,{encoding:'utf8',timeout:180000,env:engine==='deno'?{...process.env,DENO_DIR:'/private/tmp/json-stream-deno-v3-cache'}:process.env}));
- results.push(result);fs.writeFileSync(output,JSON.stringify({engine,runtime:execFileSync(bin,['--version'],{encoding:'utf8'}).trim(),protocol:{repetitions,warmups,iterations,samples:7,setupIncluded:true,ownedConcretePathsConsumed:true,serialWorkers:true,units:'decimal MB/s'},results},null,2));
+ results.push(result);fs.writeFileSync(output,JSON.stringify({engine,runtime:execFileSync(bin,['--version'],{encoding:'utf8'}).trim(),protocol:{repetitions,warmups,iterations,samples:7,setupIncluded:true,ownedConcretePathsConsumed:true,serialWorkers:true,units:'decimal MB/s',cpuTimeDiagnostic:true},results},null,2));
  console.log(`${results.length}/${repetitions*sizes.length*cases.length*versions.length} ${version.label} ${dataset}/${mode} ${size}B: ${result.mbps.toFixed(1)} MB/s`);
 }

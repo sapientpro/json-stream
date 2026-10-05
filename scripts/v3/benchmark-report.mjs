@@ -16,5 +16,14 @@ for(const report of reports){
  lines.push(`| ${dataset}/${mode} (${input}) | ${size} | ${b.toFixed(1)} | ${n.toFixed(1)} | ${(100*(n/b-1)).toFixed(1)}% | ${Math.min(...deltas).toFixed(1)}…${Math.max(...deltas).toFixed(1)}% |`);
  }
  lines.push('');
+ const cpuRows=report.results.filter(row=>Array.isArray(row.cpuSamples)&&row.cpuSamples.length);
+ if(cpuRows.length){
+  const ratios=cpuRows.flatMap(row=>row.cpuSamples.map(sample=>sample.cpuToWallRatio));
+  const low=ratios.filter(ratio=>ratio<0.8).length;
+  lines.push(`CPU/wall diagnostic: ${low}/${ratios.length} measured samples below 80%; range ${(100*Math.min(...ratios)).toFixed(1)}…${(100*Math.max(...ratios)).toFixed(1)}%.`, '',
+   'A low ratio suggests the worker spent substantial wall time without CPU execution. This is a scheduling-noise heuristic, not a throughput correction or proof that other samples ran on idle hardware. Runtime helper threads can produce ratios above 100%; CPU frequency changes are not detected. Repeat loaded comparisons before drawing performance conclusions.','');
+  if(cpuRows.length!==report.results.length)lines.push('CPU diagnostics are unavailable for some workers in this report.','');
+ }
+ else if(report.protocol?.cpuTimeDiagnostic)lines.push('CPU diagnostics are unavailable on this runtime; throughput uses wall time only.','');
 }
 fs.writeFileSync(output,lines.join('\n'));console.log(output);
