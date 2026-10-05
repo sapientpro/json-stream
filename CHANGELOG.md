@@ -2,6 +2,31 @@
 
 This project follows [Semantic Versioning](https://semver.org/).
 
+## 2.0.1
+
+Compatible performance improvements over 2.0.0. Public imports, callback paths,
+subscription behavior and parser options are unchanged.
+
+### Performance
+
+- Scan complete numeric tokens with a fast digit-run parser, preserving native
+  number conversion and rounding and falling back for tokens split across writes.
+- Use direct observer-trie lookups and dedicated wildcard edges; stop retention
+  matching after finding a value consumer.
+- Avoid accumulating strings that no consumer needs when `retainRoot: false`.
+- Scan strings and locate delimiters without allocating match arrays.
+- Recognize complete `true`, `false` and `null` literals at value entry.
+- Decode complete Unicode escapes without building temporary hex strings, with
+  a bounded adaptive code-unit cache on Bun.
+- Notify value observers without allocating a closure for each notification.
+- Preserve native private fields in the CommonJS build, matching the ES2022
+  target used by the supported Node runtimes.
+
+These changes retain incremental parsing, wildcard/chunk delivery and error
+handling. Performance varies by runtime, data and chunk size; the release
+[release benchmark report](https://github.com/sapientpro/json-stream/blob/main/benchmarks/releases/2.0.1.md)
+includes regressions as well as improvements.
+
 ## 2.0.0
 
 Relative to **1.1.4**, the last release on npm.
