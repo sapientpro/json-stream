@@ -3,7 +3,7 @@
 These are local measurements, not release guarantees. Node26.10.0/Bun1.4.2,
 UTF-8 byte input, 1KiB/64KiB chunks, serial fresh processes, parser setup and
 registration included. Callbacks consume concrete paths; fixture outputs are
-checked. JSON fixture sizes and all 20 workload/mode definitions live in
+checked. JSON fixture sizes and workload/mode definitions live in
 `scripts/v3/benchmark-worker.mjs`. Reproduce a released checkout with:
 
 ```sh
@@ -246,3 +246,5 @@ All numbers are decimal MB/s. Alternating fresh processes, serial workers; parse
 | long string/root (bytes) | 65536 | 12301.5 | 11337.2 | -7.8% | -19.7…2.4% |
 
 Supplementary Deno/package compatibility is verified, but Deno is not a performance gate. Remaining priorities: Node control/escape/string-fragment costs, Bun object building, tiny-document setup; preserve strict syntax, precision and owned paths.
+
+[Escape decoding follow-up against the architecture PR](v3-escape-performance.md) adds an explicit short escaped-string workload and separate comparison/confirmation tables.

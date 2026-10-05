@@ -38,6 +38,39 @@ const scanStringEnd = (buf: string, pos: number, len: number): number => {
     }
     return end;
 };
+// Batch complete escapes within one input chunk; boundary/cut handling remains in STR.
+const readEscapedRun = (buf: string, pos: number, len: number, retain: boolean): {pos: number; text: string} => {
+    let text = '';
+    while (pos < len) {
+        const code = buf.charCodeAt(pos);
+        if (code < 32 || code === QUOTE) break;
+        if (code === BACKSLASH) {
+            const ch = buf[pos + 1];
+            if (ch === 'u') {
+                if (pos + 6 > len) break;
+                const value = readHex4(buf, pos + 2);
+                if (value < 0) break;
+                if (retain) text += unicodeUnit(value);
+                pos += 6;
+            }
+            else {
+                const escaped = ch === undefined ? undefined : ESCAPES[ch];
+                if (escaped === undefined) break;
+                if (retain) text += escaped;
+                pos += 2;
+            }
+        }
+        else {
+            const end = scanStringEnd(buf, pos, len);
+            if (end === pos) break;
+            const part = buf.slice(pos, end);
+            if (IS_V8 && end - pos > 32 && hasStringControl(part, pos, end, len)) break;
+            if (retain) text += part;
+            pos = end;
+        }
+    }
+    return {pos, text};
+};
 export class JsonScanner extends ParserCore {
     protected _numPhase = 0;
     protected _resetScanner(): void { this._numPhase = 0; }
@@ -294,6 +327,14 @@ export class JsonScanner extends ParserCore {
                         this._closeString();
                     }
                     else {
+                        if (IS_V8 && this._str.length >= 64 && len - pos >= 256) {
+                            const run = readEscapedRun(buf, pos, len, this._retainString || this._strSinks.length > 0);
+                            if (run.pos > pos) {
+                                if (run.text) this._str += run.text;
+                                pos = run.pos;
+                                break;
+                            }
+                        }
                         // Decode complete escapes without a second state-machine dispatch.
                         const ch = buf[pos + 1];
                         if (ch === 'u' && pos + 6 <= len) {

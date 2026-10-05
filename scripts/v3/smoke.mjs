@@ -35,3 +35,8 @@ console.log('PASS: installed multi-document managers and prefix filter');
 const reuse=new JsonParser();const reusedValues=[];reuse.onValue([],v=>reusedValues.push(v));reuse.write('1');reuse.reset();reuse.write('2');reuse.end();deepStrictEqual(reusedValues,[1,2]);
 
 throws(()=>new JsonLinesParser().write(Uint8Array.of(0xff)));
+
+const escapeStress={s:'x'.repeat(96)+'\\\n\t"😀'.repeat(200)};
+const stressParser=new JsonParser();let stressText='';stressParser.onString(['s'],v=>stressText+=v);
+const stressInput=JSON.stringify(escapeStress);for(let pos=0;pos<stressInput.length;pos+=512)stressParser.write(stressInput.slice(pos,pos+512));stressParser.end();deepStrictEqual(stressParser.root,escapeStress);strictEqual(stressText,escapeStress.s);
+console.log('PASS: complete escape runs and streaming fragments');
