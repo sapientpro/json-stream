@@ -259,3 +259,5 @@ LLM-oriented `onString` measurements with 32/128/1024-byte chunks and first-deli
 [Native string-fragment decoding](v3-native-fragments-performance.md) explores bounded `JSON.parse` decoding within the strict V8 escape path, with suffix handling and loaded-hardware control limitations.
 
 [Token-sized Bun writes](v3-token-chunks-performance.md) adds variable Unicode code-point benchmarks and the Bun-only consumed-buffer path, with loaded-hardware controls and rejected decoder/fragment experiments.
+
+[One-pass V8 text fragments](v3-v8-text-fragments-performance.md) follows the Bun token-sized-write patch and includes Node22/24/26 measurements, byte/Bun controls and rejected per-write-store experiments.

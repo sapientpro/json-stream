@@ -138,6 +138,8 @@ export abstract class ParserCore implements Parser {
                 this._closeString = this._closeStringUnobserved;
                 this._close = this._closeUnobserved;
             }
+            if (IS_V8 && mode === 'text' && this._hasChunks)
+                this._flushChunk = this._flushTextChunk;
         }
         this._started = true;
         const text = typeof chunk === 'string'
@@ -518,6 +520,36 @@ export abstract class ParserCore implements Parser {
             (this._parts ??= []).push(chunk);
         for (const sink of this._strSinks) {
             sink.subject.next(chunk, sink.path);
+        }
+    }
+    /** Selected once for V8 text input; prune and deliver in one pass. */
+    protected _flushTextChunk(final = false): void {
+        if (!this._strSinks.length) {
+            if (!this._retainString)
+                this._str = '';
+            return;
+        }
+        let end = this._str.length;
+        // Retain only a trailing high surrogate until its partner arrives.
+        if (!final && end) {
+            const last = this._str.charCodeAt(end - 1);
+            if (last >= 0xD800 && last <= 0xDBFF)
+                --end;
+        }
+        if (!end)
+            return;
+        const chunk = this._str.slice(0, end);
+        this._str = this._str.slice(end);
+        if (this._retainString)
+            (this._parts ??= []).push(chunk);
+        for (let i = 0; i < this._strSinks.length;) {
+            const sink = this._strSinks[i]!;
+            if (!sink.subject.observed || sink.subject.closed)
+                this._strSinks.splice(i, 1);
+            else {
+                sink.subject.next(chunk, sink.path);
+                ++i;
+            }
         }
     }
     protected _release(): void { this._stack.length = 0; this._buf = ''; this._pos = 0; this._str = ''; this._parts = null; this._strSinks.length = 0; this._acc = ''; this._decoder = null; this._snapshot = null; this._path.length = 0; this._context = this._rootContext = EMPTY_CONTEXT; }

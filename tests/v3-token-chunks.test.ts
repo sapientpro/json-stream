@@ -28,6 +28,22 @@ describe('token-sized string delivery',()=>{
         });
     }
     for(const Parser of [JsonParser,Json5Parser]){
+        test(`${Parser.name} retains strings across cancellation, surrogate-only writes and reset`,()=>{
+            const parser=new Parser(),roots:unknown[]=[],fragments:string[]=[];
+            let ends=0;
+            parser.onValue('$',value=>roots.push(value));
+            const subscription=parser.onString('$.text',{
+                next:part=>{fragments.push(part);subscription.unsubscribe();},
+                end:()=>ends++,
+            });
+            parser.write('{"text":"prefix');
+            expect(fragments).toEqual(['prefix']);
+            parser.write('\uD83D');parser.write('\uDE00tail"}');
+            expect(roots).toEqual([{text:'prefix😀tail'}]);
+            parser.reset();parser.write('{"text":"after"}');parser.end();
+            expect(roots).toEqual([{text:'prefix😀tail'},{text:'after'}]);
+            expect(fragments).toEqual(['prefix']);expect(ends).toBe(0);
+        });
         test(`${Parser.name} keeps error offsets after fully consumed Unicode chunks`,()=>{
             const parser=new Parser(),encoder=new TextEncoder();
             const pieces=['{"text":"',...Array.from(text)];

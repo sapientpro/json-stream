@@ -7,7 +7,9 @@ const option=(name,fallback)=>{const at=args.indexOf(name);return at<0?fallback:
 const engine=option('--engine','node'),baseline=option('--baseline'),output=option('--output',`notes/analysis/v3-benchmark-${engine}.json`);
 const bin=option('--runtime',engine==='bun'?'bun':engine==='deno'?'deno':process.execPath);
 const module=pathToFileURL(path.resolve('dist/esm/v3/index.js')).href;
-const versions=baseline?[{label:option('--baseline-label','2.0.1'),module:pathToFileURL(path.resolve(baseline)).href,legacy:option('--baseline-api','observable')==='observable',format:'json'},{label:'3.0 JSON',module,format:'json'}]:[{label:'3.0 JSON',module,format:'json'},{label:'3.0 JSON5',module,format:'json5'}];
+const selectedFormat=option('--format','json');
+if(!['json','json5'].includes(selectedFormat))throw new Error('--format must be json or json5');
+const versions=baseline?[{label:option('--baseline-label','2.0.1'),module:pathToFileURL(path.resolve(baseline)).href,legacy:option('--baseline-api','observable')==='observable',format:selectedFormat},{label:`3.0 ${selectedFormat.toUpperCase()}`,module,format:selectedFormat}]:[{label:'3.0 JSON',module,format:'json'},{label:'3.0 JSON5',module,format:'json5'}];
 let cases=[['integers','root'],['integers','scalar'],['decimals','scalar'],['exponents','scalar'],['short strings','scalar'],['short escaped strings','scalar'],['literals','scalar'],['objects','root'],['objects','root-callback'],['objects','root+ids'],['objects','ids'],['objects','items'],['objects','fanout'],['objects','overlap'],['objects','missing'],['integers','cancel'],['wide object','root'],['unicode','string'],['escapes','string'],['llm','string'],['long string','root'],['small','root']];
 if(option('--cases')){const chosen=new Set(option('--cases').split(','));cases=cases.filter(([data,mode])=>chosen.has(data+'/'+mode));if(!cases.length)throw new Error('No workload matched --cases');}
 if(option('--format')){versions.splice(0,versions.length,...versions.filter(v=>v.format===option('--format')));}
