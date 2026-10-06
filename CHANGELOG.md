@@ -2,6 +2,13 @@
 
 This project follows [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+- Decode large strict JSON escape fragments through the native string parser on
+  V8, preserving incremental handling of incomplete escapes, surrogate pairs,
+  cancellation and ordinary parser errors. Small chunks and JSON5 keep their
+  existing decoding paths.
+
 ## 3.0.0-alpha.1 — 2026-10-06
 
 - Replace observable value/string subscriptions with synchronous callbacks and

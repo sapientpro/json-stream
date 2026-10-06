@@ -255,3 +255,5 @@ LLM-oriented `onString` measurements with 32/128/1024-byte chunks and first-deli
 [Numeric materialization during emission](v3-numeric-emission-performance.md) compares the selective numeric emitter against the JSONPath subscriptions PR, including string controls and rejected runtime/dialect variants.
 
 [Completed object keys](v3-object-key-performance.md) follows the numeric emission PR and includes object builders, selected IDs and LLM streaming controls on Node and Bun.
+
+[Native string-fragment decoding](v3-native-fragments-performance.md) explores bounded `JSON.parse` decoding within the strict V8 escape path, with suffix handling and loaded-hardware control limitations.
