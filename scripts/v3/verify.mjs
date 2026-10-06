@@ -1,3 +1,6 @@
+const capturedValues=new WeakMap();
+const captureRoot=parser=>{parser.onValue('$',value=>capturedValues.set(parser,value));return parser;};
+const capturedRoot=parser=>parser.rootReady?capturedValues.get(parser):undefined;
 // Differential tests use JSON.parse/JSON5.parse as independent oracles only.
 import {deepStrictEqual, strictEqual} from 'node:assert';
 import JSON5 from 'json5';
@@ -16,7 +19,7 @@ for(const [Parser,oracle,fixtures] of [
   const bytes=new TextEncoder().encode(doc),cut=random(bytes.length+1);
   for(const chunks of [[doc],[bytes.subarray(0,cut),bytes.subarray(cut)]]) {
    let actual,accepted=true;
-   try{const p=new Parser();for(const c of chunks)p.write(c);p.end();actual=p.root;}catch{accepted=false;}
+   try{const p=captureRoot(new Parser());for(const c of chunks)p.write(c);p.end();actual=capturedRoot(p);}catch{accepted=false;}
    try{strictEqual(accepted,valid);if(valid)deepStrictEqual(actual,wanted);}catch(e){console.error({format:Parser.name,doc,accepted,valid,cut});throw e;}
    ++checks;
   }
@@ -27,20 +30,20 @@ for(const [Parser,oracle,fixtures] of [
   const text=Parser===JsonParser?JSON.stringify(root):JSON5.stringify(root),bytes=new TextEncoder().encode(text);
   for(const size of [1,2,3,7,64,1024]) {
    // Preserve closed sibling containers and prior roots across depth/type reuse and reset.
-   const retained=new Parser();
+   const retained=captureRoot(new Parser());
    for(let at=0;at<bytes.length;at+=size)retained.write(bytes.subarray(at,at+size));
-   const priorRoot=retained.root;deepStrictEqual(priorRoot,root);retained.reset();
+   const priorRoot=capturedRoot(retained);deepStrictEqual(priorRoot,root);retained.reset();
    const next={mixed:[[{id:i}],{nested:[{},[],null]},[false,{last:i}]],empty:{}};
    const nextBytes=new TextEncoder().encode(JSON.stringify(next));
    for(let at=0;at<nextBytes.length;at+=size)retained.write(nextBytes.subarray(at,at+size));
-   retained.end();deepStrictEqual(retained.root,next);deepStrictEqual(priorRoot,root);++checks;
-   const p=new Parser({retainRoot:false}),values=[],paths=[],fragments=[],ends=[];
+   retained.end();deepStrictEqual(capturedRoot(retained),next);deepStrictEqual(priorRoot,root);++checks;
+   const p=new Parser({}),values=[],paths=[],fragments=[],ends=[];
    p.onValue(['items',Any],(v,path)=>{values.push(v);paths.push(path);});
    p.onString(['items',Any,'text'],{next:(v,path)=>fragments.push([v,path]),end:path=>ends.push(path)});
    for(let at=0;at<bytes.length;at+=size)p.write(bytes.subarray(at,at+size));p.end();
    deepStrictEqual(values,root.items);deepStrictEqual(paths,root.items.map((_,id)=>['items',id]));
    for(let id=0;id<root.items.length;id++)strictEqual(fragments.filter(([,path])=>path[1]===id).map(([v])=>v).join(''),root.items[id].text);
-   deepStrictEqual(ends,root.items.map((_,id)=>['items',id,'text']));strictEqual(p.root,undefined);++checks;
+   deepStrictEqual(ends,root.items.map((_,id)=>['items',id,'text']));strictEqual(capturedRoot(p),undefined);++checks;
   }
  }
 }

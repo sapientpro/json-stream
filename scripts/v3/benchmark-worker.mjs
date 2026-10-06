@@ -25,10 +25,13 @@ if(job.syntax==='json5')text='/*document*/'+text.replace(/"(items|id|name|active
 const bytes=new TextEncoder().encode(text),input=job.input==='text'?text:bytes,chunks=[];
 for(let i=0;i<input.length;i+=job.size)chunks.push(input.slice(i,i+job.size));
 const expectedIds=value.items?.map(x=>x.id), expectedValues=Array.isArray(value)?value:value.items;
+const legacyRetention='root' in Parser.prototype;
 const run=(capture=false)=>{
- const p=new Parser({retainRoot:job.mode==='root'||job.mode==='root+ids'});
+ const retain=job.mode==='root'||job.mode==='root+ids';
+ const p=new Parser(legacyRetention?{retainRoot:retain}:{});
  let count=0,sum=0,length=0,pathSum=0,lastPath,sub,receivedRoot;const values=[];
  const consume=(v,path)=>{++count;for(const key of path)pathSum+=typeof key==='number'?key:key.length;lastPath=path;if(typeof v==='number')sum+=v;else if(typeof v==='string')length+=v.length;else if(v?.id!==undefined)sum+=v.id;if(capture)values.push(v);if(job.mode==='cancel'&&count===32)sub.unsubscribe();};
+ if(retain&&!legacyRetention)p.onValue('$',v=>receivedRoot=v);
  const add=path=>job.legacy?p.observe(path).subscribe(({value,path})=>consume(value,path)):p.onValue(path,consume);
  if(job.mode==='root-callback') {const consumeRoot=(v,path)=>{receivedRoot=v;consume(v,path);};if(job.legacy)p.observe([]).subscribe(({value,path})=>consumeRoot(value,path));else p.onValue([],consumeRoot);}
  else if(['scalar','cancel'].includes(job.mode))sub=add([api.Any]);
@@ -39,7 +42,7 @@ const run=(capture=false)=>{
  else if(job.mode==='overlap'){add([api.Rest]);add(['items',api.Any,'id']);add(['items',api.Any]);}
  else if(job.mode==='string'){if(job.legacy)p.chunks('text').subscribe(v=>consume(v,['text']));else p.onString(['text'],consume);}
  for(const chunk of chunks)p.write(chunk);p.end();strictEqual(p.finished,true);
- return{root:job.mode==='root-callback'?receivedRoot:p.root,count,sum,length,pathSum,lastPath,values};
+ return{root:job.mode==='root-callback'||!legacyRetention?receivedRoot:p.root,count,sum,length,pathSum,lastPath,values};
 };
 const probe=run(true);
 if(['root','root+ids','root-callback'].includes(job.mode))deepStrictEqual(probe.root,value);

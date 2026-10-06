@@ -14,8 +14,8 @@ if(process.argv[2]==='--worker') {
  function parse(){
   let seen=0,last=-1,chars=0;
   const bind=p=>{p.onValue(dataset==='numbers'?[]:['id'],(v,path)=>{seen++;last=v;void path.length;});if(fragmented)p.onString(['s'],v=>chars+=v.length);};
-  if(kind==='direct')for(const record of records){const p=new JsonParser({retainRoot:false});bind(p);for(let pos=0;pos<record.length;pos+=size)p.write(record.subarray(pos,pos+size));p.end();}
-  else {const p=kind==='jsonl'?new JsonLinesParser({retainRoot:false}):new PrefixedJsonParser('data:',{retainRoot:false});bind(p);for(let pos=0;pos<input.length;pos+=size)p.write(input.subarray(pos,pos+size));p.end();if(p.recordCount!==count)throw Error('record count');}
+  if(kind==='direct')for(const record of records){const p=new JsonParser({});bind(p);for(let pos=0;pos<record.length;pos+=size)p.write(record.subarray(pos,pos+size));p.end();}
+  else {const p=kind==='jsonl'?new JsonLinesParser({}):new PrefixedJsonParser('data:',{});bind(p);for(let pos=0;pos<input.length;pos+=size)p.write(input.subarray(pos,pos+size));p.end();if(p.recordCount!==count)throw Error('record count');}
   if(seen!==count||last!==count-1||fragmented&&chars!==count*32768)throw Error('incorrect results');
  }
  parse();for(let i=0;i<12;i++)parse();const samples=[];

@@ -3,6 +3,7 @@ export const Rest = Symbol.for('@sapientpro/json-stream/selector/rest');
 export type PathSegment = string | number;
 export type Selector = PathSegment | typeof Any | typeof Rest;
 export type Path = readonly Selector[];
+/** A JSONPath string starting with $, or a typed array of property/index selectors. */
 export type PathInput = string | Path;
 export type Subscription = {
     unsubscribe(): void;
@@ -21,7 +22,6 @@ export type CallbackOptions = {
 export type ParserOptions = CallbackOptions & {
     collectJson?: boolean;
     maxDepth?: number;
-    retainRoot?: boolean;
 };
 export type Format = 'json' | 'json5';
 export type FormatOptions = ParserOptions & {
@@ -34,7 +34,6 @@ export interface InputSink {
 }
 export interface Parser extends InputSink {
     reset(): void;
-    readonly root: any;
     readonly rootReady: boolean;
     readonly finished: boolean;
     readonly closed: boolean;
@@ -46,8 +45,5 @@ export interface Parser extends InputSink {
     onValue<T = any>(path: PathInput, callback: ValueCallback<T> | CallbackObserver<T>): Subscription;
     onString(path: PathInput, callback: ValueCallback<string> | CallbackObserver<string>): Subscription;
     getValue<T = any>(path?: PathInput): Promise<T>;
-    onValueJsonPath<T = any>(query: string, callback: ValueCallback<T> | CallbackObserver<T>): Subscription;
-    onStringJsonPath(query: string, callback: ValueCallback<string> | CallbackObserver<string>): Subscription;
-    getValueJsonPath<T = any>(query: string): Promise<T>;
     stringStream(path: PathInput): ReadableStream<string>;
 }

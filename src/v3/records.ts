@@ -48,13 +48,7 @@ abstract class RecordManager extends InputFramer {
     onRecord<T = any>(callback: (value: T, recordIndex: number) => void): Subscription {
         return this.onValue<T>([], (value, _path, index) => callback(value, index));
     }
-    onValueJsonPath<T = any>(query: string, callback: RecordCallback<T> | RecordObserver<T>): Subscription {
-        return this.onValue(compileJsonPath(query), callback);
-    }
-    onStringJsonPath(query: string, callback: RecordCallback<string> | RecordObserver<string>): Subscription {
-        return this.onString(compileJsonPath(query), callback);
-    }
-    getValue<T = any>(path: PathInput = []): Promise<T> {
+    getValue<T = any>(path: PathInput = '$'): Promise<T> {
         return new Promise((resolve, reject) => {
             let subscription: Subscription;
             subscription = this.onValue<T>(path, {
@@ -64,10 +58,6 @@ abstract class RecordManager extends InputFramer {
             });
         });
     }
-    getValueJsonPath<T = any>(query: string): Promise<T> {
-        try { return this.getValue(compileJsonPath(query)); }
-        catch (error) { return Promise.reject(error); }
-    }
     stringStream(path: PathInput): ReadableStream<string> {
         return createStringStream(this, path, this.options.maxBufferedChunks);
     }
@@ -75,7 +65,7 @@ abstract class RecordManager extends InputFramer {
         if (this._started || this._closed) throw new Error('Register callbacks before the first write');
         const observer = typeof callback === 'function' ? {next: callback} : callback;
         if (!observer || typeof observer.next !== 'function') throw new TypeError('A next callback is required');
-        const saved = typeof path === 'string' ? path : [...path];
+        const saved = typeof path === 'string' ? compileJsonPath(path) : [...path];
         // Use the parser's selector validation; it has not consumed any input yet.
         const validation = fragments ? this.parser!.onString(saved, () => {}) : this.parser!.onValue(saved, () => {});
         validation.unsubscribe();

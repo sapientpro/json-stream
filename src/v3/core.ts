@@ -1,7 +1,7 @@
 import { DOCUMENT_INPUT } from './document-input.js';
 import {IS_V8} from './lexical.js';
 import { Any, Rest } from './types.js';
-import type { PathInput, PathSegment, ParserOptions, CallbackOptions, ValueCallback, CallbackObserver, Subscription, Parser } from './types.js';
+import type { Path, PathInput, PathSegment, ParserOptions, CallbackOptions, ValueCallback, CallbackObserver, Subscription, Parser } from './types.js';
 import { CallbackChannel, makeErrorReporter, validateBufferLimit } from './channel.js';
 import { EMPTY_CONTEXT, newNode, makeContext, stepContext, childrenOf } from './selectors.js';
 import type { Node, Context, Frame } from './selectors.js';
@@ -17,7 +17,6 @@ export abstract class ParserCore implements Parser {
     protected _context!: Context;
     protected readonly _collect: boolean;
     protected readonly _maxDepth: number;
-    protected readonly _retainRoot: boolean;
     protected readonly _subjectOptions: CallbackOptions;
     protected _started = false;
     protected _buf = '';
@@ -44,14 +43,15 @@ export abstract class ParserCore implements Parser {
     protected _documentDone = false;
     protected _rootAvailable = false;
     protected _inputMode: 'text' | 'bytes' | undefined;
-    protected _value: any;
     protected _failure: Error | null = null;
     protected _writable: WritableStream<Uint8Array | string> | null = null;
     protected _running = false;
     protected _framed = false;
-    constructor({ collectJson = false, maxDepth = 1000, retainRoot = true, maxBufferedChunks = Infinity, onObserverError }: ParserOptions = {}) {
+    constructor(options: ParserOptions = {}) {
+        if ('retainRoot' in options)
+            throw new TypeError('retainRoot was removed; subscribe to $ for the complete value');
+        const { collectJson = false, maxDepth = 1000, maxBufferedChunks = Infinity, onObserverError } = options;
         validateBufferLimit(maxBufferedChunks);
-        this._retainRoot = retainRoot;
         this._subjectOptions = { maxBufferedChunks, onObserverError };
         this._reportCallback = makeErrorReporter(onObserverError);
         if (maxDepth !== Infinity && (!Number.isSafeInteger(maxDepth) || maxDepth < 0))
@@ -63,9 +63,6 @@ export abstract class ParserCore implements Parser {
     get json(): string {
         return this._json;
     }
-    get root(): any {
-        return this._value;
-    }
     get finished(): boolean {
         return this._documentDone;
     }
@@ -76,13 +73,13 @@ export abstract class ParserCore implements Parser {
     } {
         if (this._started || this._done || this._failure)
             throw new Error('Register callbacks before the first write');
-        const segments = typeof path === 'string' ? path.split('.') : [...path];
+        const segments = typeof path === 'string' ? compileJsonPath(path) : [...path];
         if (segments.some((key, i) => key === Rest && i !== segments.length - 1))
             throw new TypeError('Rest must be the last selector segment');
         const observer = typeof callback === 'function' ? { next: callback } : callback;
         if (!observer || typeof observer.next !== 'function')
             throw new TypeError('A next callback is required');
-        const node = this._node(segments as PathInput);
+        const node = this._node(segments);
         if (fragments) {
             this._hasChunks = true;
             return (node.fragments ??= new CallbackChannel<string>(this._reportCallback)).add(observer as CallbackObserver<string>);
@@ -99,7 +96,7 @@ export abstract class ParserCore implements Parser {
     } {
         return this._register(path, callback, true);
     }
-    getValue<T = any>(path: PathInput = []): Promise<T> {
+    getValue<T = any>(path: PathInput = '$'): Promise<T> {
         return new Promise((resolve, reject) => {
             let subscription: {
                 unsubscribe(): void;
@@ -133,7 +130,7 @@ export abstract class ParserCore implements Parser {
             // Bun favors the ordinary builder for root-only callbacks; V8 favors substitution.
             if (!this._tracking || (rootOnly && IS_V8)) {
                 this._tracking = false;
-                this._retainAll = this._retainRoot || !!this._root.callbacks?.observed;
+                this._retainAll = !!this._root.callbacks?.observed;
                 this._emit = this._emitUnobserved;
                 this._open = this._openUnobserved;
                 this._closeString = this._closeStringUnobserved;
@@ -224,7 +221,6 @@ export abstract class ParserCore implements Parser {
         this._state = VALUE;
         this._documentDone = false;
         this._rootAvailable = false;
-        this._value = undefined;
         this._buf = '';
         this._pos = this._consumed = this._pinned = 0;
         this._stack.length = this._path.length = 0;
@@ -236,7 +232,7 @@ export abstract class ParserCore implements Parser {
         this._retainString = true;
         this._eof = false;
         this._context = this._rootContext;
-        if (!this._tracking) this._retainAll = this._retainRoot || !!this._root.callbacks?.observed;
+        if (!this._tracking) this._retainAll = !!this._root.callbacks?.observed;
         this._resetScanner();
     }
     protected _resetScanner(): void { }
@@ -246,8 +242,8 @@ export abstract class ParserCore implements Parser {
         else
             this._complete();
     }
-    protected _node(path: PathInput): Node {
-        const segments = typeof path === 'string' ? path.split('.') : path;
+    protected _node(path: Path): Node {
+        const segments = path;
         for (const key of segments) {
             if (typeof key === 'number' && (!Number.isSafeInteger(key) || key < 0))
                 throw new TypeError('Array selectors must be nonnegative safe integers');
@@ -305,8 +301,6 @@ export abstract class ParserCore implements Parser {
                 this._dispatch(this._root, value, 0);
             if (this.closed)
                 return;
-            if (this._retainRoot)
-                this._value = value;
             this._state = END;
             this._rootAvailable = true;
         }
@@ -350,8 +344,6 @@ export abstract class ParserCore implements Parser {
             return;
         const frame = this._stack[this._stack.length - 1];
         if (!frame) {
-            if (this._retainRoot)
-                this._value = value;
             this._state = END;
             this._rootAvailable = true;
             return;
@@ -387,9 +379,9 @@ export abstract class ParserCore implements Parser {
     protected _hasValueSink(_node: Node, _depth: number): boolean { for (const node of this._context.nodes)
         if (node.callbacks?.observed)
             return true; return false; }
-    protected _needsKey(): boolean { const frame = this._stack[this._stack.length - 1]!; return this._retainRoot || frame.container !== undefined || frame.context !== EMPTY_CONTEXT; }
+    protected _needsKey(): boolean { const frame = this._stack[this._stack.length - 1]!; return frame.container !== undefined || frame.context !== EMPTY_CONTEXT; }
     protected _shouldRetain(): boolean {
-        if (this._retainRoot || this._stack[this._stack.length - 1]?.container !== undefined)
+        if (this._stack[this._stack.length - 1]?.container !== undefined)
             return true;
         return this._hasValueSink(this._root, 0);
     }
@@ -481,10 +473,4 @@ export abstract class ParserCore implements Parser {
     protected _finishInput(): void { }
     protected _validateEnd(): boolean { return true; }
     get closed(): boolean { return this._done || this._state === FAILED; }
-    onValueJsonPath<T = any>(query: string, callback: ValueCallback<T> | CallbackObserver<T>): Subscription { return this.onValue(compileJsonPath(query), callback); }
-    onStringJsonPath(query: string, callback: ValueCallback<string> | CallbackObserver<string>): Subscription { return this.onString(compileJsonPath(query), callback); }
-    getValueJsonPath<T = any>(query: string): Promise<T> {
-        try {return this.getValue(compileJsonPath(query));}
-        catch (error) {return Promise.reject(error);}
-    }
 }
