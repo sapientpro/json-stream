@@ -257,3 +257,5 @@ LLM-oriented `onString` measurements with 32/128/1024-byte chunks and first-deli
 [Completed object keys](v3-object-key-performance.md) follows the numeric emission PR and includes object builders, selected IDs and LLM streaming controls on Node and Bun.
 
 [Native string-fragment decoding](v3-native-fragments-performance.md) explores bounded `JSON.parse` decoding within the strict V8 escape path, with suffix handling and loaded-hardware control limitations.
+
+[Token-sized Bun writes](v3-token-chunks-performance.md) adds variable Unicode code-point benchmarks and the Bun-only consumed-buffer path, with loaded-hardware controls and rejected decoder/fragment experiments.

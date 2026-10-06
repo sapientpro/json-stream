@@ -8,6 +8,7 @@ import type { Node, Context, Frame } from './selectors.js';
 import { VALUE, OBJ_FIRST, OBJ_KEY, COLON, OBJ_NEXT, ARR_NEXT, STR, ESC, UESC, NUM, LIT, END, FAILED } from './state.js';
 import { createWritableStream, createStringStream } from './web.js';
 import { compileJsonPath } from './jsonpath.js';
+const IS_BUN = typeof (globalThis as {Bun?: unknown}).Bun !== 'undefined';
 /** Shared incremental builder and synchronous callback lifecycle. */
 export abstract class ParserCore implements Parser {
     protected readonly _root: Node = newNode();
@@ -148,6 +149,12 @@ export abstract class ParserCore implements Parser {
             this._consumed += this._pos - offset;
             this._buf = text;
             this._pos = offset;
+        }
+        else if (IS_BUN && this._pos === this._buf.length) {
+            // Avoid slicing and concatenating an empty remainder on the measured Bun path.
+            this._consumed += this._pos;
+            this._buf = text;
+            this._pos = 0;
         }
         else if (this._pos) {
             this._consumed += this._pos;
