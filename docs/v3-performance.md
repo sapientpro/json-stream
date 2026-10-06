@@ -251,3 +251,5 @@ Supplementary Deno/package compatibility is verified, but Deno is not a performa
 
 
 LLM-oriented `onString` measurements with 32/128/1024-byte chunks and first-delivery tests: [LLM string streaming](v3-llm-performance.md).
+
+[Numeric materialization during emission](v3-numeric-emission-performance.md) compares the selective numeric emitter against the JSONPath subscriptions PR, including string controls and rejected runtime/dialect variants.

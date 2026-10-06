@@ -132,6 +132,7 @@ export abstract class ParserCore implements Parser {
                 this._tracking = false;
                 this._retainAll = !!this._root.callbacks?.observed;
                 this._emit = this._emitUnobserved;
+                if (IS_V8) this._emitNumber = this._emitNumberUnobserved;
                 this._open = this._openUnobserved;
                 this._closeString = this._closeStringUnobserved;
                 this._close = this._closeUnobserved;
@@ -368,6 +369,50 @@ export abstract class ParserCore implements Parser {
                 this._path.pop();
             this._state = OBJ_NEXT;
         }
+    }
+    protected _emitNumber(buf: string, start: number, end: number): void {
+        this._snapshot = null;
+        let value: number | undefined;
+        if (this._context !== EMPTY_CONTEXT && !this._done) for (const node of this._context.nodes) if (node.callbacks?.observed) {
+            if (value === undefined) {value = Number(buf.slice(start, end));}
+            node.callbacks.next(value, this._snapshot ??= this._path.slice());
+        }
+        // an observer may have called destroy(); do not overwrite the terminal state
+        if (this._state === FAILED || this._done)
+            return;
+        const frame = this._stack[this._stack.length - 1];
+        if (!frame) {
+            this._state = END;
+            this._rootAvailable = true;
+            return;
+        }
+        if (frame.container !== undefined && value === undefined) {value = Number(buf.slice(start, end));}
+        if (frame.isArray) {
+            frame.container?.push(value);
+            ++frame.count;
+            if (this._tracking)
+                this._path[this._path.length - 1] = frame.count;
+            this._state = ARR_NEXT;
+        }
+        else {
+            // __proto__ is an accessor on Object.prototype; assigning would move the
+            // prototype instead of creating an own property.
+            if (frame.container !== undefined && frame.key === '__proto__') {
+                Object.defineProperty(frame.container, frame.key, { value, enumerable: true, writable: true, configurable: true });
+            }
+            else if (frame.container !== undefined) {
+                frame.container[frame.key] = value;
+            }
+            if (this._tracking)
+                this._path.pop();
+            this._state = OBJ_NEXT;
+        }
+    }
+
+    protected _emitNumberUnobserved(buf: string, start: number, end: number): void {
+        let value: number | undefined;
+        if (this._retainAll) {value = Number(buf.slice(start, end));}
+        this._emitUnobserved(value);
     }
     protected _dispatch(_node: Node, value: any, _depth: number): void { if (this._context === EMPTY_CONTEXT || this._done)
         return; for (const node of this._context.nodes)
