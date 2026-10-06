@@ -40,6 +40,32 @@ const scanStringEnd = (buf: string, pos: number, len: number): number => {
 };
 // Batch complete escapes within one input chunk; boundary/cut handling remains in STR.
 const readEscapedRun = (buf: string, pos: number, len: number, retain: boolean): {pos: number; text: string} => {
+    if (retain) {
+        let end = buf.indexOf('"', pos);
+        while (end >= 0) {
+            let before = end - 1;
+            while (before >= pos && buf.charCodeAt(before) === BACKSLASH) --before;
+            if (((end - before - 1) & 1) === 0) break;
+            end = buf.indexOf('"', end + 1);
+        }
+        if (end < 0) {
+            end = len;
+            const slash = buf.lastIndexOf('\\', end - 1);
+            let before = slash - 1;
+            while (before >= pos && buf.charCodeAt(before) === BACKSLASH) --before;
+            if ((slash - before) & 1) {
+                const tail = end - slash;
+                if (tail === 1 || (buf[slash + 1] === 'u' && tail < 6)) end = slash;
+            }
+        }
+        if (end - pos >= 256) {
+            try {
+                return {pos: end, text: JSON.parse('"' + buf.slice(pos, end) + '"')};
+            } catch {
+                // Invalid fragments retain the ordinary decoder and error positions.
+            }
+        }
+    }
     let text = '';
     while (pos < len) {
         const code = buf.charCodeAt(pos);
