@@ -1,7 +1,7 @@
 {
   "name": "@sapientpro/json-stream",
-  "version": "2.0.1",
-  "description": "A JSON stream parser",
+  "version": "3.0.0-alpha.0",
+  "description": "Incremental JSON and JSON5 parser with selective value callbacks and streaming strings",
   "license": "MIT",
   "author": {
     "name": "Dmyto Kulyk",
@@ -20,28 +20,28 @@
     "stream",
     "parser"
   ],
-  "main": "dist/cjs/index.js",
-  "module": "dist/esm/index.js",
-  "types": "dist/esm/index.d.ts",
+  "main": "dist/cjs/v3/index.js",
+  "module": "dist/esm/v3/index.js",
+  "types": "dist/esm/v3/index.d.ts",
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/esm/index.d.ts",
-        "default": "./dist/esm/index.js"
+        "types": "./dist/esm/v3/index.d.ts",
+        "default": "./dist/esm/v3/index.js"
       },
       "require": {
-        "types": "./dist/cjs/index.d.ts",
-        "default": "./dist/cjs/index.js"
+        "types": "./dist/cjs/v3/index.d.ts",
+        "default": "./dist/cjs/v3/index.js"
       }
     },
     "./node": {
       "import": {
-        "types": "./dist/esm/node.d.ts",
-        "default": "./dist/esm/node.js"
+        "types": "./dist/esm/v3/node.d.ts",
+        "default": "./dist/esm/v3/node.js"
       },
       "require": {
-        "types": "./dist/cjs/node.d.ts",
-        "default": "./dist/cjs/node.js"
+        "types": "./dist/cjs/v3/node.d.ts",
+        "default": "./dist/cjs/v3/node.js"
       }
     },
     "./package.json": "./package.json"
@@ -56,7 +56,9 @@
     "benchmark:competitors:bun": "npm run build && bun scripts/benchmark-competitors.mjs",
     "benchmark:regression": "node --expose-gc scripts/benchmark-regression.mjs && bun scripts/benchmark-regression.mjs",
     "benchmark:node": "npm run build && node --expose-gc scripts/benchmark.mjs",
-    "benchmark:bun": "npm run build && bun scripts/benchmark.mjs"
+    "benchmark:bun": "npm run build && bun scripts/benchmark.mjs",
+    "test:formats": "node scripts/v3/verify.mjs && bun scripts/v3/verify.mjs",
+    "benchmark:v3": "npm run build && node scripts/v3/benchmark.mjs"
   },
   "engines": {
     "node": ">=22"
@@ -70,16 +72,21 @@
     "json-web-streams": "1.2.0",
     "stream-json": "3.7.0",
     "ts-jest": "^29.2.5",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "json5": "2.2.3"
   },
   "files": [
-    "dist",
-    "CHANGELOG.md"
+    "dist/cjs/v3",
+    "dist/esm/v3",
+    "dist/cjs/package.json",
+    "dist/esm/package.json",
+    "CHANGELOG.md",
+    "docs"
   ],
   "typesVersions": {
     "*": {
       "node": [
-        "dist/cjs/node.d.ts"
+        "dist/cjs/v3/node.d.ts"
       ]
     }
   }

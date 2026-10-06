@@ -2,6 +2,30 @@
 
 This project follows [Semantic Versioning](https://semver.org/).
 
+## 3.0.0-alpha.0 (unreleased development candidate)
+
+- Replace observable value/string subscriptions with synchronous callbacks and
+  unsubscribe handles; provide first-match promises and Web string streams.
+- Share selector, retention, callback and transport lifecycle across independent
+  strict JSON and JSON5 scanners. Select the format once at construction.
+- Add a documented RFC 9535 JSONPath child-selector subset with explicit rejection
+  of unsupported queries. Distinguish numeric array indexes from object names.
+- Separate root availability from successful EOF, reject trailing input and
+  malformed JSON separators/escapes/numbers, and fix input mode for each parser.
+- Require consumer registration before the first write, support cancellation
+  during parsing and retain complete selected values without retaining the root.
+- Keep Web and Node transports as wrappers over the synchronous core. String
+  fragment observers receive per-string boundary notifications.
+
+- Move prefix seeking out of the core. Add JSONL and prefixed-document managers
+  with persistent consumers and record indexes. JSONL defaults to strict JSON;
+  explicit JSON5 mode requires one physical line per record. Reuse parser state
+  and subscriptions across records with validating `reset()` boundaries.
+
+See [the migration guide](docs/v3.md). This candidate has not been published.
+Performance comparisons and compatibility checks are recorded separately; do not
+assume every workload is faster than 2.0.1.
+
 ## 2.0.1
 
 Compatible performance improvements over 2.0.0. Public imports, callback paths,
