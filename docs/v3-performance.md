@@ -263,3 +263,5 @@ LLM-oriented `onString` measurements with 32/128/1024-byte chunks and first-deli
 [One-pass V8 text fragments](v3-v8-text-fragments-performance.md) follows the Bun token-sized-write patch and includes Node22/24/26 measurements, byte/Bun controls and rejected per-write-store experiments.
 
 [Root selector setup](v3-root-selector-performance.md) measures repeated short documents, includes Node22/24/26 and Bun, and keeps large-document controls and rejected array-append experiments explicit.
+
+[JSON5 token scanning](v3-json5-delimiter-performance.md) measures token boundary searches and scanner method extraction, with JSON/UTF-8/token-sized string controls and rejected variants.

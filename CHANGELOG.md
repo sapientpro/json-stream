@@ -4,6 +4,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+- Reduce JSON5 token boundary allocations and scanner closures, preserving
+  token validation, incremental strings and callback timing.
+
 - Reuse a frozen root selector for `$`, reducing subscription setup for small
   documents. Add scalar and empty-object setup workloads to the benchmark.
 
