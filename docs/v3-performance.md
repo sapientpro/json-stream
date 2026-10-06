@@ -261,3 +261,5 @@ LLM-oriented `onString` measurements with 32/128/1024-byte chunks and first-deli
 [Token-sized Bun writes](v3-token-chunks-performance.md) adds variable Unicode code-point benchmarks and the Bun-only consumed-buffer path, with loaded-hardware controls and rejected decoder/fragment experiments.
 
 [One-pass V8 text fragments](v3-v8-text-fragments-performance.md) follows the Bun token-sized-write patch and includes Node22/24/26 measurements, byte/Bun controls and rejected per-write-store experiments.
+
+[Root selector setup](v3-root-selector-performance.md) measures repeated short documents, includes Node22/24/26 and Bun, and keeps large-document controls and rejected array-append experiments explicit.

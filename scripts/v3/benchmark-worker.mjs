@@ -5,6 +5,8 @@ const api=await import(job.module);
 const Parser=job.format==='json5'?api.Json5Parser:api.JsonParser;
 const objects=()=>({items:Array.from({length:8000},(_,id)=>({id,name:'item-'+id,active:id%3===0,tags:['a','b'],score:id/7}))});
 const fixtures={
+ scalar:()=>123,
+ empty:()=>({}),
  integers:()=>Array.from({length:40000},(_,i)=>i),
  decimals:()=>Array.from({length:40000},(_,i)=>(i-20000)/7),
  exponents:()=>Array.from({length:40000},(_,i)=>i%2?i*1e-120:i*1e120),
