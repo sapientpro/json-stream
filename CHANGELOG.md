@@ -4,6 +4,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+- Reuse a frozen root selector for `$`, reducing subscription setup for small
+  documents. Add scalar and empty-object setup workloads to the benchmark.
+
 - Select one-pass string-fragment delivery for text input on V8, preserving
   synchronous callbacks, cancellation, root retention and surrogate boundaries.
 

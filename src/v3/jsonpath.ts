@@ -1,7 +1,11 @@
 import { Any } from './types.js';
 import type { Path, Selector } from './types.js';
+const ROOT_PATH: Path = Object.freeze([]);
 /** Compile the streaming child-selector subset of RFC 9535 once. */
 export function compileJsonPath(query: string): Path {
+    // The root needs no selector parsing or helper closures.
+    if (query === '$')
+        return ROOT_PATH;
     if (typeof query !== 'string' || query[0] !== '$')
         throw new SyntaxError('JSONPath must start with $');
     const path: Selector[] = [];
