@@ -4,6 +4,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+- Select one-pass string-fragment delivery for text input on V8, preserving
+  synchronous callbacks, cancellation, root retention and surrogate boundaries.
+
 - Replace fully consumed input buffers directly for small Bun chunks, reducing work per
   write without delaying string fragments. Add code-point chunk patterns to the
   benchmark for token-sized text and UTF-8 input.
