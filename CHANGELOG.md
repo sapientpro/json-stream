@@ -4,6 +4,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+- Replace fully consumed input buffers directly for small Bun chunks, reducing work per
+  write without delaying string fragments. Add code-point chunk patterns to the
+  benchmark for token-sized text and UTF-8 input.
+
 - Decode large strict JSON escape fragments through the native string parser on
   V8, preserving incremental handling of incomplete escapes, surrogate pairs,
   cancellation and ordinary parser errors. Small chunks and JSON5 keep their

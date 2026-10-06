@@ -13,7 +13,8 @@ for(const report of reports){
  const median=nums=>{nums.sort((a,b)=>a-b);const at=Math.floor(nums.length/2);return nums.length%2?nums[at]:(nums[at-1]+nums[at])/2;};
  for(const key of keys){const [dataset,mode,size,input]=JSON.parse(key),rows=report.results.filter(r=>JSON.stringify([r.dataset,r.mode,r.size,r.input])===key),labels=[...new Set(rows.map(r=>r.label))];if(labels.length!==2)continue;
  const base=rows.filter(r=>r.label==='2.0.1'||r.label===labels[0]),next=rows.filter(r=>r.label!==base[0].label),b=median(base.map(r=>r.mbps)),n=median(next.map(r=>r.mbps)),deltas=base.map(r=>100*(next.find(x=>x.repetition===r.repetition).mbps/r.mbps-1));
- lines.push(`| ${dataset}/${mode} (${input}) | ${size} | ${b.toFixed(1)} | ${n.toFixed(1)} | ${(100*(n/b-1)).toFixed(1)}% | ${Math.min(...deltas).toFixed(1)}…${Math.max(...deltas).toFixed(1)}% |`);
+ const chunk=rows[0].chunkPattern?`varying ${Math.min(...rows[0].chunkPattern)}–${Math.max(...rows[0].chunkPattern)} code points`:rows[0].chunkUnit==='codepoint'?`${size} code points`:String(size);
+ lines.push(`| ${dataset}/${mode} (${input}) | ${chunk} | ${b.toFixed(1)} | ${n.toFixed(1)} | ${(100*(n/b-1)).toFixed(1)}% | ${Math.min(...deltas).toFixed(1)}…${Math.max(...deltas).toFixed(1)}% |`);
  }
  lines.push('');
 }

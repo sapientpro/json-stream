@@ -12,13 +12,19 @@ let cases=[['integers','root'],['integers','scalar'],['decimals','scalar'],['exp
 if(option('--cases')){const chosen=new Set(option('--cases').split(','));cases=cases.filter(([data,mode])=>chosen.has(data+'/'+mode));if(!cases.length)throw new Error('No workload matched --cases');}
 if(option('--format')){versions.splice(0,versions.length,...versions.filter(v=>v.format===option('--format')));}
 const repetitions=Number(option('--pairs','3')),warmups=Number(option('--warmups','120')),iterations=Number(option('--iterations','16'));
+const chunkUnit=option('--chunk-unit','input');
+if(!['input','codepoint'].includes(chunkUnit))throw new Error('--chunk-unit must be input or codepoint');
+const chunkPattern=option('--chunk-pattern')?.split(',').map(Number);
+if(chunkPattern&&(chunkUnit!=='codepoint'||chunkPattern.some(n=>!Number.isSafeInteger(n)||n<1)))throw new Error('--chunk-pattern needs positive code-point lengths and --chunk-unit codepoint');
 const results=[],worker=fileURLToPath(new URL('benchmark-worker.mjs',import.meta.url));
-const sizes=option('--sizes','1024,65536').split(',').map(Number);
+const sizes=chunkPattern?[0]:option('--sizes','1024,65536').split(',').map(Number);
+if(!chunkPattern&&sizes.some(n=>!Number.isSafeInteger(n)||n<1))throw new Error('--sizes needs positive integer lengths');
 fs.mkdirSync(path.dirname(output),{recursive:true});
 for(let repetition=0;repetition<repetitions;repetition++)for(const size of sizes)for(const [dataset,mode] of cases)for(const version of repetition%2?[...versions].reverse():versions){
- const job={...version,dataset,mode,size,repetition,warmups,iterations,input:option('--input','bytes'),syntax:option('--syntax','json')};
+ const job={...version,dataset,mode,size,repetition,warmups,iterations,input:option('--input','bytes'),syntax:option('--syntax','json'),chunkUnit,chunkPattern};
  const cmdArgs=engine==='deno'?['run','--cached-only','--allow-read',worker,JSON.stringify(job)]:[...(engine==='node'?['--expose-gc']:[]),worker,JSON.stringify(job)];
  const result=JSON.parse(execFileSync(bin,cmdArgs,{encoding:'utf8',timeout:180000,env:engine==='deno'?{...process.env,DENO_DIR:'/private/tmp/json-stream-deno-v3-cache'}:process.env}));
  results.push(result);fs.writeFileSync(output,JSON.stringify({engine,runtime:execFileSync(bin,['--version'],{encoding:'utf8'}).trim(),protocol:{repetitions,warmups,iterations,samples:7,setupIncluded:true,ownedConcretePathsConsumed:true,serialWorkers:true,units:'decimal MB/s'},results},null,2));
- console.log(`${results.length}/${repetitions*sizes.length*cases.length*versions.length} ${version.label} ${dataset}/${mode} ${size}B: ${result.mbps.toFixed(1)} MB/s`);
+ const chunkLabel=chunkPattern?`pattern ${chunkPattern.join(',')} code points`:chunkUnit==='codepoint'?`${size} code points`:`${size} ${job.input==='text'?'UTF-16 units':'bytes'}`;
+ console.log(`${results.length}/${repetitions*sizes.length*cases.length*versions.length} ${version.label} ${dataset}/${mode} ${chunkLabel}: ${result.mbps.toFixed(1)} MB/s`);
 }

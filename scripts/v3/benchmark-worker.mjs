@@ -23,7 +23,13 @@ const value=fixtures[job.dataset]();
 let text=JSON.stringify(value);
 if(job.syntax==='json5')text='/*document*/'+text.replace(/"(items|id|name|active|tags|score|text)":/g,'$1:').replace(/\}$/,' ,}');
 const bytes=new TextEncoder().encode(text),input=job.input==='text'?text:bytes,chunks=[];
-for(let i=0;i<input.length;i+=job.size)chunks.push(input.slice(i,i+job.size));
+if(job.chunkUnit==='codepoint'){
+ const points=Array.from(text),encoder=new TextEncoder(),widths=job.chunkPattern??[job.size];
+ for(let i=0,n=0;i<points.length;n++){
+  const width=widths[n%widths.length],part=points.slice(i,i+width).join('');
+  chunks.push(job.input==='text'?part:encoder.encode(part));i+=width;
+ }
+}else for(let i=0;i<input.length;i+=job.size)chunks.push(input.slice(i,i+job.size));
 const expectedIds=value.items?.map(x=>x.id), expectedValues=Array.isArray(value)?value:value.items;
 const legacyRetention='root' in Parser.prototype;
 const run=(capture=false)=>{
@@ -58,4 +64,4 @@ for(let i=0;i<job.warmups;i++)run();
 const samples=[];
 for(let sample=0;sample<7;sample++){if(typeof Bun!=='undefined')Bun.gc(true);else globalThis.gc?.();const start=performance.now();let result;for(let i=0;i<job.iterations;i++)result=run();samples.push((performance.now()-start)/job.iterations);deepStrictEqual(summary(result),expected);}
 const medianMs=[...samples].sort((a,b)=>a-b)[3];
-console.log(JSON.stringify({...job,bytes:bytes.length,medianMs,mbps:bytes.length/medianMs/1000,samplesMs:samples}));
+console.log(JSON.stringify({...job,bytes:bytes.length,chunkCount:chunks.length,medianMs,mbps:bytes.length/medianMs/1000,millionWritesPerSecond:chunks.length/medianMs/1000,samplesMs:samples}));
