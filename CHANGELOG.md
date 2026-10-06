@@ -4,7 +4,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
-- Replace fully consumed input buffers directly on Bun, reducing work per small
+- Replace fully consumed input buffers directly for small Bun chunks, reducing work per
   write without delaying string fragments. Add code-point chunk patterns to the
   benchmark for token-sized text and UTF-8 input.
 

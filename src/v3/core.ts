@@ -150,8 +150,8 @@ export abstract class ParserCore implements Parser {
             this._buf = text;
             this._pos = offset;
         }
-        else if (IS_BUN && this._pos === this._buf.length) {
-            // Avoid slicing and concatenating an empty remainder on the measured Bun path.
+        else if (IS_BUN && text.length <= 128 && this._pos === this._buf.length) {
+            // Small Bun writes avoid an empty slice/concat; large chunks keep their measured path.
             this._consumed += this._pos;
             this._buf = text;
             this._pos = 0;
