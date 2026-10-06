@@ -2,7 +2,7 @@
 
 This project follows [Semantic Versioning](https://semver.org/).
 
-## 3.0.0-alpha.0 (unreleased development candidate)
+## 3.0.0-alpha.1 — 2026-10-06
 
 - Replace observable value/string subscriptions with synchronous callbacks and
   unsubscribe handles; provide first-match promises and Web string streams.
@@ -22,7 +22,19 @@ This project follows [Semantic Versioning](https://semver.org/).
   explicit JSON5 mode requires one physical line per record. Reuse parser state
   and subscriptions across records with validating `reset()` boundaries.
 
-See [the migration guide](docs/v3.md). This candidate has not been published.
+- Unify `onValue`, `onString`, `getValue` and `stringStream` selectors: JSONPath
+  strings begin with `$`; typed arrays with `Any`/`Rest` remain supported.
+- Remove `retainRoot` and the `root` getter. Retain values through subscriptions;
+  `getValue()` or `onValue('$', ...)` requests the whole root.
+- Batch complete JSON escape runs on V8 and defer validated numeric conversion
+  until a value consumer or retained parent needs it.
+- Finish plain object keys directly for value parsers; string-fragment consumers
+  keep their existing key path to preserve small-chunk LLM performance.
+- Cover synchronous earliest string delivery, surrogate protection, cancellation,
+  reset, record framing and selected paths across byte boundaries.
+
+See [the migration guide](docs/v3.md). Install prereleases using the `alpha` npm tag;
+2.0.1 remains the stable release.
 Performance comparisons and compatibility checks are recorded separately; do not
 assume every workload is faster than 2.0.1.
 
