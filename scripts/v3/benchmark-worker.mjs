@@ -14,6 +14,7 @@ const fixtures={
  objects,
  'wide object':()=>Object.fromEntries(Array.from({length:16000},(_,i)=>['key'+i,{id:i,text:'v'+i}])),
  unicode:()=>({text:'€😀漢字'.repeat(30000)}),
+ llm:()=>({meta:{model:'fixture',id:1},text:('Пояснення: «так», emoji 😀.\nКод: const x = "value";\nШлях: C:\\tmp\\file.\n').repeat(3000)}),
  escapes:()=>({text:'\\\n\t"😀'.repeat(20000)}),
  'long string':()=>({text:'abcdef0123456789'.repeat(40000)}),
  small:()=>({items:[{id:1,text:'a'},{id:2,text:'b'}]}),

@@ -248,3 +248,6 @@ All numbers are decimal MB/s. Alternating fresh processes, serial workers; parse
 Supplementary Deno/package compatibility is verified, but Deno is not a performance gate. Remaining priorities: Node control/escape/string-fragment costs, Bun object building, tiny-document setup; preserve strict syntax, precision and owned paths.
 
 [Escape decoding follow-up against the architecture PR](v3-escape-performance.md) adds an explicit short escaped-string workload and separate comparison/confirmation tables.
+
+
+LLM-oriented `onString` measurements with 32/128/1024-byte chunks and first-delivery tests: [LLM string streaming](v3-llm-performance.md).
