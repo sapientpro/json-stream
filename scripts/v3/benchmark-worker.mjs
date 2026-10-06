@@ -8,6 +8,7 @@ const fixtures={
  integers:()=>Array.from({length:40000},(_,i)=>i),
  decimals:()=>Array.from({length:40000},(_,i)=>(i-20000)/7),
  exponents:()=>Array.from({length:40000},(_,i)=>i%2?i*1e-120:i*1e120),
+ 'short escaped strings':()=>Array.from({length:40000},(_,i)=>'\\\n\t"😀'+i),
  'short strings':()=>Array.from({length:40000},(_,i)=>'s'+i),
  literals:()=>Array.from({length:40000},(_,i)=>[true,false,null][i%3]),
  objects,
