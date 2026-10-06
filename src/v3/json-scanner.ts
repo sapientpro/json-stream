@@ -99,6 +99,25 @@ export class JsonScanner extends ParserCore {
         else
             this._fail(this._syntaxError());
     }
+    protected _readObjectKey(buf: string, pos: number, len: number): number {
+        const end = scanStringEnd(buf, pos, len);
+        const part = buf.slice(pos, end);
+        if (IS_V8 && end - pos > 32 && hasStringControl(part, pos, end, len)) {
+            this._pos = pos;
+            this._fail(this._syntaxError());
+        }
+        if (end < len && buf.charCodeAt(end) === QUOTE) {
+            this._pos = end + 1;
+            const key = this._retainString ? this._flatten(part) : undefined;
+            this._stack[this._stack.length - 1]!.key = key!;
+            if (this._tracking) this._path.push(key!);
+            this._state = COLON;
+            return end + 1;
+        }
+        if (this._retainString) this._str += part;
+        this._state = STR;
+        return end;
+    }
     protected _run(): void {
         const buf = this._buf;
         const len = buf.length;
@@ -259,7 +278,8 @@ export class JsonScanner extends ParserCore {
                             ++pos;
                             this._keyMode = true;
                             this._retainString = this._needsKey();
-                            this._state = STR;
+                            if (this._hasChunks) this._state = STR;
+                            else pos = this._readObjectKey(buf, pos, len);
                             break;
                         case COLON:
                             if (code !== COLON_CH) {
