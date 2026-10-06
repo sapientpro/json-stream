@@ -78,3 +78,65 @@ node scripts/v3/benchmark.mjs --baseline /path/to/alpha/dist/esm/v3/index.js --b
 ```
 
 No CPU profiling tools, runtime dependencies, release or publication are added by this change.
+
+## Quiet-machine confirmation — 2026-10-06
+
+The heavy PHP workload was absent for this repeat. Full fixtures, three serial alternating process pairs, 120 warmups and seven samples ×32 iterations. The initial control table remains above as historical loaded-hardware data. All repeated rows below are retained; CPU/wall diagnostics do not correct throughput or prove constant CPU frequency.
+
+The native gains repeat: Node LLM 1KB/64KB +46.6%/+75.8%, dense escaped strings +80.7%/+144.8%. Small-string, numeric and Bun controls mostly show small differences. Node object/128-byte input is −2.2% initially and −2.4% in the longer repeat (pair range −2.4…4.8%); do not claim universally neutral controls.
+
+The first fast-ASCII controls were −4…5%. Longer windows used 256 warmups and seven samples ×512 iterations for ASCII, ×128 for objects/LLM. ASCII/64KB then measured +0.2%, range 0.0…2.6%; ASCII/1KB had a 41.6% process-pair outlier. LLM/32 bytes also had a 23.1% pair outlier. Those outliers remain visible and are not interpreted as gains.
+
+### pr24-node
+
+84/84 workers completed
+
+| workload / input | chunk | alpha.1 | PR24 | Δ | pairs |
+|---|---:|---:|---:|---:|---|
+| json llm/string bytes | 32 bytes | 84.0 | 83.6 | -0.5% | 0.0%, -0.9%, -3.3% |
+| json llm/string bytes | 128 bytes | 168.6 | 172.3 | 2.2% | 2.7%, 0.4%, 1.7% |
+| json llm/string bytes | 1024 bytes | 262.2 | 384.3 | 46.6% | 47.4%, 46.6%, 49.2% |
+| json llm/string bytes | 65536 bytes | 365.0 | 641.8 | 75.8% | 78.5%, 78.8%, 75.7% |
+| json escapes/string bytes | 128 bytes | 95.1 | 95.1 | -0.1% | -1.6%, -1.6%, -0.1% |
+| json escapes/string bytes | 1024 bytes | 140.0 | 253.1 | 80.7% | 80.8%, 82.0%, 80.7% |
+| json escapes/string bytes | 65536 bytes | 161.5 | 395.3 | 144.8% | 139.0%, 147.1%, 142.3% |
+| json short strings/scalar bytes | 32 bytes | 99.1 | 99.5 | 0.5% | 1.8%, 0.1%, -0.4% |
+| json short strings/scalar bytes | 128 bytes | 134.3 | 134.3 | -0.1% | 0.4%, 0.1%, -0.9% |
+| json objects/root bytes | 32 bytes | 96.1 | 96.3 | 0.3% | 1.1%, -0.1%, -0.6% |
+| json objects/root bytes | 128 bytes | 134.7 | 131.7 | -2.2% | 0.1%, -3.5%, -3.3% |
+| json integers/scalar bytes | 128 bytes | 103.5 | 104.3 | 0.8% | 0.8%, 0.1%, 0.2% |
+| json long string/root bytes | 1024 bytes | 1786.6 | 1713.5 | -4.1% | -4.1%, -2.7%, -0.7% |
+| json long string/root bytes | 65536 bytes | 5334.5 | 5073.3 | -4.9% | -13.7%, 0.1%, -4.1% |
+
+CPU/wall below 80%: 0/588 samples.
+
+
+### pr24-bun
+
+36/36 workers completed
+
+| workload / input | chunk | alpha.1 | PR24 | Δ | pairs |
+|---|---:|---:|---:|---:|---|
+| json llm/string bytes | 128 bytes | 282.5 | 287.9 | 1.9% | 1.9%, -1.8%, 1.5% |
+| json llm/string bytes | 1024 bytes | 350.3 | 351.7 | 0.4% | -0.4%, 0.4%, 3.9% |
+| json escapes/string bytes | 128 bytes | 164.7 | 165.9 | 0.8% | 4.1%, -2.2%, -1.7% |
+| json escapes/string bytes | 1024 bytes | 192.0 | 194.3 | 1.2% | 2.7%, 1.2%, -1.6% |
+| json objects/root bytes | 128 bytes | 177.3 | 179.0 | 1.0% | 3.5%, -0.1%, 1.0% |
+| json objects/root bytes | 1024 bytes | 201.0 | 200.1 | -0.4% | -1.9%, 4.6%, -2.5% |
+
+CPU/wall below 80%: 0/252 samples.
+
+
+### pr24-node-extended
+
+24/24 workers completed
+
+| workload / input | chunk | alpha.1 | PR24 | Δ | pairs |
+|---|---:|---:|---:|---:|---|
+| json long string/root bytes | 1024 bytes | 2061.6 | 2115.1 | 2.6% | 1.5%, 2.8%, 41.6% |
+| json long string/root bytes | 65536 bytes | 5775.4 | 5787.7 | 0.2% | 0.0%, 0.2%, 2.6% |
+| json objects/root bytes | 128 bytes | 136.7 | 133.3 | -2.4% | -2.3%, -2.4%, 4.8% |
+| json llm/string bytes | 32 bytes | 70.3 | 86.5 | 23.1% | -0.8%, 23.1%, -3.7% |
+
+CPU/wall below 80%: 0/168 samples.
+
