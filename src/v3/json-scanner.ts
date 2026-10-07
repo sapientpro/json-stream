@@ -98,6 +98,18 @@ const readEscapedRun = (buf: string, pos: number, len: number, retain: boolean):
     return {pos, text};
 };
 export class JsonScanner extends ParserCore {
+    protected _validateEnd(): boolean {
+        // RegExp's last subject can keep a completed input buffer alive.
+        STRING_END.lastIndex = 0;
+        STRING_END.test('"');
+        return true;
+    }
+    protected _release(): void {
+        // Errors and cancellation may skip document-end validation.
+        if (!this._documentDone) this._validateEnd();
+        // Avoid introducing a super home-object context in scanner hot methods.
+        (ParserCore.prototype as JsonScanner)._release.call(this);
+    }
     // Reuse bounded, validated keys; collisions always fall back to ordinary scanning.
     protected declare _keyCache: (string | undefined)[];
     protected declare _keyMisses: number;
