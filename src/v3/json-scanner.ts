@@ -1,6 +1,6 @@
 import { ParserCore } from './core.js';
 import { stepContext } from './selectors.js';
-import { VALUE, OBJ_FIRST, OBJ_KEY, COLON, OBJ_NEXT, ARR_NEXT, STR, ESC, UESC, NUM, LIT, END, FAILED } from './state.js';
+import { State } from './state.js';
 import { IS_V8, unicodeUnit, readHex4, readLiteral, isSpace } from './lexical.js';
 const QUOTE = 34, BACKSLASH = 92, LBRACE = 123, RBRACE = 125, LBRACKET = 91, RBRACKET = 93, COMMA = 44, COLON_CH = 58, MINUS = 45, PLUS = 43, DOT = 46, ZERO = 48, NINE = 57, LOWER_E = 101, UPPER_E = 69;
 // Use the native scanner only after a short prefix; tiny strings need no match allocation.
@@ -109,9 +109,9 @@ export class JsonScanner extends ParserCore {
             this._keyMisses = 0;
         }
     }
-    protected _finishInput(): void { if (this._state === NUM)
+    protected _finishInput(): void { if (this._state === State.NUM)
         this._closeNumber();
-    else if (this._state === LIT)
+    else if (this._state === State.LIT)
         this._closeLiteral(); }
     protected _closeNumber(): void {
         const text = this._acc;
@@ -142,7 +142,7 @@ export class JsonScanner extends ParserCore {
     }
     protected _initializeKeyReader(buf: string, pos: number, len: number): number {
         const end = this._readObjectKeyOrdinary(buf, pos, len);
-        if (this._state === COLON) {
+        if (this._state === State.COLON) {
             const frame = this._stack[this._stack.length - 1]!;
             let useful = frame.container !== undefined;
             if (!useful) for (const node of frame.context.nodes) {
@@ -183,11 +183,11 @@ export class JsonScanner extends ParserCore {
                 this._keyCache[slot] = key.length < 13 ? key : (' ' + key).slice(1);
             this._stack[this._stack.length - 1]!.key = key!;
             if (this._tracking) this._path.push(key!);
-            this._state = COLON;
+            this._state = State.COLON;
             return end + 1;
         }
         if (this._retainString) this._str += part;
-        this._state = STR;
+        this._state = State.STR;
         return end;
     }
     protected _readObjectKeyOrdinary(buf: string, pos: number, len: number): number {
@@ -202,11 +202,11 @@ export class JsonScanner extends ParserCore {
             const key = this._retainString ? this._flatten(part) : undefined;
             this._stack[this._stack.length - 1]!.key = key!;
             if (this._tracking) this._path.push(key!);
-            this._state = COLON;
+            this._state = State.COLON;
             return end + 1;
         }
         if (this._retainString) this._str += part;
-        this._state = STR;
+        this._state = State.STR;
         return end;
     }
     protected _run(): void {
@@ -216,8 +216,73 @@ export class JsonScanner extends ParserCore {
         for (;;) {
             if (this._done)
                 return;
+            // Keep streamed string runs outside the numeric switch dispatch.
+            if (this._state === State.STR) {
+                const end = scanStringEnd(buf, pos, len);
+                if (end > pos) {
+                    const part = buf.slice(pos, end);
+                    if (IS_V8 && end - pos > 32 && hasStringControl(part, pos, end, len)) {
+                        this._pos = pos;
+                        this._fail(this._syntaxError());
+                    }
+                    if (this._retainString || this._strSinks.length)
+                        this._str += part;
+                    pos = end;
+                }
+                if (pos >= len) {
+                    this._flushChunk();
+                    this._pos = pos;
+                    return;
+                }
+                if (buf.charCodeAt(pos) < 32) {
+                    this._pos = pos;
+                    this._fail(this._syntaxError());
+                }
+                if (buf.charCodeAt(pos) === QUOTE) {
+                    ++pos;
+                    this._pos = pos;
+                    this._closeString();
+                }
+                else {
+                    if (IS_V8 && this._str.length >= 64 && len - pos >= 256) {
+                        const run = readEscapedRun(buf, pos, len, this._retainString || this._strSinks.length > 0);
+                        if (run.pos > pos) {
+                            if (run.text) this._str += run.text;
+                            pos = run.pos;
+                            continue;
+                        }
+                    }
+                    // Decode complete escapes without a second state-machine dispatch.
+                    const ch = buf[pos + 1];
+                    if (ch === 'u' && pos + 6 <= len) {
+                        const value = readHex4(buf, pos + 2);
+                        if (value < 0) {
+                            this._pos = pos;
+                            this._fail(this._syntaxError());
+                        }
+                        if (this._retainString || this._strSinks.length)
+                            this._str += unicodeUnit(value);
+                        pos += 6;
+                    }
+                    else if (ch !== undefined && ch !== 'u') {
+                        const value = ESCAPES[ch];
+                        if (value === undefined) {
+                            this._pos = pos;
+                            this._fail(this._syntaxError());
+                        }
+                        if (this._retainString || this._strSinks.length)
+                            this._str += value;
+                        pos += 2;
+                    }
+                    else {
+                        ++pos;
+                        this._state = State.ESC;
+                    }
+                }
+                continue;
+                        }
             switch (this._state) {
-                case END:
+                case State.END:
                     if (this._framed) { this._pos = pos; return; }
                     while (pos < len && isSpace(buf.charCodeAt(pos)))
                         ++pos;
@@ -225,15 +290,15 @@ export class JsonScanner extends ParserCore {
                     if (pos < len)
                         this._fail(this._syntaxError());
                     return;
-                case FAILED:
+                case State.FAILED:
                     this._pos = pos;
                     return;
-                case VALUE:
-                case OBJ_FIRST:
-                case OBJ_KEY:
-                case COLON:
-                case OBJ_NEXT:
-                case ARR_NEXT: {
+                case State.VALUE:
+                case State.OBJ_FIRST:
+                case State.OBJ_KEY:
+                case State.COLON:
+                case State.OBJ_NEXT:
+                case State.ARR_NEXT: {
                     while (pos < len && isSpace(buf.charCodeAt(pos)))
                         ++pos;
                     if (pos >= len) {
@@ -242,7 +307,7 @@ export class JsonScanner extends ParserCore {
                     }
                     const code = buf.charCodeAt(pos);
                     switch (this._state) {
-                        case VALUE:
+                        case State.VALUE:
                             if (this._tracking)
                                 this._context = this._stack.length ? this._stack[this._stack.length - 1]!.arrayContext ?? stepContext(this._stack[this._stack.length - 1]!.context, this._path[this._path.length - 1]!) : this._rootContext;
                             if (code === LBRACE) {
@@ -263,7 +328,7 @@ export class JsonScanner extends ParserCore {
                                 this._retainString = this._shouldRetain();
                                 if (this._hasChunks)
                                     this._findChunkSinks(this._root, 0);
-                                this._state = STR;
+                                this._state = State.STR;
                             }
                             else if ((code >= ZERO && code <= NINE) || code === MINUS) {
                                 const start = pos, negative = code === MINUS;
@@ -339,7 +404,7 @@ export class JsonScanner extends ParserCore {
                                 this._acc = buf.slice(start, finish);
                                 this._numPhase = phase;
                                 pos = finish;
-                                this._state = NUM;
+                                this._state = State.NUM;
                             }
                             else {
                                 this._acc = '';
@@ -350,14 +415,14 @@ export class JsonScanner extends ParserCore {
                                     this._emit(literal === 1 ? true : literal === 2 ? false : null);
                                 }
                                 else {
-                                    this._state = LIT;
+                                    this._state = State.LIT;
                                 }
                             }
                             break;
-                        case OBJ_FIRST:
-                        case OBJ_KEY:
+                        case State.OBJ_FIRST:
+                        case State.OBJ_KEY:
                             // a trailing comma leaves OBJ_KEY facing the closing brace
-                            if (code === RBRACE && this._state === OBJ_FIRST) {
+                            if (code === RBRACE && this._state === State.OBJ_FIRST) {
                                 ++pos;
                                 this._close();
                                 break;
@@ -369,39 +434,39 @@ export class JsonScanner extends ParserCore {
                             ++pos;
                             this._keyMode = true;
                             this._retainString = this._needsKey();
-                            if (this._hasChunks) this._state = STR;
+                            if (this._hasChunks) this._state = State.STR;
                             else pos = this._readObjectKey(buf, pos, len);
                             break;
-                        case COLON:
+                        case State.COLON:
                             if (code !== COLON_CH) {
                                 this._pos = pos;
                                 this._fail(this._syntaxError());
                             }
                             ++pos;
-                            this._state = VALUE;
+                            this._state = State.VALUE;
                             break;
-                        case OBJ_NEXT:
+                        case State.OBJ_NEXT:
                             if (code === RBRACE) {
                                 ++pos;
                                 this._close();
                             }
                             else if (code === COMMA) {
                                 ++pos;
-                                this._state = OBJ_KEY;
+                                this._state = State.OBJ_KEY;
                             }
                             else {
                                 this._pos = pos;
                                 this._fail(this._syntaxError());
                             }
                             break;
-                        case ARR_NEXT:
+                        case State.ARR_NEXT:
                             if (code === RBRACKET) {
                                 ++pos;
                                 this._close();
                             }
                             else if (code === COMMA) {
                                 ++pos;
-                                this._state = VALUE;
+                                this._state = State.VALUE;
                             }
                             else {
                                 this._pos = pos;
@@ -411,71 +476,7 @@ export class JsonScanner extends ParserCore {
                     }
                     break;
                 }
-                case STR: {
-                    const end = scanStringEnd(buf, pos, len);
-                    if (end > pos) {
-                        const part = buf.slice(pos, end);
-                        if (IS_V8 && end - pos > 32 && hasStringControl(part, pos, end, len)) {
-                            this._pos = pos;
-                            this._fail(this._syntaxError());
-                        }
-                        if (this._retainString || this._strSinks.length)
-                            this._str += part;
-                        pos = end;
-                    }
-                    if (pos >= len) {
-                        this._flushChunk();
-                        this._pos = pos;
-                        return;
-                    }
-                    if (buf.charCodeAt(pos) < 32) {
-                        this._pos = pos;
-                        this._fail(this._syntaxError());
-                    }
-                    if (buf.charCodeAt(pos) === QUOTE) {
-                        ++pos;
-                        this._pos = pos;
-                        this._closeString();
-                    }
-                    else {
-                        if (IS_V8 && this._str.length >= 64 && len - pos >= 256) {
-                            const run = readEscapedRun(buf, pos, len, this._retainString || this._strSinks.length > 0);
-                            if (run.pos > pos) {
-                                if (run.text) this._str += run.text;
-                                pos = run.pos;
-                                break;
-                            }
-                        }
-                        // Decode complete escapes without a second state-machine dispatch.
-                        const ch = buf[pos + 1];
-                        if (ch === 'u' && pos + 6 <= len) {
-                            const value = readHex4(buf, pos + 2);
-                            if (value < 0) {
-                                this._pos = pos;
-                                this._fail(this._syntaxError());
-                            }
-                            if (this._retainString || this._strSinks.length)
-                                this._str += unicodeUnit(value);
-                            pos += 6;
-                        }
-                        else if (ch !== undefined && ch !== 'u') {
-                            const value = ESCAPES[ch];
-                            if (value === undefined) {
-                                this._pos = pos;
-                                this._fail(this._syntaxError());
-                            }
-                            if (this._retainString || this._strSinks.length)
-                                this._str += value;
-                            pos += 2;
-                        }
-                        else {
-                            ++pos;
-                            this._state = ESC;
-                        }
-                    }
-                    break;
-                }
-                case ESC: {
+                case State.ESC: {
                     if (pos >= len) {
                         this._flushChunk();
                         this._pos = pos;
@@ -492,12 +493,12 @@ export class JsonScanner extends ParserCore {
                             }
                             if (this._retainString || this._strSinks.length)
                                 this._str += unicodeUnit(value);
-                            this._state = STR;
+                            this._state = State.STR;
                             break;
                         }
                         ++pos;
                         this._acc = '';
-                        this._state = UESC;
+                        this._state = State.UESC;
                         break;
                     }
                     if (!'"\\/bfnrt'.includes(ch)) {
@@ -509,10 +510,10 @@ export class JsonScanner extends ParserCore {
                             : ch === 'b' ? '\b' : ch === 'f' ? '\f' : ch;
                     }
                     ++pos;
-                    this._state = STR;
+                    this._state = State.STR;
                     break;
                 }
-                case UESC: {
+                case State.UESC: {
                     const take = Math.min(4 - this._acc.length, len - pos);
                     this._acc += buf.slice(pos, pos + take);
                     pos += take;
@@ -529,10 +530,10 @@ export class JsonScanner extends ParserCore {
                         this._str += unicodeUnit(parseInt(this._acc, 16));
                     }
                     this._acc = '';
-                    this._state = STR;
+                    this._state = State.STR;
                     break;
                 }
-                case NUM: {
+                case State.NUM: {
                     let end = pos, phase = this._numPhase;
                     while (end < len) {
                         const code = buf.charCodeAt(end);
@@ -577,7 +578,7 @@ export class JsonScanner extends ParserCore {
                     this._closeNumber();
                     break;
                 }
-                case LIT: {
+                case State.LIT: {
                     let end = pos;
                     while (end < len && buf.charCodeAt(end) >= 97 && buf.charCodeAt(end) <= 122)
                         ++end;

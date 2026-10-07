@@ -1,6 +1,6 @@
 import { ParserCore } from './core.js';
 import { stepContext } from './selectors.js';
-import { VALUE, OBJ_FIRST, OBJ_KEY, COLON, OBJ_NEXT, ARR_NEXT, STR, ESC, UESC, NUM, LIT, END, FAILED } from './state.js';
+import { State } from './state.js';
 import { unicodeUnit, hexDigit, readHex4, isSpace, decodeIdentifier } from './lexical.js';
 const IDENT = 14, SKIP_LF = 15;
 const JSON5_TOKEN_END = /[\t\n\v\f\r \u00a0\ufeff\u2028\u2029\p{Zs},:{}\[\]\/]/gu;
@@ -31,7 +31,7 @@ export class Json5Scanner extends ParserCore {
             this._stack[this._stack.length - 1]!.key = name!;
             if (this._tracking)
                 this._path.push(name!);
-            this._state = COLON;
+            this._state = State.COLON;
         }
         else if (text === 'true' || text === 'false' || text === 'null') {
             this._emit(text === 'true' ? true : text === 'false' ? false : null);
@@ -56,18 +56,18 @@ export class Json5Scanner extends ParserCore {
         const buf = this._buf, len = buf.length;
         let pos = this._pos;
         for (;;) {
-            if (this._framed && this._state === END) break;
-            if (this._state === FAILED || this._done)
+            if (this._framed && this._state === State.END) break;
+            if (this._state === State.FAILED || this._done)
                 break;
             if (this._state === SKIP_LF) {
                 if (pos === len && !this._eof)
                     break;
                 if (buf.charCodeAt(pos) === 10)
                     ++pos;
-                this._state = STR;
+                this._state = State.STR;
                 continue;
             }
-            if (this._state === NUM || this._state === IDENT) {
+            if (this._state === State.NUM || this._state === IDENT) {
                 const start = pos;
                 pos = this._tokenEnd(buf, pos, len);
                 this._acc += buf.slice(start, pos);
@@ -76,7 +76,7 @@ export class Json5Scanner extends ParserCore {
                 this._finishToken(pos);
                 continue;
             }
-            if (this._state === STR) {
+            if (this._state === State.STR) {
                 if (pos === len)
                     break;
                 let end = pos;
@@ -104,12 +104,12 @@ export class Json5Scanner extends ParserCore {
                     this._closeString();
                 }
                 else if (code === 92)
-                    this._state = ESC;
+                    this._state = State.ESC;
                 else
                     this._failAt(pos);
                 continue;
             }
-            if (this._state === ESC) {
+            if (this._state === State.ESC) {
                 if (pos === len)
                     break;
                 const ch = buf[pos]!, code = buf.charCodeAt(pos);
@@ -131,12 +131,12 @@ export class Json5Scanner extends ParserCore {
                         if (this._retainString || this._strSinks.length)
                             this._str += unicodeUnit(value);
                         pos += length;
-                        this._state = STR;
+                        this._state = State.STR;
                         continue;
                     }
                     this._acc = '';
                     this._hexLength = length;
-                    this._state = UESC;
+                    this._state = State.UESC;
                     continue;
                 }
                 if (code === 13) {
@@ -144,17 +144,17 @@ export class Json5Scanner extends ParserCore {
                     continue;
                 }
                 if (code === 10 || code === 0x2028 || code === 0x2029) {
-                    this._state = STR;
+                    this._state = State.STR;
                     continue;
                 }
                 if (code >= 49 && code <= 57 || ch === '0' && /[0-9]/.test(buf[pos] ?? ''))
                     this._failAt(pos);
                 if (this._retainString || this._strSinks.length)
                     this._str += ch === '0' ? '\0' : ch === 'v' ? '\v' : ch === 'n' ? '\n' : ch === 'r' ? '\r' : ch === 't' ? '\t' : ch === 'b' ? '\b' : ch === 'f' ? '\f' : ch;
-                this._state = STR;
+                this._state = State.STR;
                 continue;
             }
-            if (this._state === UESC) {
+            if (this._state === State.UESC) {
                 while (pos < len && this._acc.length < this._hexLength) {
                     const ch = buf[pos++]!;
                     if (hexDigit(ch.charCodeAt(0)) < 0)
@@ -166,7 +166,7 @@ export class Json5Scanner extends ParserCore {
                 if (this._retainString || this._strSinks.length)
                     this._str += unicodeUnit(parseInt(this._acc, 16));
                 this._acc = '';
-                this._state = STR;
+                this._state = State.STR;
                 continue;
             }
             // Comments and whitespace occur only between grammar tokens.
@@ -211,10 +211,10 @@ export class Json5Scanner extends ParserCore {
                 continue;
             }
             switch (this._state) {
-                case END:
+                case State.END:
                     this._failAt(pos);
                     break;
-                case VALUE:
+                case State.VALUE:
                     if (this._tracking)
                         this._context = this._stack.length ? this._stack[this._stack.length - 1]!.arrayContext ?? stepContext(this._stack[this._stack.length - 1]!.context, this._path[this._path.length - 1]!) : this._rootContext;
                     if (code === 123 || code === 91) {
@@ -232,7 +232,7 @@ export class Json5Scanner extends ParserCore {
                         this._retainString = this._shouldRetain();
                         if (this._hasChunks)
                             this._findChunkSinks(this._root, 0);
-                        this._state = STR;
+                        this._state = State.STR;
                     }
                     else {
                         // Short decimal integers need no token string, regex or Number().
@@ -258,11 +258,11 @@ export class Json5Scanner extends ParserCore {
                             }
                         }
                         this._acc = '';
-                        this._state = NUM;
+                        this._state = State.NUM;
                     }
                     break;
-                case OBJ_FIRST:
-                case OBJ_KEY:
+                case State.OBJ_FIRST:
+                case State.OBJ_KEY:
                     if (code === 125) {
                         ++pos;
                         this._close();
@@ -272,39 +272,39 @@ export class Json5Scanner extends ParserCore {
                         this._quote = code;
                         this._keyMode = true;
                         this._retainString = this._needsKey();
-                        this._state = STR;
+                        this._state = State.STR;
                     }
                     else {
                         this._acc = '';
                         this._state = IDENT;
                     }
                     break;
-                case COLON:
+                case State.COLON:
                     if (code !== 58)
                         this._failAt(pos);
                     ++pos;
-                    this._state = VALUE;
+                    this._state = State.VALUE;
                     break;
-                case OBJ_NEXT:
+                case State.OBJ_NEXT:
                     if (code === 125) {
                         ++pos;
                         this._close();
                     }
                     else if (code === 44) {
                         ++pos;
-                        this._state = OBJ_KEY;
+                        this._state = State.OBJ_KEY;
                     }
                     else
                         this._failAt(pos);
                     break;
-                case ARR_NEXT:
+                case State.ARR_NEXT:
                     if (code === 93) {
                         ++pos;
                         this._close();
                     }
                     else if (code === 44) {
                         ++pos;
-                        this._state = VALUE;
+                        this._state = State.VALUE;
                     }
                     else
                         this._failAt(pos);

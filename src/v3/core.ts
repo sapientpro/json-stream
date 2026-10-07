@@ -5,7 +5,7 @@ import type { Path, PathInput, PathSegment, ParserOptions, CallbackOptions, Valu
 import { CallbackChannel, makeErrorReporter, validateBufferLimit } from './channel.js';
 import { EMPTY_CONTEXT, newNode, makeContext, stepContext, childrenOf } from './selectors.js';
 import type { Node, Context, Frame } from './selectors.js';
-import { VALUE, OBJ_FIRST, OBJ_KEY, COLON, OBJ_NEXT, ARR_NEXT, STR, ESC, UESC, NUM, LIT, END, FAILED } from './state.js';
+import { State } from './state.js';
 import { createWritableStream, createStringStream } from './web.js';
 import { compileJsonPath } from './jsonpath.js';
 const IS_BUN = typeof (globalThis as {Bun?: unknown}).Bun !== 'undefined';
@@ -59,7 +59,7 @@ export abstract class ParserCore implements Parser {
             throw new RangeError('maxDepth must be a nonnegative safe integer or Infinity');
         this._collect = collectJson;
         this._maxDepth = maxDepth;
-        this._state = VALUE;
+        this._state = State.VALUE;
     }
     get json(): string {
         return this._json;
@@ -115,7 +115,7 @@ export abstract class ParserCore implements Parser {
     write(chunk: string | Uint8Array, offset = -1): void {
         if (this._running)
             throw new Error('write() re-entered from an observer callback; use destroy() to stop');
-        if (this._state === FAILED)
+        if (this._state === State.FAILED)
             throw this._failure!;
         if (this._done)
             throw new Error('Parser is closed');
@@ -191,7 +191,7 @@ export abstract class ParserCore implements Parser {
     private _finishDocument(close: boolean): void {
         if (this._running)
             throw new Error('end() re-entered');
-        if (this._state === FAILED)
+        if (this._state === State.FAILED)
             throw this._failure!;
         if (this._done)
             return;
@@ -213,7 +213,7 @@ export abstract class ParserCore implements Parser {
             this._finishInput();
             if (this.closed)
                 return;
-            if (this._state !== END || !this._validateEnd())
+            if (this._state !== State.END || !this._validateEnd())
                 this._fail(this._syntaxError());
             this._documentDone = true;
             if (close) this._complete();
@@ -228,7 +228,7 @@ export abstract class ParserCore implements Parser {
         if (this.closed) throw this._failure ?? new Error('Cannot reset a closed parser; use reset before end');
         this._finishDocument(false);
         if (this.closed) return;
-        this._state = VALUE;
+        this._state = State.VALUE;
         this._documentDone = false;
         this._rootAvailable = false;
         this._buf = '';
@@ -275,9 +275,9 @@ export abstract class ParserCore implements Parser {
         return new SyntaxError('Json syntax error at ' + (this._consumed + this._pos));
     }
     protected _fail(error: Error, shouldThrow = true): never | void {
-        if (this._state === FAILED || this._done)
+        if (this._state === State.FAILED || this._done)
             return;
-        this._state = FAILED;
+        this._state = State.FAILED;
         this._failure = error;
         this._walk(this._root, node => {
             node.fragments?.error(error);
@@ -311,13 +311,13 @@ export abstract class ParserCore implements Parser {
                 this._dispatch(this._root, value, 0);
             if (this.closed)
                 return;
-            this._state = END;
+            this._state = State.END;
             this._rootAvailable = true;
         }
         else if (frame.isArray) {
             frame.container?.push(value);
             ++frame.count;
-            this._state = ARR_NEXT;
+            this._state = State.ARR_NEXT;
         }
         else {
             if (frame.container !== undefined && frame.key === '__proto__') {
@@ -325,7 +325,7 @@ export abstract class ParserCore implements Parser {
             }
             else if (frame.container !== undefined)
                 frame.container[frame.key] = value;
-            this._state = OBJ_NEXT;
+            this._state = State.OBJ_NEXT;
         }
     }
     protected _openUnobserved(isArray: boolean): void {
@@ -333,14 +333,14 @@ export abstract class ParserCore implements Parser {
             this._fail(new SyntaxError('Json nesting deeper than ' + this._maxDepth));
         this._stack.push({ container: this._retainAll ? (isArray ? [] : {}) : undefined,
             isArray, key: '', count: 0, context: EMPTY_CONTEXT, arrayContext: undefined });
-        this._state = isArray ? VALUE : OBJ_FIRST;
+        this._state = isArray ? State.VALUE : State.OBJ_FIRST;
     }
     protected _closeStringUnobserved(): void {
         const text = this._retainString ? (this._str.length < 13 ? this._str : this._flatten(this._str)) : undefined;
         this._str = '';
         if (this._keyMode) {
             this._stack[this._stack.length - 1]!.key = text!;
-            this._state = COLON;
+            this._state = State.COLON;
         }
         else
             this._emit(text);
@@ -350,11 +350,11 @@ export abstract class ParserCore implements Parser {
         this._snapshot = null;
         this._dispatch(this._root, value, 0);
         // an observer may have called destroy(); do not overwrite the terminal state
-        if (this._state === FAILED || this._done)
+        if (this._state === State.FAILED || this._done)
             return;
         const frame = this._stack[this._stack.length - 1];
         if (!frame) {
-            this._state = END;
+            this._state = State.END;
             this._rootAvailable = true;
             return;
         }
@@ -363,7 +363,7 @@ export abstract class ParserCore implements Parser {
             ++frame.count;
             if (this._tracking)
                 this._path[this._path.length - 1] = frame.count;
-            this._state = ARR_NEXT;
+            this._state = State.ARR_NEXT;
         }
         else {
             // __proto__ is an accessor on Object.prototype; assigning would move the
@@ -376,7 +376,7 @@ export abstract class ParserCore implements Parser {
             }
             if (this._tracking)
                 this._path.pop();
-            this._state = OBJ_NEXT;
+            this._state = State.OBJ_NEXT;
         }
     }
     protected _emitNumber(buf: string, start: number, end: number): void {
@@ -387,11 +387,11 @@ export abstract class ParserCore implements Parser {
             node.callbacks.next(value, this._snapshot ??= this._path.slice());
         }
         // an observer may have called destroy(); do not overwrite the terminal state
-        if (this._state === FAILED || this._done)
+        if (this._state === State.FAILED || this._done)
             return;
         const frame = this._stack[this._stack.length - 1];
         if (!frame) {
-            this._state = END;
+            this._state = State.END;
             this._rootAvailable = true;
             return;
         }
@@ -401,7 +401,7 @@ export abstract class ParserCore implements Parser {
             ++frame.count;
             if (this._tracking)
                 this._path[this._path.length - 1] = frame.count;
-            this._state = ARR_NEXT;
+            this._state = State.ARR_NEXT;
         }
         else {
             // __proto__ is an accessor on Object.prototype; assigning would move the
@@ -414,7 +414,7 @@ export abstract class ParserCore implements Parser {
             }
             if (this._tracking)
                 this._path.pop();
-            this._state = OBJ_NEXT;
+            this._state = State.OBJ_NEXT;
         }
     }
 
@@ -447,7 +447,7 @@ export abstract class ParserCore implements Parser {
         this._stack.push({ container, isArray, key: '', count: 0, context: this._context, arrayContext: this._tracking && isArray && !this._context.indexed ? stepContext(this._context, 0) : undefined });
         if (isArray && this._tracking)
             this._path.push(0);
-        this._state = isArray ? VALUE : OBJ_FIRST;
+        this._state = isArray ? State.VALUE : State.OBJ_FIRST;
     }
     protected _close(): void {
         const frame = this._stack.pop()!;
@@ -461,7 +461,7 @@ export abstract class ParserCore implements Parser {
         let text: string | undefined;
         if (this._strSinks.length || this._parts !== null) {
             this._flushChunk(true);
-            if (this._done || this._state === FAILED)
+            if (this._done || this._state === State.FAILED)
                 return;
             text = this._retainString ? (this._parts?.join('') ?? '') + this._str : undefined;
             this._parts = null;
@@ -475,13 +475,13 @@ export abstract class ParserCore implements Parser {
             text = this._retainString ? this._flatten(this._str) : undefined;
         }
         this._str = '';
-        if (this._done || this._state === FAILED)
+        if (this._done || this._state === State.FAILED)
             return;
         if (this._keyMode) {
             this._stack[this._stack.length - 1]!.key = text!;
             if (this._tracking)
                 this._path.push(text!);
-            this._state = COLON;
+            this._state = State.COLON;
             return;
         }
         this._emit(text);
@@ -556,5 +556,5 @@ export abstract class ParserCore implements Parser {
     protected abstract _run(): void;
     protected _finishInput(): void { }
     protected _validateEnd(): boolean { return true; }
-    get closed(): boolean { return this._done || this._state === FAILED; }
+    get closed(): boolean { return this._done || this._state === State.FAILED; }
 }
