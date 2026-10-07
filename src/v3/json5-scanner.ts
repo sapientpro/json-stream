@@ -1,5 +1,5 @@
 import { ParserCore } from './core.js';
-import { stepContext } from './selectors.js';
+import { EMPTY_CONTEXT, stepContext } from './selectors.js';
 import { State } from './state.js';
 import { unicodeUnit, hexDigit, readHex4, isSpace, decodeIdentifier } from './lexical.js';
 const IDENT = 14, SKIP_LF = 15;
@@ -39,8 +39,9 @@ export class Json5Scanner extends ParserCore {
             const name = decodeIdentifier(text);
             if (name === undefined)
                 this._failAt(pos);
-            this._stack[this._stack.length - 1]!.key = name!;
-            if (this._tracking)
+            const frame = this._stack[this._stack.length - 1]!;
+            frame.key = name!;
+            if (frame.context !== EMPTY_CONTEXT)
                 this._path.push(name!);
             this._state = State.COLON;
         }

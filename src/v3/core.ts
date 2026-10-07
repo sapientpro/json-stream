@@ -361,7 +361,7 @@ export abstract class ParserCore implements Parser {
         if (frame.isArray) {
             frame.container?.push(value);
             ++frame.count;
-            if (this._tracking)
+            if (frame.context !== EMPTY_CONTEXT)
                 this._path[this._path.length - 1] = frame.count;
             this._state = State.ARR_NEXT;
         }
@@ -374,7 +374,7 @@ export abstract class ParserCore implements Parser {
             else if (frame.container !== undefined) {
                 frame.container[frame.key] = value;
             }
-            if (this._tracking)
+            if (frame.context !== EMPTY_CONTEXT)
                 this._path.pop();
             this._state = State.OBJ_NEXT;
         }
@@ -399,7 +399,7 @@ export abstract class ParserCore implements Parser {
         if (frame.isArray) {
             frame.container?.push(value);
             ++frame.count;
-            if (this._tracking)
+            if (frame.context !== EMPTY_CONTEXT)
                 this._path[this._path.length - 1] = frame.count;
             this._state = State.ARR_NEXT;
         }
@@ -412,7 +412,7 @@ export abstract class ParserCore implements Parser {
             else if (frame.container !== undefined) {
                 frame.container[frame.key] = value;
             }
-            if (this._tracking)
+            if (frame.context !== EMPTY_CONTEXT)
                 this._path.pop();
             this._state = State.OBJ_NEXT;
         }
@@ -445,16 +445,15 @@ export abstract class ParserCore implements Parser {
         }
         const container = this._shouldRetain() ? (isArray ? [] : {}) : undefined;
         this._stack.push({ container, isArray, key: '', count: 0, context: this._context, arrayContext: this._tracking && isArray && !this._context.indexed ? stepContext(this._context, 0) : undefined });
-        if (isArray && this._tracking)
+        if (isArray && this._context !== EMPTY_CONTEXT)
             this._path.push(0);
         this._state = isArray ? State.VALUE : State.OBJ_FIRST;
     }
     protected _close(): void {
         const frame = this._stack.pop()!;
         this._context = frame.context;
-        if (frame.isArray)
-            if (this._tracking)
-                this._path.pop();
+        if (frame.isArray && frame.context !== EMPTY_CONTEXT)
+            this._path.pop();
         this._emit(frame.container);
     }
     protected _closeString(): void {
@@ -478,8 +477,9 @@ export abstract class ParserCore implements Parser {
         if (this._done || this._state === State.FAILED)
             return;
         if (this._keyMode) {
-            this._stack[this._stack.length - 1]!.key = text!;
-            if (this._tracking)
+            const frame = this._stack[this._stack.length - 1]!;
+            frame.key = text!;
+            if (frame.context !== EMPTY_CONTEXT)
                 this._path.push(text!);
             this._state = State.COLON;
             return;
