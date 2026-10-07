@@ -18,6 +18,9 @@ const fixtures={
  'short strings':()=>Array.from({length:40000},(_,i)=>'s'+i),
  literals:()=>Array.from({length:40000},(_,i)=>[true,false,null][i%3]),
  objects,
+ 'discarded metadata':()=>({items:Array.from({length:2000},(_,id)=>({id,metadata:Object.fromEntries(
+  Array.from({length:6},(_,n)=>['group'+n,{a:id,b:'short',c:false,d:null,e:{x:1,y:2}}])
+ )}))}),
  'wide object':()=>Object.fromEntries(Array.from({length:16000},(_,i)=>['key'+i,{id:i,text:'v'+i}])),
  unicode:()=>({text:'€😀漢字'.repeat(30000)}),
  llm:()=>({meta:{model:'fixture',id:1},text:('Пояснення: «так», emoji 😀.\nКод: const x = "value";\nШлях: C:\\tmp\\file.\n').repeat(3000)}),
@@ -67,7 +70,7 @@ if(job.mode==='cancel')strictEqual(probe.count,32);
 const summary=({root,count,sum,length,pathSum,lastPath})=>({root,count,sum,length,pathSum,lastPath});
 const expected=summary(probe);
 for(let i=0;i<job.warmups;i++)run();
-const samples=[];
-for(let sample=0;sample<7;sample++){if(gcMode==='forced')collect();const start=performance.now();let result;for(let i=0;i<job.iterations;i++)result=run();samples.push((performance.now()-start)/job.iterations);deepStrictEqual(summary(result),expected);}
+const samples=[],cpuSamples=[];
+for(let sample=0;sample<7;sample++){if(gcMode==='forced')collect();const cpuStart=job.cpu?process.cpuUsage():undefined;const start=performance.now();let result;for(let i=0;i<job.iterations;i++)result=run();samples.push((performance.now()-start)/job.iterations);if(cpuStart){const cpu=process.cpuUsage(cpuStart);cpuSamples.push((cpu.user+cpu.system)/job.iterations/1000);}deepStrictEqual(summary(result),expected);}
 const medianMs=[...samples].sort((a,b)=>a-b)[3];
-console.log(JSON.stringify({...job,gc:gcMode,bytes:bytes.length,chunkCount:chunks.length,medianMs,mbps:bytes.length/medianMs/1000,millionWritesPerSecond:chunks.length/medianMs/1000,samplesMs:samples}));
+console.log(JSON.stringify({...job,gc:gcMode,bytes:bytes.length,chunkCount:chunks.length,medianMs,mbps:bytes.length/medianMs/1000,millionWritesPerSecond:chunks.length/medianMs/1000,samplesMs:samples,...(job.cpu?{cpuSamplesMs:cpuSamples}:{})}));
