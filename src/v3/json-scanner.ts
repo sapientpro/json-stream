@@ -98,8 +98,17 @@ const readEscapedRun = (buf: string, pos: number, len: number, retain: boolean):
     return {pos, text};
 };
 export class JsonScanner extends ParserCore {
+    // Reuse bounded, validated keys; collisions always fall back to ordinary scanning.
+    protected declare _keyCache: (string | undefined)[];
+    protected declare _keyMisses: number;
     protected _numPhase = 0;
-    protected _resetScanner(): void { this._numPhase = 0; }
+    protected _resetScanner(): void {
+        this._numPhase = 0;
+        if (this._keyCache) {
+            this._readObjectKey = this._readObjectKeyCached;
+            this._keyMisses = 0;
+        }
+    }
     protected _finishInput(): void { if (this._state === NUM)
         this._closeNumber();
     else if (this._state === LIT)
@@ -126,6 +135,62 @@ export class JsonScanner extends ParserCore {
             this._fail(this._syntaxError());
     }
     protected _readObjectKey(buf: string, pos: number, len: number): number {
+        // Cache setup is not worthwhile for small input windows or discarded keys.
+        if (!this._retainString || len < 256 || this._stack.length < 2)
+            return this._readObjectKeyOrdinary(buf, pos, len);
+        return this._initializeKeyReader(buf, pos, len);
+    }
+    protected _initializeKeyReader(buf: string, pos: number, len: number): number {
+        const end = this._readObjectKeyOrdinary(buf, pos, len);
+        if (this._state === COLON) {
+            const frame = this._stack[this._stack.length - 1]!;
+            let useful = frame.container !== undefined;
+            if (!useful) for (const node of frame.context.nodes) {
+                if (node.any || node.rest || node.children[frame.key]) {
+                    useful = true;
+                    break;
+                }
+            }
+            if (useful) {
+                this._keyCache = [];
+                this._keyMisses = 0;
+                this._readObjectKey = this._readObjectKeyCached;
+            }
+        }
+        return end;
+    }
+    protected _readObjectKeyCached(buf: string, pos: number, len: number): number {
+        // Outer object keys are usually distinct; keep their ordinary reader.
+        if (!this._retainString || this._stack.length < 2)
+            return this._readObjectKeyOrdinary(buf, pos, len);
+        const slot = buf.charCodeAt(pos) & 63;
+        const cached = this._keyCache[slot];
+        const hit = cached !== undefined && pos + cached.length < len &&
+            buf.charCodeAt(pos + cached.length) === QUOTE && buf.startsWith(cached, pos);
+        const end = hit ? pos + cached!.length : scanStringEnd(buf, pos, len);
+        const part = hit ? cached! : buf.slice(pos, end);
+        if (hit) this._keyMisses = 0;
+        // Distinct keys use the original reader for the rest of this record.
+        else if (++this._keyMisses === 16) this._readObjectKey = this._readObjectKeyOrdinary;
+        if (IS_V8 && end - pos > 32 && hasStringControl(part, pos, end, len)) {
+            this._pos = pos;
+            this._fail(this._syntaxError());
+        }
+        if (end < len && buf.charCodeAt(end) === QUOTE) {
+            this._pos = end + 1;
+            const key = this._retainString ? this._flatten(part) : undefined;
+            if (!hit && key !== undefined && key.length <= 64)
+                this._keyCache[slot] = key.length < 13 ? key : (' ' + key).slice(1);
+            this._stack[this._stack.length - 1]!.key = key!;
+            if (this._tracking) this._path.push(key!);
+            this._state = COLON;
+            return end + 1;
+        }
+        if (this._retainString) this._str += part;
+        this._state = STR;
+        return end;
+    }
+    protected _readObjectKeyOrdinary(buf: string, pos: number, len: number): number {
         const end = scanStringEnd(buf, pos, len);
         const part = buf.slice(pos, end);
         if (IS_V8 && end - pos > 32 && hasStringControl(part, pos, end, len)) {
