@@ -31,4 +31,34 @@ describe('incremental object keys', () => {
         parser.write('{"aA":2,"text":"second"}');parser.end();
         expect(events).toEqual([[1,['aA']],['first',['text']],[2,['aA']],['second',['text']]]);
     });
+    test('repeated, colliding and prefix keys preserve values and paths at every byte cut', () => {
+        const value=Array.from({length:4},(_,id)=>({name:id,note:'😀',name2:true,'.':null,a:1,'!':2,
+            '':3,['long'.repeat(12)]:id}));
+        const input=JSON.stringify(value),bytes=new TextEncoder().encode(input);
+        for(let cut=0;cut<=bytes.length;cut++) {
+            const parser=new JsonParser();let root:unknown;const selected:unknown[]=[];
+            parser.onValue('$',v=>root=v);
+            parser.onValue('$[*].*',(v,path)=>selected.push([v,path]));
+            parser.write(bytes.subarray(0,cut));parser.write(bytes.subarray(cut));parser.end();
+            expect(root).toEqual(value);
+            expect(selected).toEqual(value.flatMap((item,i)=>Object.entries(item).map(([key,v])=>[v,[i,key]])));
+        }
+    });
+    test('previously seen keys do not conceal malformed continuations', () => {
+        for(const key of ['name','long'.repeat(12)])for(const suffix of ['\n','\u0000','\\q']) {
+            const input=' '.repeat(300)+'[{"'+key+'":0},{"'+key+'":1,"'+key+suffix+'":2}]';
+            for(let cut=0;cut<=input.length;cut++) {
+                const parser=new JsonParser();parser.onValue('$',()=>{});
+                expect(()=>{parser.write(input.slice(0,cut));parser.write(input.slice(cut));parser.end();}).toThrow(SyntaxError);
+            }
+        }
+    });
+    test('new keys after many distinct keys and reset still match selectors', () => {
+        const parser=new JsonParser(),values:unknown[]=[];
+        parser.onValue('$[*].*',(v,path)=>values.push([v,path]));
+        const first=Object.fromEntries(Array.from({length:600},(_,i)=>['key'+i,i]));
+        parser.write(JSON.stringify([first]));parser.reset();
+        parser.write('[{"name":1,"name2":2,"name":3,"n\\u006f te":4}]');parser.end();
+        expect(values.slice(600)).toEqual([[1,[0,'name']],[2,[0,'name2']],[3,[0,'name']],[4,[0,'no te']]]);
+    });
 });
