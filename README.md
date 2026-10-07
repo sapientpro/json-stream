@@ -40,7 +40,7 @@ npm run test:formats
 npm run benchmark:v3
 ```
 
-Benchmarks include setup and use serial workers with correctness checks.
+Benchmarks include setup and use natural GC, serial workers and correctness checks. See [benchmark GC modes](docs/v3-benchmark-methodology.md) for the separate forced-GC workload.
 The 2.x sources remain as regression controls and are excluded from the v3 package.
 
 MIT licensed.
