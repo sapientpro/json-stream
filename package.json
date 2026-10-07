@@ -51,14 +51,15 @@
     "build": "rm -rf dist && tsc -p tsconfig.json && tsc -p tsconfig-esm.json && node scripts/dist-type.mjs",
     "test": "jest",
     "benchmark": "npm run build && node --expose-gc scripts/benchmark.mjs && bun scripts/benchmark.mjs && node scripts/benchmark-report.mjs",
-    "benchmark:competitors": "npm run build && node --expose-gc scripts/benchmark-competitors.mjs && bun scripts/benchmark-competitors.mjs && node --expose-gc scripts/benchmark-competitors.mjs --checks && bun scripts/benchmark-competitors.mjs --checks && node scripts/benchmark-competitors-report.mjs",
-    "benchmark:competitors:node": "npm run build && node --expose-gc scripts/benchmark-competitors.mjs",
-    "benchmark:competitors:bun": "npm run build && bun scripts/benchmark-competitors.mjs",
+    "benchmark:competitors": "npm run build && node scripts/v3/competitors.mjs --engine node --checks && bun scripts/v3/competitors.mjs --engine bun --checks && node scripts/v3/competitors.mjs --engine node && bun scripts/v3/competitors.mjs --engine bun && node scripts/v3/competitors-report.mjs",
+    "benchmark:competitors:node": "npm run build && node scripts/v3/competitors.mjs --engine node",
+    "benchmark:competitors:bun": "npm run build && bun scripts/v3/competitors.mjs --engine bun",
     "benchmark:regression": "node --expose-gc scripts/benchmark-regression.mjs && bun scripts/benchmark-regression.mjs",
     "benchmark:node": "npm run build && node --expose-gc scripts/benchmark.mjs",
     "benchmark:bun": "npm run build && bun scripts/benchmark.mjs",
     "test:formats": "node scripts/v3/verify.mjs && bun scripts/v3/verify.mjs",
-    "benchmark:v3": "npm run build && node scripts/v3/benchmark.mjs"
+    "benchmark:v3": "npm run build && node scripts/v3/benchmark.mjs",
+    "benchmark:competitors:deno": "npm run build && node scripts/v3/competitors.mjs --engine deno --checks && node scripts/v3/competitors.mjs --engine deno --secondary && node scripts/v3/competitors-report.mjs --engines node,bun,deno"
   },
   "engines": {
     "node": ">=22"
