@@ -46,9 +46,12 @@ The broader baseline audit requests full roots, individual values, independent s
 
 - Holding four tiny Unicode fragments from large text documents retains about 64 MiB on both runtimes. Dropping the fragments releases those buffers, apart from the strict scanner's last subject fixed here.
 - Bun also retains about 64 MiB when keeping four tiny selected values, in both formats and both input modes. The current concat/slice flattening expression does not reliably detach them on Bun.
+- Additional short-string probes find that Bun can retain a source even for 4, 11 and 12 code units: four saved values or fragments retain about 32 MiB with ASCII input. The V8-oriented `<13` shortcut is therefore not a portable detachment rule.
 - Four selected 2 MiB strings retain about 40 MiB on Bun, rather than just their 8 MiB ASCII output payload. Full roots intentionally retain the ignored strings too.
 - Node byte strings may live in external memory; low heap use does not prove that output slices are independent.
 
 These findings require a separate sparse-output copying experiment with LLM and dense-output controls. This patch does not resolve them. Short-key cache retention, output path lifetimes, true transient peak measurements and wrapper queues remain further audit work.
+
+Two isolated copying prototypes were rejected. Native stringify/parse detachment with a simple 1024-unit size-gap guard reduced retained memory but slowed Node LLM/65536 from 867.8 to 316.0 MB/s (−63.6%): decoding escapes itself creates that size gap. Requiring output below a quarter of the input restored this large-chunk control, but Node LLM/128 was −1.5% (all three pairs negative), Bun objects/root/65536 was −3.0% (all pairs negative), and the short-string shortcut still leaked on Bun. Neither prototype is part of this patch. The next experiment must cover short strings and key/path caches and avoid adding copying checks to ordinary small-fragment delivery.
 
 Validation: 447 tests in 25 suites; 22400 differential format checks on each of Node and Bun. Lifecycle tests exercise nested parser completion, reset, cancellation and failure during another parser's callbacks, including Unicode byte input.
