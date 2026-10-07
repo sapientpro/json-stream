@@ -15,7 +15,18 @@ export class Json5Scanner extends ParserCore {
     protected _comment = 0;
     protected _hexLength = 4;
     protected _resetScanner(): void { this._quote = 34; this._comment = 0; this._hexLength = 4; }
-    protected _validateEnd(): boolean { return this._comment === 0; }
+    protected _validateEnd(): boolean {
+        // Release the token scanner's last RegExp subject after the document.
+        JSON5_TOKEN_END.lastIndex = 0;
+        JSON5_TOKEN_END.test(' ');
+        return this._comment === 0;
+    }
+    protected _release(): void {
+        // Cancellation and syntax errors may never reach end validation.
+        if (!this._documentDone) this._validateEnd();
+        // A super method adds a class context to every scanner method on V8.
+        (ParserCore.prototype as Json5Scanner)._release.call(this);
+    }
     protected _failAt(pos: number): never {
         this._pos = pos;
         this._fail(this._syntaxError());

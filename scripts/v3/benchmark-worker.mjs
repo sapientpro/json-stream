@@ -18,6 +18,7 @@ const fixtures={
  'short strings':()=>Array.from({length:40000},(_,i)=>'s'+i),
  literals:()=>Array.from({length:40000},(_,i)=>[true,false,null][i%3]),
  objects,
+ 'unique identifiers':()=>({items:Array.from({length:8000},(_,id)=>({['key'+id]:id}))}),
  'discarded metadata':()=>({items:Array.from({length:2000},(_,id)=>({id,metadata:Object.fromEntries(
   Array.from({length:6},(_,n)=>['group'+n,{a:id,b:'short',c:false,d:null,e:{x:1,y:2}}])
  )}))}),
@@ -30,7 +31,7 @@ const fixtures={
 };
 const value=fixtures[job.dataset]();
 let text=JSON.stringify(value);
-if(job.syntax==='json5')text='/*document*/'+text.replace(/"(items|id|name|active|tags|score|text)":/g,'$1:').replace(/\}$/,' ,}');
+if(job.syntax==='json5')text='/*document*/'+text.replace(/"(items|id|name|active|tags|score|text|key[0-9]+)":/g,'$1:').replace(/\}$/,' ,}');
 const bytes=new TextEncoder().encode(text),input=job.input==='text'?text:bytes,chunks=[];
 if(job.chunkUnit==='codepoint'){
  const points=Array.from(text),encoder=new TextEncoder(),widths=job.chunkPattern??[job.size];

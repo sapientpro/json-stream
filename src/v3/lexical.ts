@@ -73,7 +73,7 @@ const IDENTIFIER = /^[$_\p{L}\p{Nl}][$_\p{L}\p{Nl}\p{Mn}\p{Mc}\p{Nd}\p{Pc}\u200c
 const IDENTIFIER_START = /^[$_\p{L}\p{Nl}]$/u;
 const IDENTIFIER_PART = /^[$_\p{L}\p{Nl}\p{Mn}\p{Mc}\p{Nd}\p{Pc}\u200c\u200d]$/u;
 /** Validate each escaped identifier character before combining UTF-16 units. */
-export function decodeIdentifier(text: string): string | undefined {
+function decodeIdentifierUncached(text: string): string | undefined {
     if (!text.includes('\\'))
         return IDENTIFIER.test(text) ? text : undefined;
     let name = '';
@@ -98,4 +98,32 @@ export function decodeIdentifier(text: string): string | undefined {
         name += char;
     }
     return name || undefined;
+}
+
+// Memoize complete, validated tokens; never use a prefix to skip tokenization.
+const identifierMemo = new Array<{raw: string; name: string} | undefined>(64).fill(undefined);
+let identifierMisses = 0, identifierHits = 0, identifierCooldown = 0;
+export function decodeIdentifier(text: string): string | undefined {
+    if (text.length > 64) return decodeIdentifierUncached(text);
+    if (identifierCooldown > 0) {
+        --identifierCooldown;
+        return decodeIdentifierUncached(text);
+    }
+    const slot = text.charCodeAt(0) & 63;
+    const cached = identifierMemo[slot];
+    if (cached !== undefined && cached.raw === text) {
+        if (++identifierHits === 64) identifierHits = identifierMisses = 0;
+        return cached.name;
+    }
+    // Copy before validation: RegExp's last subject can also retain an input buffer.
+    const raw = text.split('').join('');
+    const name = decodeIdentifierUncached(raw);
+    if (name !== undefined) {
+        identifierMemo[slot] = {raw, name: name === raw ? raw : name.split('').join('')};
+    }
+    if (++identifierMisses === 16) {
+        identifierHits = identifierMisses = 0;
+        identifierCooldown = 4096;
+    }
+    return name;
 }
