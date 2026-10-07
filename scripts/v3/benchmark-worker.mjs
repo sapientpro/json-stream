@@ -1,6 +1,10 @@
 import {performance} from 'node:perf_hooks';
 import {deepStrictEqual, strictEqual} from 'node:assert';
 const job=JSON.parse(process.argv[2]);
+const gcMode=job.gc??'natural';
+if(!['natural','forced'].includes(gcMode))throw new Error('gc must be natural or forced');
+const collect=typeof Bun!=='undefined'?()=>Bun.gc(true):globalThis.gc;
+if(gcMode==='forced'&&typeof collect!=='function')throw new Error('Forced GC is unavailable; Node needs --expose-gc');
 const api=await import(job.module);
 const Parser=job.format==='json5'?api.Json5Parser:api.JsonParser;
 const objects=()=>({items:Array.from({length:8000},(_,id)=>({id,name:'item-'+id,active:id%3===0,tags:['a','b'],score:id/7}))});
@@ -64,6 +68,6 @@ const summary=({root,count,sum,length,pathSum,lastPath})=>({root,count,sum,lengt
 const expected=summary(probe);
 for(let i=0;i<job.warmups;i++)run();
 const samples=[];
-for(let sample=0;sample<7;sample++){if(typeof Bun!=='undefined')Bun.gc(true);else globalThis.gc?.();const start=performance.now();let result;for(let i=0;i<job.iterations;i++)result=run();samples.push((performance.now()-start)/job.iterations);deepStrictEqual(summary(result),expected);}
+for(let sample=0;sample<7;sample++){if(gcMode==='forced')collect();const start=performance.now();let result;for(let i=0;i<job.iterations;i++)result=run();samples.push((performance.now()-start)/job.iterations);deepStrictEqual(summary(result),expected);}
 const medianMs=[...samples].sort((a,b)=>a-b)[3];
-console.log(JSON.stringify({...job,bytes:bytes.length,chunkCount:chunks.length,medianMs,mbps:bytes.length/medianMs/1000,millionWritesPerSecond:chunks.length/medianMs/1000,samplesMs:samples}));
+console.log(JSON.stringify({...job,gc:gcMode,bytes:bytes.length,chunkCount:chunks.length,medianMs,mbps:bytes.length/medianMs/1000,millionWritesPerSecond:chunks.length/medianMs/1000,samplesMs:samples}));
