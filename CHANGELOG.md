@@ -9,6 +9,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   input writes to reduce retained source storage. Default is `'fast'`; copying
   trades throughput for retained memory. See `docs/v3-copying.md` for limits
   and normal-mode performance controls.
+- Return unconsumed UTF-16 tail counts from core writes, add `strictEnd: false`
+  for document managers, and accept final text in `end(text?)`. Keep strict
+  trailing-input validation by default and preserve subscriptions through reset.
 
 ## 3.0.0-alpha.2 — 2026-10-08
 

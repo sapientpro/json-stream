@@ -43,7 +43,7 @@ const sizes=chunkPattern?[0]:option('--sizes','1024,65536').split(',').map(Numbe
 if(!chunkPattern&&sizes.some(n=>!Number.isSafeInteger(n)||n<1))throw new Error('--sizes needs positive integer lengths');
 fs.mkdirSync(path.dirname(output),{recursive:true});
 for(let repetition=0;repetition<repetitions;repetition++)for(const size of sizes)for(const [dataset,mode] of cases)for(const version of repetition%2?[...versions].reverse():versions){
- const job={...version,...(samePath?{sourceModule:version.module,module:stageModule(version.module)}:{}),memoryMode,dataset,mode,size,repetition,warmups,iterations,gc,cpu,input:option('--input','bytes'),syntax:option('--syntax','json'),chunkUnit,chunkPattern};
+ const job={...version,...(samePath?{sourceModule:version.module,module:stageModule(version.module)}:{}),memoryMode,dataset,mode,size,repetition,warmups,iterations,gc,cpu,input:option('--input','text'),syntax:option('--syntax','json'),chunkUnit,chunkPattern};
  const cmdArgs=engine==='deno'?['run','--cached-only','--allow-read',worker,JSON.stringify(job)]:[...(engine==='node'&&gc==='forced'?['--expose-gc']:[]),worker,JSON.stringify(job)];
  const result=JSON.parse(execFileSync(bin,cmdArgs,{encoding:'utf8',timeout:180000,env:engine==='deno'?{...process.env,DENO_DIR:'/private/tmp/json-stream-deno-v3-cache'}:process.env}));
  results.push(result);fs.writeFileSync(output,JSON.stringify({engine,runtime:execFileSync(bin,['--version'],{encoding:'utf8'}).trim(),protocol:{repetitions,warmups,iterations,samples:7,gc,cpu,samePath,setupIncluded:true,ownedConcretePathsConsumed:true,serialWorkers:true,units:'decimal MB/s'},results},null,2));

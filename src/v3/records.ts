@@ -1,8 +1,8 @@
+import { DOCUMENT_INPUT } from './document-input.js';
 import { JsonScanner } from './json-scanner.js';
 import { Json5Scanner } from './json5-scanner.js';
 import { InputFramer } from './framing.js';
 import { createStringStream } from './web.js';
-import { DOCUMENT_INPUT } from './document-input.js';
 import { compileJsonPath } from './jsonpath.js';
 import { makeErrorReporter } from './channel.js';
 import type { FormatOptions, PathInput, PathSegment, Subscription } from './types.js';
@@ -134,7 +134,7 @@ abstract class RecordManager extends InputFramer {
 
 /** LF-framed values. JSON5 is an explicit single-physical-line extension. */
 export class JsonLinesParser extends RecordManager {
-    constructor(options: FormatOptions = {}) { super(options, true); }
+    constructor(options: FormatOptions = {}) { super({...options, strictEnd: true}, true); }
     private first = true;
     protected consume(text: string): void {
         if (this.first && text.length) {
@@ -160,7 +160,7 @@ export class PrefixedJsonParser extends RecordManager {
     private tail = '';
     private seeking = true;
     constructor(private readonly marker: string, options: FormatOptions = {}) {
-        super(options);
+        super({...options, strictEnd: false});
         if (typeof marker !== 'string' || !marker.length) throw new TypeError('Prefix marker must be nonempty');
     }
     protected consume(text: string): void {
@@ -181,12 +181,12 @@ export class PrefixedJsonParser extends RecordManager {
                 if (pos === input.length) return;
             }
             const parser = this.activeParser();
-            const used = parser[DOCUMENT_INPUT](input, pos);
+            const unread = parser[DOCUMENT_INPUT](input, pos);
             if (this._closed) return;
             if (!parser.rootReady) return;
             this.finishRecord();
             this.seeking = true;
-            pos += used;
+            pos = input.length - unread;
         }
     }
     protected finishInput(): void {

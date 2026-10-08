@@ -48,3 +48,10 @@ p.write('{}');
 // @ts-expect-error byte input belongs to a transport adapter
 p.write(new Uint8Array());
 createDecodedInput(p).write(new Uint8Array());
+
+const boundary: Parser = new JsonParser({strictEnd:false});
+const remaining: number = boundary.write('{} tail');
+const finalRemaining: number = new JsonParser().end('{}');
+void remaining; void finalRemaining;
+// @ts-expect-error final parser chunks must also be strings
+new JsonParser().end(new Uint8Array());
