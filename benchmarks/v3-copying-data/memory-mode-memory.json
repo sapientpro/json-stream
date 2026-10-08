@@ -1,0 +1,2882 @@
+[
+  {
+    "engine": "node",
+    "memoryMode": "fast",
+    "runtime": "node",
+    "format": "json",
+    "input": "text",
+    "scenario": "selective",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 16.359420776367188,
+      "heapTotal": 0.25,
+      "heapUsed": 0.12877655029296875,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 16.390670776367188,
+      "heapTotal": 0.25,
+      "heapUsed": 0.14104461669921875,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 16.296920776367188,
+      "heapTotal": 16.265625,
+      "heapUsed": 16.34107208251953,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json",
+    "input": "text",
+    "scenario": "selective",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 16.375091552734375,
+      "heapTotal": 0.25,
+      "heapUsed": 0.13169097900390625,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 16.406341552734375,
+      "heapTotal": 0.25,
+      "heapUsed": 0.14471435546875,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 16.359466552734375,
+      "heapTotal": 16.265625,
+      "heapUsed": 16.568984985351562,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json",
+    "input": "text",
+    "scenario": "selective",
+    "lifecycle": "reset",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 16.42198944091797,
+      "heapTotal": 0.5,
+      "heapUsed": 0.1344146728515625,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 16.43761444091797,
+      "heapTotal": 0.5,
+      "heapUsed": 0.14771270751953125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 16.35948944091797,
+      "heapTotal": 16.515625,
+      "heapUsed": 16.59026336669922,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json",
+    "input": "text",
+    "scenario": "selective",
+    "lifecycle": "destroy",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 16.34386444091797,
+      "heapTotal": 0.5,
+      "heapUsed": 0.13031005859375,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 16.34386444091797,
+      "heapTotal": 0.5,
+      "heapUsed": 0.14322662353515625,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 16.28136444091797,
+      "heapTotal": 16.515625,
+      "heapUsed": 16.593093872070312,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json",
+    "input": "text",
+    "scenario": "selective",
+    "lifecycle": "error",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 16.23444366455078,
+      "heapTotal": 0.25,
+      "heapUsed": 0.13358306884765625,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 16.28131866455078,
+      "heapTotal": 0.25,
+      "heapUsed": 0.1464996337890625,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 16.20319366455078,
+      "heapTotal": 16.265625,
+      "heapUsed": 16.587890625,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "fast",
+    "runtime": "node",
+    "format": "json",
+    "input": "text",
+    "scenario": "fragments",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 64.53147888183594,
+      "heapTotal": 64.3125,
+      "heapUsed": 64.13666534423828,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 0.43761444091796875,
+      "heapTotal": 0.25,
+      "heapUsed": 0.14875030517578125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 64.51585388183594,
+      "heapTotal": 64.5625,
+      "heapUsed": 64.37106323242188,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json",
+    "input": "text",
+    "scenario": "fragments",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 16.37511444091797,
+      "heapTotal": 0.25,
+      "heapUsed": 0.13939666748046875,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 16.40636444091797,
+      "heapTotal": 0.25,
+      "heapUsed": 0.15181732177734375,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 16.34386444091797,
+      "heapTotal": 16.515625,
+      "heapUsed": 16.442703247070312,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json",
+    "input": "text",
+    "scenario": "fragments",
+    "lifecycle": "reset",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 16.328216552734375,
+      "heapTotal": 0.5,
+      "heapUsed": 0.1420745849609375,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 16.343841552734375,
+      "heapTotal": 0.5,
+      "heapUsed": 0.4808349609375,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 16.281341552734375,
+      "heapTotal": 16.515625,
+      "heapUsed": 16.21508026123047,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json",
+    "input": "text",
+    "scenario": "fragments",
+    "lifecycle": "destroy",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 16.406341552734375,
+      "heapTotal": 0.5,
+      "heapUsed": 0.1380157470703125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 16.421966552734375,
+      "heapTotal": 0.5,
+      "heapUsed": 0.15093231201171875,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 16.359466552734375,
+      "heapTotal": 16.515625,
+      "heapUsed": 16.209640502929688,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json",
+    "input": "text",
+    "scenario": "fragments",
+    "lifecycle": "error",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 16.390716552734375,
+      "heapTotal": 0.5,
+      "heapUsed": 0.14128875732421875,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 16.406341552734375,
+      "heapTotal": 0.5,
+      "heapUsed": 0.15374755859375,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 16.312591552734375,
+      "heapTotal": 16.515625,
+      "heapUsed": 16.6231689453125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "fast",
+    "runtime": "node",
+    "format": "json",
+    "input": "bytes",
+    "scenario": "selective",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 56.75025177001953,
+      "heapTotal": 0,
+      "heapUsed": 0.13976287841796875,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 56.79712677001953,
+      "heapTotal": 0,
+      "heapUsed": 0.1526336669921875,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 88.71900177001953,
+      "heapTotal": 32.53125,
+      "heapUsed": 32.114662170410156,
+      "external": 32.000877380371094,
+      "arrayBuffers": 16.00054168701172
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json",
+    "input": "bytes",
+    "scenario": "selective",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 56.656410217285156,
+      "heapTotal": 0.25,
+      "heapUsed": 0.14264678955078125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 56.672035217285156,
+      "heapTotal": 0.25,
+      "heapUsed": 0.15594482421875,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 88.70337677001953,
+      "heapTotal": 32.53125,
+      "heapUsed": 32.11821746826172,
+      "external": 32.000877380371094,
+      "arrayBuffers": 16.00054168701172
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json",
+    "input": "bytes",
+    "scenario": "selective",
+    "lifecycle": "reset",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 56.843955993652344,
+      "heapTotal": 0,
+      "heapUsed": 0.13874053955078125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 56.906455993652344,
+      "heapTotal": 0,
+      "heapUsed": 0.15167236328125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 88.90652465820312,
+      "heapTotal": 32.53125,
+      "heapUsed": 32.1123046875,
+      "external": 32.000877380371094,
+      "arrayBuffers": 16.00054168701172
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json",
+    "input": "bytes",
+    "scenario": "selective",
+    "lifecycle": "destroy",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 56.578285217285156,
+      "heapTotal": 0,
+      "heapUsed": 0.13454437255859375,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 56.578285217285156,
+      "heapTotal": 0,
+      "heapUsed": 0.1475677490234375,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 88.60960388183594,
+      "heapTotal": 32.28125,
+      "heapUsed": 32.15283966064453,
+      "external": 32.000877380371094,
+      "arrayBuffers": 16.00054168701172
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json",
+    "input": "bytes",
+    "scenario": "selective",
+    "lifecycle": "error",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 56.718910217285156,
+      "heapTotal": 0,
+      "heapUsed": 0.14458465576171875,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 56.765785217285156,
+      "heapTotal": 0,
+      "heapUsed": 0.1576080322265625,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 88.76585388183594,
+      "heapTotal": 32.53125,
+      "heapUsed": 32.16334533691406,
+      "external": 32.00087928771973,
+      "arrayBuffers": 16.00054359436035
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "fast",
+    "runtime": "node",
+    "format": "json",
+    "input": "bytes",
+    "scenario": "fragments",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 104.68772888183594,
+      "heapTotal": 0.25,
+      "heapUsed": 0.14652252197265625,
+      "external": 32.000633239746094,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 104.71897888183594,
+      "heapTotal": 0.25,
+      "heapUsed": 0.15973663330078125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 120.7347183227539,
+      "heapTotal": 48.796875,
+      "heapUsed": 48.479644775390625,
+      "external": 48.00129699707031,
+      "arrayBuffers": 24.000812530517578
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json",
+    "input": "bytes",
+    "scenario": "fragments",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 88.76585388183594,
+      "heapTotal": 0.25,
+      "heapUsed": 0.15038299560546875,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 88.76585388183594,
+      "heapTotal": 0.25,
+      "heapUsed": 0.1633148193359375,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 120.8284912109375,
+      "heapTotal": 48.796875,
+      "heapUsed": 48.157066345214844,
+      "external": 48.00129699707031,
+      "arrayBuffers": 24.000812530517578
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json",
+    "input": "bytes",
+    "scenario": "fragments",
+    "lifecycle": "reset",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 88.67208099365234,
+      "heapTotal": 0,
+      "heapUsed": 0.14640045166015625,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 88.68770599365234,
+      "heapTotal": 0,
+      "heapUsed": 0.15882110595703125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 120.73467254638672,
+      "heapTotal": 48.546875,
+      "heapUsed": 48.149192810058594,
+      "external": 48.00129699707031,
+      "arrayBuffers": 24.000812530517578
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json",
+    "input": "bytes",
+    "scenario": "fragments",
+    "lifecycle": "destroy",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 88.60960388183594,
+      "heapTotal": 0.25,
+      "heapUsed": 0.14225006103515625,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 88.64085388183594,
+      "heapTotal": 0.25,
+      "heapUsed": 0.155548095703125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 120.7347412109375,
+      "heapTotal": 48.796875,
+      "heapUsed": 48.155059814453125,
+      "external": 48.00129699707031,
+      "arrayBuffers": 24.000812530517578
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json",
+    "input": "bytes",
+    "scenario": "fragments",
+    "lifecycle": "error",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 88.76585388183594,
+      "heapTotal": 0.25,
+      "heapUsed": 0.15229034423828125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 88.79710388183594,
+      "heapTotal": 0.25,
+      "heapUsed": 0.165313720703125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 120.82844543457031,
+      "heapTotal": 48.796875,
+      "heapUsed": 48.49031066894531,
+      "external": 48.00129985809326,
+      "arrayBuffers": 24.000815391540527
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "fast",
+    "runtime": "node",
+    "format": "json5",
+    "input": "text",
+    "scenario": "selective",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 16.32823944091797,
+      "heapTotal": 0.25,
+      "heapUsed": 0.11785888671875,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 16.34386444091797,
+      "heapTotal": 0.25,
+      "heapUsed": 0.130126953125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 16.31261444091797,
+      "heapTotal": 16.515625,
+      "heapUsed": 16.64691162109375,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json5",
+    "input": "text",
+    "scenario": "selective",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 16.359466552734375,
+      "heapTotal": 0.5,
+      "heapUsed": 0.1207733154296875,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 16.359466552734375,
+      "heapTotal": 0.5,
+      "heapUsed": 0.3804168701171875,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 16.281341552734375,
+      "heapTotal": 16.515625,
+      "heapUsed": 16.425216674804688,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json5",
+    "input": "text",
+    "scenario": "selective",
+    "lifecycle": "reset",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 16.421966552734375,
+      "heapTotal": 0.5,
+      "heapUsed": 0.12342071533203125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 16.437591552734375,
+      "heapTotal": 0.5,
+      "heapUsed": 0.1363525390625,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 16.359466552734375,
+      "heapTotal": 16.515625,
+      "heapUsed": 16.57831573486328,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json5",
+    "input": "text",
+    "scenario": "selective",
+    "lifecycle": "destroy",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 16.40636444091797,
+      "heapTotal": 0.5,
+      "heapUsed": 0.11951446533203125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 16.43761444091797,
+      "heapTotal": 0.5,
+      "heapUsed": 0.37915802001953125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 16.35948944091797,
+      "heapTotal": 16.515625,
+      "heapUsed": 16.44061279296875,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json5",
+    "input": "text",
+    "scenario": "selective",
+    "lifecycle": "error",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 16.40636444091797,
+      "heapTotal": 0.5,
+      "heapUsed": 0.12326812744140625,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 16.45323944091797,
+      "heapTotal": 0.5,
+      "heapUsed": 0.38352203369140625,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 16.34386444091797,
+      "heapTotal": 16.515625,
+      "heapUsed": 16.43396759033203,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "fast",
+    "runtime": "node",
+    "format": "json5",
+    "input": "text",
+    "scenario": "fragments",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 64.54712677001953,
+      "heapTotal": 64.3125,
+      "heapUsed": 64.12181854248047,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 0.4063873291015625,
+      "heapTotal": 0.25,
+      "heapUsed": 0.133941650390625,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 64.53150177001953,
+      "heapTotal": 64.5625,
+      "heapUsed": 64.3650894165039,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json5",
+    "input": "text",
+    "scenario": "fragments",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 16.32823944091797,
+      "heapTotal": 0.25,
+      "heapUsed": 0.12454986572265625,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 16.35948944091797,
+      "heapTotal": 0.25,
+      "heapUsed": 0.3845062255859375,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 16.28136444091797,
+      "heapTotal": 16.265625,
+      "heapUsed": 16.627792358398438,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json5",
+    "input": "text",
+    "scenario": "fragments",
+    "lifecycle": "reset",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 16.437591552734375,
+      "heapTotal": 0.5,
+      "heapUsed": 0.1271514892578125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 16.437591552734375,
+      "heapTotal": 0.5,
+      "heapUsed": 0.387451171875,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 16.343841552734375,
+      "heapTotal": 16.515625,
+      "heapUsed": 16.403648376464844,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json5",
+    "input": "text",
+    "scenario": "fragments",
+    "lifecycle": "destroy",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 16.281341552734375,
+      "heapTotal": 0,
+      "heapUsed": 0.123291015625,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 16.343841552734375,
+      "heapTotal": 0,
+      "heapUsed": 0.5646286010742188,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 16.265716552734375,
+      "heapTotal": 16.265625,
+      "heapUsed": 16.441787719726562,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json5",
+    "input": "text",
+    "scenario": "fragments",
+    "lifecycle": "error",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 16.32819366455078,
+      "heapTotal": 0.5,
+      "heapUsed": 0.127044677734375,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 16.32819366455078,
+      "heapTotal": 0.5,
+      "heapUsed": 0.5510940551757812,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 16.29694366455078,
+      "heapTotal": 16.515625,
+      "heapUsed": 16.42608642578125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "fast",
+    "runtime": "node",
+    "format": "json5",
+    "input": "bytes",
+    "scenario": "selective",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 56.640830993652344,
+      "heapTotal": 0,
+      "heapUsed": 0.12884521484375,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 56.687705993652344,
+      "heapTotal": 0,
+      "heapUsed": 0.14111328125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 88.70342254638672,
+      "heapTotal": 32.28125,
+      "heapUsed": 32.46946716308594,
+      "external": 32.000877380371094,
+      "arrayBuffers": 16.00054168701172
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json5",
+    "input": "bytes",
+    "scenario": "selective",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 56.500160217285156,
+      "heapTotal": 0,
+      "heapUsed": 0.1317596435546875,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 56.531410217285156,
+      "heapTotal": 0,
+      "heapUsed": 0.14505767822265625,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 88.56275177001953,
+      "heapTotal": 32.28125,
+      "heapUsed": 32.14176940917969,
+      "external": 32.000877380371094,
+      "arrayBuffers": 16.00054168701172
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json5",
+    "input": "bytes",
+    "scenario": "selective",
+    "lifecycle": "reset",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 72.54703521728516,
+      "heapTotal": 0,
+      "heapUsed": 0.12774658203125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 72.56266021728516,
+      "heapTotal": 0,
+      "heapUsed": 0.140167236328125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 88.53145599365234,
+      "heapTotal": 32.28125,
+      "heapUsed": 32.13545227050781,
+      "external": 32.000877380371094,
+      "arrayBuffers": 16.00054168701172
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json5",
+    "input": "bytes",
+    "scenario": "selective",
+    "lifecycle": "destroy",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 56.64085388183594,
+      "heapTotal": 0.25,
+      "heapUsed": 0.123748779296875,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 56.64085388183594,
+      "heapTotal": 0.25,
+      "heapUsed": 0.13616943359375,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 88.7347183227539,
+      "heapTotal": 32.78125,
+      "heapUsed": 32.602752685546875,
+      "external": 32.000877380371094,
+      "arrayBuffers": 16.00054168701172
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json5",
+    "input": "bytes",
+    "scenario": "selective",
+    "lifecycle": "error",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 56.468910217285156,
+      "heapTotal": 0,
+      "heapUsed": 0.13426971435546875,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 56.484535217285156,
+      "heapTotal": 0,
+      "heapUsed": 0.1485595703125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 88.53150177001953,
+      "heapTotal": 32.28125,
+      "heapUsed": 32.15325164794922,
+      "external": 32.00087928771973,
+      "arrayBuffers": 16.00054359436035
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "fast",
+    "runtime": "node",
+    "format": "json5",
+    "input": "bytes",
+    "scenario": "fragments",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 104.71902465820312,
+      "heapTotal": 0,
+      "heapUsed": 0.13167572021484375,
+      "external": 32.000633239746094,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 104.75027465820312,
+      "heapTotal": 0,
+      "heapUsed": 0.38822174072265625,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 120.70342254638672,
+      "heapTotal": 48.796875,
+      "heapUsed": 48.13836669921875,
+      "external": 48.00129699707031,
+      "arrayBuffers": 24.000812530517578
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json5",
+    "input": "bytes",
+    "scenario": "fragments",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 88.62522888183594,
+      "heapTotal": -0.25,
+      "heapUsed": 0.13553619384765625,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 88.65647888183594,
+      "heapTotal": -0.25,
+      "heapUsed": 0.28553009033203125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 120.7347183227539,
+      "heapTotal": 48.796875,
+      "heapUsed": 48.142669677734375,
+      "external": 48.00129699707031,
+      "arrayBuffers": 24.000812530517578
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json5",
+    "input": "bytes",
+    "scenario": "fragments",
+    "lifecycle": "reset",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 88.62527465820312,
+      "heapTotal": 0.25,
+      "heapUsed": 0.13147735595703125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 88.64089965820312,
+      "heapTotal": 0.25,
+      "heapUsed": 0.5019073486328125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 120.7191162109375,
+      "heapTotal": 48.546875,
+      "heapUsed": 48.13495635986328,
+      "external": 48.00129699707031,
+      "arrayBuffers": 24.000812530517578
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json5",
+    "input": "bytes",
+    "scenario": "fragments",
+    "lifecycle": "destroy",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 88.76585388183594,
+      "heapTotal": 0.25,
+      "heapUsed": 0.12752532958984375,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 88.76585388183594,
+      "heapTotal": 0.25,
+      "heapUsed": 0.13994598388671875,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 120.8753433227539,
+      "heapTotal": 48.796875,
+      "heapUsed": 48.14171600341797,
+      "external": 48.00129699707031,
+      "arrayBuffers": 24.000812530517578
+    }
+  },
+  {
+    "engine": "node",
+    "memoryMode": "compact",
+    "runtime": "node",
+    "format": "json5",
+    "input": "bytes",
+    "scenario": "fragments",
+    "lifecycle": "error",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 88.73462677001953,
+      "heapTotal": -0.25,
+      "heapUsed": 0.1380462646484375,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 88.75025177001953,
+      "heapTotal": -0.25,
+      "heapUsed": 0.1504669189453125,
+      "external": 0.00003814697265625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 120.85978698730469,
+      "heapTotal": 49.046875,
+      "heapUsed": 48.63465118408203,
+      "external": 48.00129985809326,
+      "arrayBuffers": 24.000815391540527
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "fast",
+    "runtime": "bun",
+    "format": "json",
+    "input": "text",
+    "scenario": "selective",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 81.421875,
+      "heapTotal": 0.0791015625,
+      "heapUsed": 64.17960166931152,
+      "external": 64.12399864196777,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 81.4375,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.17822837829589844,
+      "external": 0.12280845642089844,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 81,
+      "heapTotal": 0.0947265625,
+      "heapUsed": 40.17821216583252,
+      "external": 40.12360095977783,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json",
+    "input": "text",
+    "scenario": "selective",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 33.171875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.18755245208740234,
+      "external": 0.12792110443115234,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 33.171875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.18657588958740234,
+      "external": 0.12694454193115234,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 32.984375,
+      "heapTotal": 0.0947265625,
+      "heapUsed": 16.18842124938965,
+      "external": 16.12811851501465,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json",
+    "input": "text",
+    "scenario": "selective",
+    "lifecycle": "reset",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 33.671875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.181640625,
+      "external": 0.1226806640625,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 33.671875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.1806640625,
+      "external": 0.1217041015625,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 33.109375,
+      "heapTotal": 0.0947265625,
+      "heapUsed": 16.18106174468994,
+      "external": 16.12239170074463,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json",
+    "input": "text",
+    "scenario": "selective",
+    "lifecycle": "destroy",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 33.484375,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.18423843383789062,
+      "external": 0.12541580200195312,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 33.484375,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.18326187133789062,
+      "external": 0.12443923950195312,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 32.953125,
+      "heapTotal": 0.0947265625,
+      "heapUsed": 16.18510627746582,
+      "external": 16.125612258911133,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json",
+    "input": "text",
+    "scenario": "selective",
+    "lifecycle": "error",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 33.65625,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.18595027923583984,
+      "external": 0.12660884857177734,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 33.65625,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.18497371673583984,
+      "external": 0.12563228607177734,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 33.390625,
+      "heapTotal": 0.0947265625,
+      "heapUsed": 16.186216354370117,
+      "external": 16.12623405456543,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "fast",
+    "runtime": "bun",
+    "format": "json",
+    "input": "text",
+    "scenario": "fragments",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 81.328125,
+      "heapTotal": 0.0791015625,
+      "heapUsed": 64.1842851638794,
+      "external": 64.12769031524658,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 81.328125,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.18291187286376953,
+      "external": 0.12650012969970703,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 80.953125,
+      "heapTotal": 0.0947265625,
+      "heapUsed": 40.18289089202881,
+      "external": 40.12728786468506,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json",
+    "input": "text",
+    "scenario": "fragments",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 33.171875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.19223594665527344,
+      "external": 0.13161277770996094,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 33.171875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.19125938415527344,
+      "external": 0.13063621520996094,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 32.984375,
+      "heapTotal": 0.0947265625,
+      "heapUsed": 16.193099975585938,
+      "external": 16.131805419921875,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json",
+    "input": "text",
+    "scenario": "fragments",
+    "lifecycle": "reset",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 33.21875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.1863241195678711,
+      "external": 0.1263723373413086,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 33.265625,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.1853475570678711,
+      "external": 0.1253957748413086,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 32.890625,
+      "heapTotal": 0.0947265625,
+      "heapUsed": 16.185744285583496,
+      "external": 16.12608242034912,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json",
+    "input": "text",
+    "scenario": "fragments",
+    "lifecycle": "destroy",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 33.125,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.1889209747314453,
+      "external": 0.1291065216064453,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 33.125,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.1879444122314453,
+      "external": 0.1281299591064453,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 32.953125,
+      "heapTotal": 0.0947265625,
+      "heapUsed": 16.189785957336426,
+      "external": 16.129300117492676,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json",
+    "input": "text",
+    "scenario": "fragments",
+    "lifecycle": "error",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 33.390625,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.19063282012939453,
+      "external": 0.13029956817626953,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 33.390625,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.18965625762939453,
+      "external": 0.12932300567626953,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 33.25,
+      "heapTotal": 0.0947265625,
+      "heapUsed": 16.190896034240723,
+      "external": 16.129921913146973,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "fast",
+    "runtime": "bun",
+    "format": "json",
+    "input": "bytes",
+    "scenario": "selective",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 130.703125,
+      "heapTotal": 0.0791015625,
+      "heapUsed": 64.19039058685303,
+      "external": 64.13046932220459,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 130.765625,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.18907833099365234,
+      "external": 0.12927913665771484,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 130.390625,
+      "heapTotal": 0.095703125,
+      "heapUsed": 64.19094753265381,
+      "external": 64.13067531585693,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json",
+    "input": "bytes",
+    "scenario": "selective",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 81.515625,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.19861602783203125,
+      "external": 0.13439178466796875,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 81.515625,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.19763946533203125,
+      "external": 0.13341522216796875,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 81.25,
+      "heapTotal": 0.095703125,
+      "heapUsed": 24.19916534423828,
+      "external": 24.13465118408203,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json",
+    "input": "bytes",
+    "scenario": "selective",
+    "lifecycle": "reset",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 90.3125,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.1903982162475586,
+      "external": 0.1270742416381836,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 90.3125,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.1893148422241211,
+      "external": 0.1260976791381836,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 90.078125,
+      "heapTotal": 0.095703125,
+      "heapUsed": 24.19002056121826,
+      "external": 24.12709331512451,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json",
+    "input": "bytes",
+    "scenario": "selective",
+    "lifecycle": "destroy",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 81.4375,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.19299602508544922,
+      "external": 0.12980937957763672,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 81.4375,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.19201946258544922,
+      "external": 0.12883281707763672,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 81.25,
+      "heapTotal": 0.095703125,
+      "heapUsed": 24.193498611450195,
+      "external": 24.130067825317383,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json",
+    "input": "bytes",
+    "scenario": "selective",
+    "lifecycle": "error",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 81.71875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.19475364685058594,
+      "external": 0.13100242614746094,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 81.71875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.19367027282714844,
+      "external": 0.13002586364746094,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 81.515625,
+      "heapTotal": 0.111328125,
+      "heapUsed": 24.194390296936035,
+      "external": 24.13045597076416,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "fast",
+    "runtime": "bun",
+    "format": "json",
+    "input": "bytes",
+    "scenario": "fragments",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 130.9375,
+      "heapTotal": 0.0791015625,
+      "heapUsed": 64.19496726989746,
+      "external": 64.1341609954834,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 130.953125,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.19365501403808594,
+      "external": 0.13297080993652344,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 130.59375,
+      "heapTotal": 0.095703125,
+      "heapUsed": 72.19567394256592,
+      "external": 72.1343641281128,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json",
+    "input": "bytes",
+    "scenario": "fragments",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 90.4375,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.20329952239990234,
+      "external": 0.13808345794677734,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 90.4375,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.20232295989990234,
+      "external": 0.13710689544677734,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 90.15625,
+      "heapTotal": 0.095703125,
+      "heapUsed": 24.203845977783203,
+      "external": 24.13833999633789,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json",
+    "input": "bytes",
+    "scenario": "fragments",
+    "lifecycle": "reset",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 81.6875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.1948680877685547,
+      "external": 0.1307659149169922,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 81.734375,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.1938915252685547,
+      "external": 0.1297893524169922,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 81.234375,
+      "heapTotal": 0.095703125,
+      "heapUsed": 24.194701194763184,
+      "external": 24.13078212738037,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json",
+    "input": "bytes",
+    "scenario": "fragments",
+    "lifecycle": "destroy",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 81.75,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.1975717544555664,
+      "external": 0.1335000991821289,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 81.75,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.1965951919555664,
+      "external": 0.1325235366821289,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 81.4375,
+      "heapTotal": 0.095703125,
+      "heapUsed": 24.198073387145996,
+      "external": 24.13375759124756,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json",
+    "input": "bytes",
+    "scenario": "fragments",
+    "lifecycle": "error",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 90.625,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.19932937622070312,
+      "external": 0.13469314575195312,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 90.625,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.19835281372070312,
+      "external": 0.13371658325195312,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 90.46875,
+      "heapTotal": 0.111328125,
+      "heapUsed": 24.19907283782959,
+      "external": 24.134146690368652,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "fast",
+    "runtime": "bun",
+    "format": "json5",
+    "input": "text",
+    "scenario": "selective",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 80.984375,
+      "heapTotal": 0.0791015625,
+      "heapUsed": 64.16756248474121,
+      "external": 64.11301231384277,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 80.984375,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.16618919372558594,
+      "external": 0.11182212829589844,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 80.984375,
+      "heapTotal": 0.0947265625,
+      "heapUsed": 40.166178703308105,
+      "external": 40.11262035369873,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json5",
+    "input": "text",
+    "scenario": "selective",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 32.875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.17574214935302734,
+      "external": 0.11693477630615234,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 32.875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.17476558685302734,
+      "external": 0.11595821380615234,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 32.875,
+      "heapTotal": 0.0947265625,
+      "heapUsed": 16.176616668701172,
+      "external": 16.117137908935547,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json5",
+    "input": "text",
+    "scenario": "selective",
+    "lifecycle": "reset",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 32.703125,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.16975975036621094,
+      "external": 0.11162376403808594,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 32.703125,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.16878318786621094,
+      "external": 0.11064720153808594,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 32.6875,
+      "heapTotal": 0.0947265625,
+      "heapUsed": 16.169184684753418,
+      "external": 16.11133861541748,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json5",
+    "input": "text",
+    "scenario": "selective",
+    "lifecycle": "destroy",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 32.609375,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.172882080078125,
+      "external": 0.114990234375,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 32.609375,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.171905517578125,
+      "external": 0.114013671875,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 32.609375,
+      "heapTotal": 0.0947265625,
+      "heapUsed": 16.173755645751953,
+      "external": 16.115192413330078,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json5",
+    "input": "text",
+    "scenario": "selective",
+    "lifecycle": "error",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 32.78125,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.1749277114868164,
+      "external": 0.1160135269165039,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 32.78125,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.1739511489868164,
+      "external": 0.1150369644165039,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 32.625,
+      "heapTotal": 0.0947265625,
+      "heapUsed": 16.176146507263184,
+      "external": 16.116591453552246,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "fast",
+    "runtime": "bun",
+    "format": "json5",
+    "input": "text",
+    "scenario": "fragments",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 88.875,
+      "heapTotal": 0.0791015625,
+      "heapUsed": 64.17292404174805,
+      "external": 64.1168327331543,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 88.875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.17155075073242188,
+      "external": 0.11564254760742188,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 88.8125,
+      "heapTotal": 0.0947265625,
+      "heapUsed": 40.17153835296631,
+      "external": 40.11643886566162,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json5",
+    "input": "text",
+    "scenario": "fragments",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 32.90625,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.18089008331298828,
+      "external": 0.12075519561767578,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 32.90625,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.17991352081298828,
+      "external": 0.11977863311767578,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 32.90625,
+      "heapTotal": 0.0947265625,
+      "heapUsed": 16.1817626953125,
+      "external": 16.120956420898438,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json5",
+    "input": "text",
+    "scenario": "fragments",
+    "lifecycle": "reset",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 32.890625,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.17500019073486328,
+      "external": 0.11542987823486328,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 32.890625,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.17402362823486328,
+      "external": 0.11445331573486328,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 32.890625,
+      "heapTotal": 0.0947265625,
+      "heapUsed": 16.174427032470703,
+      "external": 16.11514663696289,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json5",
+    "input": "text",
+    "scenario": "fragments",
+    "lifecycle": "destroy",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 32.875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.17824363708496094,
+      "external": 0.11881065368652344,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 32.875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.17726707458496094,
+      "external": 0.11783409118652344,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 32.875,
+      "heapTotal": 0.0947265625,
+      "heapUsed": 16.179115295410156,
+      "external": 16.11901092529297,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json5",
+    "input": "text",
+    "scenario": "fragments",
+    "lifecycle": "error",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 32.859375,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.18018245697021484,
+      "external": 0.11983394622802734,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 32.859375,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.17920589447021484,
+      "external": 0.11885738372802734,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 32.71875,
+      "heapTotal": 0.0947265625,
+      "heapUsed": 16.18139934539795,
+      "external": 16.120409965515137,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "fast",
+    "runtime": "bun",
+    "format": "json5",
+    "input": "bytes",
+    "scenario": "selective",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 138.40625,
+      "heapTotal": 0.0791015625,
+      "heapUsed": 64.17856502532959,
+      "external": 64.11948299407959,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 138.421875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.17725276947021484,
+      "external": 0.11829280853271484,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 138.40625,
+      "heapTotal": 0.095703125,
+      "heapUsed": 64.17912769317627,
+      "external": 64.11969470977783,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json5",
+    "input": "bytes",
+    "scenario": "selective",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 81.21875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.18680572509765625,
+      "external": 0.12340545654296875,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 81.21875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.18572235107421875,
+      "external": 0.12242889404296875,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 81.21875,
+      "heapTotal": 0.095703125,
+      "heapUsed": 24.187360763549805,
+      "external": 24.12367057800293,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json5",
+    "input": "bytes",
+    "scenario": "selective",
+    "lifecycle": "reset",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 81.09375,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.17851734161376953,
+      "external": 0.11601734161376953,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 81.09375,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.17743396759033203,
+      "external": 0.11504077911376953,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 81.09375,
+      "heapTotal": 0.095703125,
+      "heapUsed": 24.17814350128174,
+      "external": 24.116040229797363,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json5",
+    "input": "bytes",
+    "scenario": "selective",
+    "lifecycle": "destroy",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 81.21875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.1816396713256836,
+      "external": 0.1193838119506836,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 81.234375,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.1806631088256836,
+      "external": 0.1184072494506836,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 81.203125,
+      "heapTotal": 0.095703125,
+      "heapUsed": 24.182147979736328,
+      "external": 24.119647979736328,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json5",
+    "input": "bytes",
+    "scenario": "selective",
+    "lifecycle": "error",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 81.421875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.1837310791015625,
+      "external": 0.1204071044921875,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 81.421875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.1827545166015625,
+      "external": 0.1194305419921875,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 81.265625,
+      "heapTotal": 0.111328125,
+      "heapUsed": 24.184252738952637,
+      "external": 24.12074565887451,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "fast",
+    "runtime": "bun",
+    "format": "json5",
+    "input": "bytes",
+    "scenario": "fragments",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 138.375,
+      "heapTotal": 0.0791015625,
+      "heapUsed": 64.18392658233643,
+      "external": 64.12330341339111,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 138.390625,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.18261432647705078,
+      "external": 0.12211322784423828,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 138.375,
+      "heapTotal": 0.095703125,
+      "heapUsed": 72.18442821502686,
+      "external": 72.12351512908936,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json5",
+    "input": "bytes",
+    "scenario": "fragments",
+    "lifecycle": "end",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 81.265625,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.1920604705810547,
+      "external": 0.1272258758544922,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 81.265625,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.1910839080810547,
+      "external": 0.1262493133544922,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 81.265625,
+      "heapTotal": 0.095703125,
+      "heapUsed": 24.192615509033203,
+      "external": 24.127490997314453,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json5",
+    "input": "bytes",
+    "scenario": "fragments",
+    "lifecycle": "reset",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 81.171875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.18375778198242188,
+      "external": 0.11982345581054688,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 81.171875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.18278121948242188,
+      "external": 0.11884689331054688,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 81.171875,
+      "heapTotal": 0.095703125,
+      "heapUsed": 24.18338394165039,
+      "external": 24.11984634399414,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json5",
+    "input": "bytes",
+    "scenario": "fragments",
+    "lifecycle": "destroy",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 81.1875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.18700122833251953,
+      "external": 0.12320423126220703,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 81.1875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.18591785430908203,
+      "external": 0.12222766876220703,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 81.1875,
+      "heapTotal": 0.095703125,
+      "heapUsed": 24.187509536743164,
+      "external": 24.12346839904785,
+      "arrayBuffers": 0
+    }
+  },
+  {
+    "engine": "bun",
+    "memoryMode": "compact",
+    "runtime": "bun",
+    "format": "json5",
+    "input": "bytes",
+    "scenario": "fragments",
+    "lifecycle": "error",
+    "module": "dist/esm/v3/index.js",
+    "width": 128,
+    "kind": "unicode",
+    "callbacks": 4,
+    "parsers": 4,
+    "ignoredInputMiB": 32,
+    "retainedMiB": {
+      "rss": 81.46875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.18898582458496094,
+      "external": 0.12422752380371094,
+      "arrayBuffers": 0
+    },
+    "outputsDroppedMiB": {
+      "rss": 81.46875,
+      "heapTotal": 0.0634765625,
+      "heapUsed": 0.18800926208496094,
+      "external": 0.12325096130371094,
+      "arrayBuffers": 0
+    },
+    "sampledHighMiB": {
+      "rss": 81.3125,
+      "heapTotal": 0.111328125,
+      "heapUsed": 24.189507484436035,
+      "external": 24.124566078186035,
+      "arrayBuffers": 0
+    }
+  }
+]

@@ -3,12 +3,17 @@ import {pathToFileURL} from 'node:url';
 import path from 'node:path';
 import {strictEqual} from 'node:assert';
 const [format = 'json', input = 'text', scenario = 'none', lifecycle = 'end',
-    module = 'dist/esm/v3/index.js'] = process.argv.slice(2);
+    module = 'dist/esm/v3/index.js', width, kind = 'unicode', memoryMode = 'fast'] = process.argv.slice(2);
 if (!['json', 'json5'].includes(format) || !['text', 'bytes'].includes(input) ||
     !['none', 'root', 'selective', 'fragments', 'dense'].includes(scenario) ||
     !['end', 'reset', 'destroy', 'error'].includes(lifecycle)) throw Error('Unknown diagnostic option');
-const {JsonParser, Json5Parser, createDecodedInput} = await import(pathToFileURL(path.resolve(module)));
+if (width !== undefined && (!['selective', 'fragments'].includes(scenario) ||
+    !Number.isSafeInteger(Number(width)) || Number(width) < 1 || Number(width) > 65536 ||
+    !['ascii', 'unicode'].includes(kind))) throw Error('Width requires selective/fragments, 1..65536 units, and ascii/unicode');
+const {JsonParser, Json5Parser, createCopyingParser} = await import(pathToFileURL(path.resolve(module)));
+const {createDecodedInput} = await import('../../dist/esm/v3/index.js');
 const Parser = format === 'json' ? JsonParser : Json5Parser;
+const create = typeof createCopyingParser === 'function' ? () => createCopyingParser({format}) : () => new Parser({memoryMode});
 const collectGarbage = typeof Bun !== 'undefined' ? () => Bun.gc(true) : globalThis.gc;
 if (!collectGarbage) throw Error('Run this diagnostic with node --expose-gc or Bun');
 const parsers = [], outputs = [];
@@ -22,8 +27,8 @@ const collect = async () => {
 const before = await collect();
 let sampledHigh = {...before}, callbacks = 0;
 function add(i) {
-    const parser = new Parser();
-    const selected = scenario === 'dense' ? 'y'.repeat(2 * 1024 * 1024)
+    const parser = create();
+    const selected = width !== undefined ? (kind === 'ascii' ? 'a' : 'π').repeat(Number(width)) : scenario === 'dense' ? 'y'.repeat(2 * 1024 * 1024)
         : 'small-selected-value-with-unicode-π😀-' + i;
     const save = value => {
         strictEqual(scenario === 'root' ? value.selected : value, selected);
@@ -54,5 +59,5 @@ outputs.length = 0;
 const outputsDropped = await collect();
 const delta = memory => Object.fromEntries(Object.keys(before).map(key => [key, (memory[key] - before[key]) / 1048576]));
 console.log(JSON.stringify({runtime:typeof Bun === 'undefined' ? 'node' : 'bun', format, input, scenario,
-    lifecycle, module, callbacks, parsers:parsers.length, ignoredInputMiB:32,
+    lifecycle, module, ...(width === undefined ? {} : {width:Number(width),kind}), callbacks, parsers:parsers.length, ignoredInputMiB:32,
     retainedMiB:delta(retained), outputsDroppedMiB:delta(outputsDropped), sampledHighMiB:delta(sampledHigh)}, null, 2));

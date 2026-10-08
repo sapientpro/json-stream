@@ -59,7 +59,8 @@
     "benchmark:bun": "npm run build && bun scripts/benchmark.mjs",
     "test:formats": "node scripts/v3/verify.mjs && bun scripts/v3/verify.mjs",
     "benchmark:v3": "npm run build && node scripts/v3/benchmark.mjs",
-    "benchmark:competitors:deno": "npm run build && node scripts/v3/competitors.mjs --engine deno --checks && node scripts/v3/competitors.mjs --engine deno --secondary && node scripts/v3/competitors-report.mjs --engines node,bun,deno"
+    "benchmark:competitors:deno": "npm run build && node scripts/v3/competitors.mjs --engine deno --checks && node scripts/v3/competitors.mjs --engine deno --secondary && node scripts/v3/competitors-report.mjs --engines node,bun,deno",
+    "test:copying": "node scripts/v3/verify-copying.mjs && bun scripts/v3/verify-copying.mjs"
   },
   "engines": {
     "node": ">=22"

@@ -6,6 +6,11 @@ if(!['natural','forced'].includes(gcMode))throw new Error('gc must be natural or
 const collect=typeof Bun!=='undefined'?()=>Bun.gc(true):globalThis.gc;
 if(gcMode==='forced'&&typeof collect!=='function')throw new Error('Forced GC is unavailable; Node needs --expose-gc');
 const api=await import(job.module);
+const createDecodedInput=api.createDecodedInput??(job.input==='bytes'&&typeof api.createCopyingParser==='function'
+ ?(await import('../../dist/esm/v3/index.js')).createDecodedInput:undefined);
+// Factory-only entries use the same globally registered typed selectors.
+const Any=api.Any??Symbol.for('@sapientpro/json-stream/selector/any');
+const Rest=api.Rest??Symbol.for('@sapientpro/json-stream/selector/rest');
 const Parser=job.format==='json5'?api.Json5Parser:api.JsonParser;
 const objects=()=>({items:Array.from({length:8000},(_,id)=>({id,name:'item-'+id,active:id%3===0,tags:['a','b'],score:id/7}))});
 const fixtures={
@@ -41,23 +46,24 @@ if(job.chunkUnit==='codepoint'){
  }
 }else for(let i=0;i<input.length;i+=job.size)chunks.push(input.slice(i,i+job.size));
 const expectedIds=value.items?.map(x=>x.id), expectedValues=Array.isArray(value)?value:value.items;
-const legacyRetention='root' in Parser.prototype;
+const legacyRetention=Parser ? 'root' in Parser.prototype : false;
 const run=(capture=false)=>{
  const retain=job.mode==='root'||job.mode==='root+ids';
- const p=new Parser(legacyRetention?{retainRoot:retain}:{});
+ const options=legacyRetention?{retainRoot:retain}:job.memoryMode?{memoryMode:job.memoryMode}:{};
+ const p=typeof api.createCopyingParser==='function'?api.createCopyingParser({...options,format:job.format}):new Parser(options);
  let count=0,sum=0,length=0,pathSum=0,lastPath,sub,receivedRoot;const values=[];
  const consume=(v,path)=>{++count;for(const key of path)pathSum+=typeof key==='number'?key:key.length;lastPath=path;if(typeof v==='number')sum+=v;else if(typeof v==='string')length+=v.length;else if(v?.id!==undefined)sum+=v.id;if(capture)values.push(v);if(job.mode==='cancel'&&count===32)sub.unsubscribe();};
  if(retain&&!legacyRetention)p.onValue('$',v=>receivedRoot=v);
  const add=path=>job.legacy?p.observe(path).subscribe(({value,path})=>consume(value,path)):p.onValue(path,consume);
  if(job.mode==='root-callback') {const consumeRoot=(v,path)=>{receivedRoot=v;consume(v,path);};if(job.legacy)p.observe([]).subscribe(({value,path})=>consumeRoot(value,path));else p.onValue([],consumeRoot);}
- else if(['scalar','cancel'].includes(job.mode))sub=add([api.Any]);
- else if(['ids','root+ids'].includes(job.mode))add(['items',api.Any,'id']);
- else if(job.mode==='items')add(['items',api.Any]);
- else if(job.mode==='fanout')for(let i=0;i<8;i++)add(['items',api.Any]);
- else if(job.mode==='missing')for(let i=0;i<100;i++)add(['never'+i,api.Any,'id']);
- else if(job.mode==='overlap'){add([api.Rest]);add(['items',api.Any,'id']);add(['items',api.Any]);}
+ else if(['scalar','cancel'].includes(job.mode))sub=add([Any]);
+ else if(['ids','root+ids'].includes(job.mode))add(['items',Any,'id']);
+ else if(job.mode==='items')add(['items',Any]);
+ else if(job.mode==='fanout')for(let i=0;i<8;i++)add(['items',Any]);
+ else if(job.mode==='missing')for(let i=0;i<100;i++)add(['never'+i,Any,'id']);
+ else if(job.mode==='overlap'){add([Rest]);add(['items',Any,'id']);add(['items',Any]);}
  else if(job.mode==='string'){if(job.legacy)p.chunks('text').subscribe(v=>consume(v,['text']));else p.onString(['text'],consume);}
- const input=job.input==='bytes'&&api.createDecodedInput?api.createDecodedInput(p):p;
+ const input=job.input==='bytes'&&createDecodedInput?createDecodedInput(p):p;
  for(const chunk of chunks)input.write(chunk);input.end();strictEqual(p.finished,true);
  return{root:job.mode==='root-callback'||!legacyRetention?receivedRoot:p.root,count,sum,length,pathSum,lastPath,values};
 };

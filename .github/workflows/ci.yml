@@ -22,13 +22,14 @@ jobs:
       - run: npm ci
       - run: node scripts/v3/smoke.mjs
       - run: node scripts/v3/verify.mjs
+      - run: node scripts/v3/verify-copying.mjs
       - run: npx --yes @arethetypeswrong/cli --pack .
       - name: Smoke test the packed tarball
         run: |
           npm pack --pack-destination /tmp
           mkdir -p /tmp/consumer
           # run from the consumer, or ESM self-reference resolves back to this repo
-          cp scripts/v3/smoke.mjs scripts/v3/smoke.cjs scripts/v3/types.ts /tmp/consumer/
+          cp scripts/v3/smoke.mjs scripts/v3/smoke.cjs scripts/v3/types.ts scripts/v3/copying-types.ts scripts/v3/verify-copying.mjs /tmp/consumer/
           cd /tmp/consumer
           npm init -y > /dev/null
           npm install /tmp/sapientpro-json-stream-*.tgz
@@ -36,7 +37,11 @@ jobs:
           node smoke.cjs @sapientpro/json-stream
           cp types.ts types.mts
           cp types.ts types.cts
-          "$GITHUB_WORKSPACE/node_modules/.bin/tsc" --noEmit --strict --skipLibCheck --target es2022 --module NodeNext --moduleResolution NodeNext --typeRoots "$GITHUB_WORKSPACE/node_modules/@types" --types node types.mts types.cts
+          cp copying-types.ts copying-types.mts
+          cp copying-types.ts copying-types.cts
+          node verify-copying.mjs @sapientpro/json-stream
+          "$GITHUB_WORKSPACE/node_modules/.bin/tsc" --noEmit --strict --skipLibCheck --target es2022 --module NodeNext --moduleResolution NodeNext --typeRoots "$GITHUB_WORKSPACE/node_modules/@types" --types node types.mts types.cts copying-types.mts copying-types.cts
+          "$GITHUB_WORKSPACE/node_modules/.bin/tsc" --noEmit --strict --skipLibCheck --target es2022 --module commonjs --moduleResolution node --typeRoots "$GITHUB_WORKSPACE/node_modules/@types" --types node copying-types.cts
           node -e "require('@sapientpro/json-stream');require('@sapientpro/json-stream/node')"
 
   bun:
@@ -52,6 +57,7 @@ jobs:
       - run: bunx jest
       - run: bun scripts/v3/smoke.mjs
       - run: bun scripts/v3/verify.mjs
+      - run: bun scripts/v3/verify-copying.mjs
 
   deno:
     runs-on: ubuntu-latest
@@ -64,3 +70,4 @@ jobs:
       - uses: denoland/setup-deno@v2
       - run: npm ci
       - run: deno run --allow-read scripts/v3/smoke.mjs
+      - run: deno run --allow-read scripts/v3/verify-copying.mjs
