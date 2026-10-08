@@ -7,7 +7,7 @@ import {readFileSync, writeFileSync, mkdirSync} from 'node:fs';
 import {cpus} from 'node:os';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
-import {JsonParser, Any} from '../../dist/esm/v3/index.js';
+import {createDecodedInput,JsonParser, Any} from '../../dist/esm/v3/index.js';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const packages=['sapient','streamparser','stream-json','json-web-streams'];
 const names={sapient:'@sapientpro/json-stream',streamparser:'@streamparser/json','stream-json':'stream-json','json-web-streams':'json-web-streams'};
@@ -60,8 +60,9 @@ async function adapter(id, mode, bytes, capture = false) {
     const parts = [];
     if (mode === 'items') parser.onValue(['items', Any], (value, path) => {count++; sum += value.id; if(capture) parts.push(value);});
     if (mode === 'string') parser.onString('$.text', part => { length += part.length; if (capture) parts.push(part); });
-    for (const chunk of chunks) parser.write(chunk);
-    parser.end();
+    const input=createDecodedInput(parser);
+    for (const chunk of chunks) input.write(chunk);
+    input.end();
     return {value, selected: capture && mode==='items' ? parts : undefined, count, sum, length, decoded: capture ? parts.join('') : undefined, holder: parser};
   };
   if (id === 'streamparser') {

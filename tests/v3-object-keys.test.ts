@@ -1,3 +1,4 @@
+import { decodedInput } from './v3-input';
 import {describe, expect, test} from '@jest/globals';
 import {JsonParser} from '../src/v3/index';
 
@@ -9,9 +10,9 @@ describe('incremental object keys', () => {
         for (let cut = 0; cut <= bytes.length; cut++) {
             const parser = new JsonParser(), selected: unknown[] = [];
             parser.onValue('$.items[*].id', (value, path) => selected.push([value, path]));
-            parser.write(bytes.subarray(0, cut));
-            parser.write(bytes.subarray(cut));
-            parser.end();
+            decodedInput(parser).write(bytes.subarray(0, cut));
+            decodedInput(parser).write(bytes.subarray(cut));
+            decodedInput(parser).end();
             expect(selected).toEqual([[1, ['items', 0, 'id']], [2, ['items', 1, 'id']]]);
         }
     });
@@ -39,7 +40,7 @@ describe('incremental object keys', () => {
             const parser=new JsonParser();let root:unknown;const selected:unknown[]=[];
             parser.onValue('$',value=>root=value);
             parser.onValue('$.*',(value,path)=>selected.push([value,path]));
-            parser.write(bytes.subarray(0,cut));parser.write(bytes.subarray(cut));parser.end();
+            decodedInput(parser).write(bytes.subarray(0,cut));decodedInput(parser).write(bytes.subarray(cut));decodedInput(parser).end();
             expect(root).toEqual(JSON.parse(input));
             expect(Object.getPrototypeOf(root)).toBe(Object.prototype);
             expect(Object.hasOwn(root as object,'__proto__')).toBe(true);
@@ -69,7 +70,7 @@ describe('incremental object keys', () => {
             const parser=new JsonParser();let root:unknown;const selected:unknown[]=[];
             parser.onValue('$',v=>root=v);
             parser.onValue('$[*].*',(v,path)=>selected.push([v,path]));
-            parser.write(bytes.subarray(0,cut));parser.write(bytes.subarray(cut));parser.end();
+            decodedInput(parser).write(bytes.subarray(0,cut));decodedInput(parser).write(bytes.subarray(cut));decodedInput(parser).end();
             expect(root).toEqual(value);
             expect(selected).toEqual(value.flatMap((item,i)=>Object.entries(item).map(([key,v])=>[v,[i,key]])));
         }

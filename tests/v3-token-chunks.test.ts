@@ -1,3 +1,4 @@
+import { decodedInput } from './v3-input';
 import {describe, expect, test} from '@jest/globals';
 import {JsonParser, Json5Parser} from '../src/v3/index';
 
@@ -14,7 +15,7 @@ describe('token-sized string delivery',()=>{
                 expect(path).toEqual(['text']);received+=part;
                 expect(/[\uD800-\uDBFF]$/.test(part)).toBe(false);
             },end:()=>ends++});
-            const write=(part:string)=>parser.write(input==='text'?part:encoder.encode(part));
+            const write=(part:string)=>decodedInput(parser).write(input==='text'?part:encoder.encode(part));
             write('{"text":"');
             let expected='';
             for(let at=0,n=0;at<points.length;n++){
@@ -23,7 +24,7 @@ describe('token-sized string delivery',()=>{
                 expect(received).toBe(expected);
                 expect(ends).toBe(0);
             }
-            write('"}');parser.end();
+            write('"}');decodedInput(parser).end();
             expect(root).toEqual({text});expect(ends).toBe(1);
         });
     }
@@ -47,10 +48,10 @@ describe('token-sized string delivery',()=>{
         test(`${Parser.name} keeps error offsets after fully consumed Unicode chunks`,()=>{
             const parser=new Parser(),encoder=new TextEncoder();
             const pieces=['{"text":"',...Array.from(text)];
-            for(const part of pieces)parser.write(encoder.encode(part));
+            for(const part of pieces)decodedInput(parser).write(encoder.encode(part));
             // JSON5 reports after consuming the invalid character; JSON reports at it.
             const offset=pieces.join('').length+(Parser===Json5Parser?1:0);
-            expect(()=>parser.write(encoder.encode('\n'))).toThrow(`Json syntax error at ${offset}`);
+            expect(()=>decodedInput(parser).write(encoder.encode('\n'))).toThrow(`Json syntax error at ${offset}`);
         });
     }
 });

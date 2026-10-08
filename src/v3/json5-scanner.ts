@@ -1,3 +1,4 @@
+import { CharCode } from './char-code.js';
 import { ParserCore } from './core.js';
 import { EMPTY_CONTEXT, stepContext } from './selectors.js';
 import { State } from './state.js';
@@ -8,13 +9,12 @@ const JSON5_SPACE = /[\t\n\v\f\r \u00a0\ufeff\u2028\u2029\p{Zs}]/u;
 const JSON5_NUMBER = /^[+-]?(?:Infinity|NaN|0[xX][0-9a-fA-F]+|(?:(?:0|[1-9][0-9]*)(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?)$/;
 const JSON5_DOUBLE_END = /["\\\r\n]/g;
 const JSON5_SINGLE_END = /['\\\r\n]/g;
-const QUOTE = 34, BACKSLASH = 92, LBRACE = 123, RBRACE = 125, LBRACKET = 91, RBRACKET = 93, COMMA = 44, COLON_CH = 58, MINUS = 45, PLUS = 43, DOT = 46, ZERO = 48, NINE = 57, LOWER_E = 101, UPPER_E = 69;
 /** JSON5 frontend; separate from the plain JSON hot loop. */
 export class Json5Scanner extends ParserCore {
-    protected _quote = 34;
+    protected _quote = CharCode.QUOTE;
     protected _comment = 0;
     protected _hexLength = 4;
-    protected _resetScanner(): void { this._quote = 34; this._comment = 0; this._hexLength = 4; }
+    protected _resetScanner(): void { this._quote = CharCode.QUOTE; this._comment = 0; this._hexLength = 4; }
     protected _validateEnd(): boolean {
         // Release the token scanner's last RegExp subject after the document.
         JSON5_TOKEN_END.lastIndex = 0;
@@ -95,12 +95,12 @@ export class Json5Scanner extends ParserCore {
                 const limit = Math.min(len, pos + 16), quote = this._quote;
                 while (end < limit) {
                     const code = buf.charCodeAt(end);
-                    if (code === quote || code === 92 || code === 13 || code === 10)
+                    if (code === quote || code === CharCode.BACKSLASH || code === 13 || code === 10)
                         break;
                     ++end;
                 }
                 if (end === limit && end < len) {
-                    const pattern = quote === 34 ? JSON5_DOUBLE_END : JSON5_SINGLE_END;
+                    const pattern = quote === CharCode.QUOTE ? JSON5_DOUBLE_END : JSON5_SINGLE_END;
                     pattern.lastIndex = end;
                     const match = pattern.exec(buf);
                     end = match ? match.index : len;
@@ -115,7 +115,7 @@ export class Json5Scanner extends ParserCore {
                     this._pos = pos;
                     this._closeString();
                 }
-                else if (code === 92)
+                else if (code === CharCode.BACKSLASH)
                     this._state = State.ESC;
                 else
                     this._failAt(pos);
@@ -159,7 +159,7 @@ export class Json5Scanner extends ParserCore {
                     this._state = State.STR;
                     continue;
                 }
-                if (code >= 49 && code <= 57 || ch === '0' && /[0-9]/.test(buf[pos] ?? ''))
+                if (code >= 49 && code <= CharCode.NINE || ch === '0' && /[0-9]/.test(buf[pos] ?? ''))
                     this._failAt(pos);
                 if (this._retainString || this._strSinks.length)
                     this._str += ch === '0' ? '\0' : ch === 'v' ? '\v' : ch === 'n' ? '\n' : ch === 'r' ? '\r' : ch === 't' ? '\t' : ch === 'b' ? '\b' : ch === 'f' ? '\f' : ch;
@@ -229,15 +229,15 @@ export class Json5Scanner extends ParserCore {
                 case State.VALUE:
                     if (this._tracking)
                         this._context = this._stack.length ? this._stack[this._stack.length - 1]!.arrayContext ?? stepContext(this._stack[this._stack.length - 1]!.context, this._path[this._path.length - 1]!) : this._rootContext;
-                    if (code === 123 || code === 91) {
+                    if (code === CharCode.LBRACE || code === CharCode.LBRACKET) {
                         ++pos;
-                        this._open(code === 91);
+                        this._open(code === CharCode.LBRACKET);
                     }
-                    else if (code === 93 && this._stack.at(-1)?.isArray) {
+                    else if (code === CharCode.RBRACKET && this._stack.at(-1)?.isArray) {
                         ++pos;
                         this._close();
                     }
-                    else if (code === 34 || code === 39) {
+                    else if (code === CharCode.QUOTE || code === CharCode.SINGLE_QUOTE) {
                         ++pos;
                         this._quote = code;
                         this._keyMode = false;
@@ -248,21 +248,21 @@ export class Json5Scanner extends ParserCore {
                     }
                     else {
                         // Short decimal integers need no token string, regex or Number().
-                        if ((code >= 48 && code <= 57) || code === 45 || code === 43) {
-                            const negative = code === 45;
-                            const start = pos + (code === 45 || code === 43 ? 1 : 0);
+                        if ((code >= CharCode.ZERO && code <= CharCode.NINE) || code === CharCode.MINUS || code === CharCode.PLUS) {
+                            const negative = code === CharCode.MINUS;
+                            const start = pos + (code === CharCode.MINUS || code === CharCode.PLUS ? 1 : 0);
                             let finish = start, digits = 0, integer = 0;
                             while (finish < len && digits < 8) {
                                 const digit = buf.charCodeAt(finish);
-                                if (digit < 48 || digit > 57)
+                                if (digit < CharCode.ZERO || digit > CharCode.NINE)
                                     break;
-                                integer = integer * 10 + digit - 48;
+                                integer = integer * 10 + digit - CharCode.ZERO;
                                 ++finish;
                                 ++digits;
                             }
                             const next = buf.charCodeAt(finish);
-                            const terminal = next === 44 || next === 125 || next === 93 || next === 47 || isSpace(next) || next === 11 || next === 12 || next >= 128 && JSON5_SPACE.test(buf[finish]!);
-                            if (digits && (digits === 1 || buf.charCodeAt(start) !== 48) && terminal) {
+                            const terminal = next === CharCode.COMMA || next === CharCode.RBRACE || next === CharCode.RBRACKET || next === 47 || isSpace(next) || next === 11 || next === 12 || next >= 128 && JSON5_SPACE.test(buf[finish]!);
+                            if (digits && (digits === 1 || buf.charCodeAt(start) !== CharCode.ZERO) && terminal) {
                                 pos = finish;
                                 this._pos = pos;
                                 this._emit(negative ? -integer : integer);
@@ -275,11 +275,11 @@ export class Json5Scanner extends ParserCore {
                     break;
                 case State.OBJ_FIRST:
                 case State.OBJ_KEY:
-                    if (code === 125) {
+                    if (code === CharCode.RBRACE) {
                         ++pos;
                         this._close();
                     }
-                    else if (code === 34 || code === 39) {
+                    else if (code === CharCode.QUOTE || code === CharCode.SINGLE_QUOTE) {
                         ++pos;
                         this._quote = code;
                         this._keyMode = true;
@@ -292,17 +292,17 @@ export class Json5Scanner extends ParserCore {
                     }
                     break;
                 case State.COLON:
-                    if (code !== 58)
+                    if (code !== CharCode.COLON)
                         this._failAt(pos);
                     ++pos;
                     this._state = State.VALUE;
                     break;
                 case State.OBJ_NEXT:
-                    if (code === 125) {
+                    if (code === CharCode.RBRACE) {
                         ++pos;
                         this._close();
                     }
-                    else if (code === 44) {
+                    else if (code === CharCode.COMMA) {
                         ++pos;
                         this._state = State.OBJ_KEY;
                     }
@@ -310,11 +310,11 @@ export class Json5Scanner extends ParserCore {
                         this._failAt(pos);
                     break;
                 case State.ARR_NEXT:
-                    if (code === 93) {
+                    if (code === CharCode.RBRACKET) {
                         ++pos;
                         this._close();
                     }
-                    else if (code === 44) {
+                    else if (code === CharCode.COMMA) {
                         ++pos;
                         this._state = State.VALUE;
                     }

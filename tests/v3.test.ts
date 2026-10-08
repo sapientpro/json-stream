@@ -1,3 +1,4 @@
+import { decodedInput } from './v3-input';
 import {captureRoot, capturedRoot} from './v3-capture';
 import {describe, test, expect} from '@jest/globals';
 import {JsonParser, Json5Parser, Any, Rest, compileJsonPath, createParser} from '../src/v3/index';
@@ -15,7 +16,7 @@ for (const Parser of [JsonParser, Json5Parser]) describe(Parser.name, () => {
       p.onValue(['items',Any,'id'], (v,path) => values.push([v,path]));
       p.onValue(['0'], (v,path) => values.push([v,path]));
       p.onValue([0], () => {throw Error('numeric selector matched object');});
-      p.write(bytes.subarray(0,cut)); p.write(bytes.subarray(cut)); p.end();
+      decodedInput(p).write(bytes.subarray(0,cut)); decodedInput(p).write(bytes.subarray(cut)); decodedInput(p).end();
       expect(values).toEqual([[1,['items',0,'id']],[2,['items',1,'id']],['object',['0']]]);
       expect(capturedRoot(p)).toBeUndefined(); expect(p.finished).toBe(true);
     }
@@ -43,7 +44,7 @@ for (const Parser of [JsonParser, Json5Parser]) describe(Parser.name, () => {
       const p=captureRoot(new Parser()); let text=''; const ends: unknown[]=[];
       const handle=p.onString(['s'], {next(v){text+=v;handle.unsubscribe();},end(path){ends.push(path);}});
       p.onString(['empty'], {next(){throw Error('empty fragment');},end:path=>ends.push(path)});
-      p.write(bytes.subarray(0,cut)); p.write(bytes.subarray(cut)); p.end();
+      decodedInput(p).write(bytes.subarray(0,cut)); decodedInput(p).write(bytes.subarray(cut)); decodedInput(p).end();
       expect(capturedRoot(p)).toEqual({s:'😀😀\nxyz',empty:''}); expect(ends).toContainEqual(['empty']);
       if(text.length) {const code=text.charCodeAt(text.length-1);expect(code < 0xD800 || code > 0xDBFF).toBe(true);}
     }
@@ -77,8 +78,8 @@ for (const Parser of [JsonParser, Json5Parser]) describe(Parser.name, () => {
     expect(()=>p.write('{oops}')).toThrow(SyntaxError);expect(events).toHaveLength(2);expect(events[0]).toBeInstanceOf(SyntaxError);expect(events[1]).toBe(events[0]);
   });
   test('input mode and registration are fixed before first write', () => {
-    const p=captureRoot(new Parser());p.write('');expect(()=>p.onValue([],()=>{})).toThrow('before');expect(()=>p.write(enc.encode('{}'))).toThrow(TypeError);p.write('{}');p.end();
-    expect(()=>p.write(' ')).toThrow('closed');
+    const p=captureRoot(new Parser());decodedInput(p).write('');expect(()=>p.onValue([],()=>{})).toThrow('before');expect(()=>decodedInput(p).write(enc.encode('{}'))).toThrow(TypeError);decodedInput(p).write('{}');decodedInput(p).end();
+    expect(()=>decodedInput(p).write(' ')).toThrow('closed');
     expect(()=>captureRoot(new Parser({maxDepth:-1}))).toThrow(RangeError);expect(()=>captureRoot(new Parser({maxDepth:0})).write('[]')).toThrow();
   });
   test('Web string cancellation and bounded queues leave parser usable', async () => {

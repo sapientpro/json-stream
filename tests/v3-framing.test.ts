@@ -1,3 +1,4 @@
+import { decodedInput } from './v3-input';
 import {captureRoot, capturedRoot} from './v3-capture';
 import {test, expect, describe} from '@jest/globals';
 import {Any, JsonParser, Json5Parser, PrefixFilter, JsonLinesParser, PrefixedJsonParser} from '../src/v3/index';
@@ -148,7 +149,7 @@ test('reset preserves unsubscription, matching caches, input mode and reentry pr
     const errors:unknown[]=[];const p=new JsonParser({onObserverError:e=>errors.push(e)});const found:unknown[]=[];
     const once=p.onValue(['x',Any],v=>{found.push(v);once.unsubscribe();});
     p.onValue(['x'],()=>p.reset());p.write('{"x":[1,2]}');p.reset();p.write('{"x":[3,4]}');p.end();expect(found).toEqual([1]);expect(errors).toHaveLength(2);
-    const bytes=captureRoot(new JsonParser());bytes.write(encoder.encode('1'));bytes.reset();expect(()=>bytes.write('2')).toThrow(TypeError);bytes.write(encoder.encode('2'));bytes.end();expect(capturedRoot(bytes)).toBe(2);
+    const bytes=captureRoot(new JsonParser());decodedInput(bytes).write(encoder.encode('1'));bytes.reset();expect(()=>decodedInput(bytes).write('2')).toThrow(TypeError);decodedInput(bytes).write(encoder.encode('2'));decodedInput(bytes).end();expect(capturedRoot(bytes)).toBe(2);
 });
 
 

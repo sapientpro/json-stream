@@ -1,3 +1,4 @@
+import { decodedInput } from './v3-input';
 import {describe, expect, test} from '@jest/globals';
 import {Json5Parser} from '../src/v3/index';
 
@@ -10,7 +11,7 @@ describe('JSON5 token and string delimiter boundaries', () => {
             const parser = new Json5Parser(); const fragments: string[] = []; let root: unknown;
             parser.onValue('$', value => {root = value;});
             parser.onString('$.text', part => fragments.push(part));
-            parser.write(data.slice(0, cut)); parser.write(data.slice(cut)); parser.end();
+            decodedInput(parser).write(data.slice(0, cut)); decodedInput(parser).write(data.slice(cut)); decodedInput(parser).end();
             expect(root).toEqual(expected); expect(fragments.join('')).toBe(expected.text);
         }
     });

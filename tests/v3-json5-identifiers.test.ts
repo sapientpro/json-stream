@@ -1,3 +1,4 @@
+import { decodedInput } from './v3-input';
 import {describe, expect, test} from '@jest/globals';
 import JSON5 from 'json5';
 import {Json5Parser} from '../src/v3/index';
@@ -31,9 +32,9 @@ describe('JSON5 identifier reuse', () => {
             let root: unknown;
             parser.onValue('$', value => root = value);
             parser.onValue('$[*].*', (value, path) => events.push([value, path]));
-            parser.write(bytes.subarray(0, cut));
-            parser.write(bytes.subarray(cut));
-            parser.end();
+            decodedInput(parser).write(bytes.subarray(0, cut));
+            decodedInput(parser).write(bytes.subarray(cut));
+            decodedInput(parser).end();
             expect(root).toEqual(JSON5.parse(input));
             expect(events).toEqual([[1, [0, 'id']], [2, [0, 'ab']], [3, [0, 'π']],
                 [4, [0, '_x']], [5, [0, '$x']], [6, [0, '__proto__']],

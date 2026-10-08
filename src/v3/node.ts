@@ -1,14 +1,16 @@
+import { createDecodedInput } from './decoded-input.js';
 import { Writable } from 'node:stream';
 import { createParser } from './index.js';
 import type { InputSink, Parser, FormatOptions, PathInput, ValueCallback, CallbackObserver, Subscription } from './types.js';
 export * from './index.js';
 /** The Node wrapper adds transport pacing; parsing and callbacks stay synchronous. */
 export function createNodeWritable(parser: InputSink): Writable {
+    const input = createDecodedInput(parser);
     return new Writable({
         decodeStrings: false,
         write(chunk: string | Buffer, _encoding, done) {
             try {
-                parser.write(chunk);
+                input.write(chunk);
                 done();
             }
             catch (error) {
@@ -17,20 +19,21 @@ export function createNodeWritable(parser: InputSink): Writable {
         },
         final(done) {
             try {
-                parser.end();
+                input.end();
                 done();
             }
             catch (error) {
                 done(error as Error);
             }
         },
-        destroy(error, done) { parser.destroy(error); done(error); },
+        destroy(error, done) { input.destroy(error); done(error); },
     });
 }
 export class JsonStream extends Writable {
     readonly #parser: Parser;
     constructor(options: FormatOptions = {}) {
         const parser = createParser(options);
+        const input = createDecodedInput(parser);
         let valueSubscription: Subscription | undefined;
         let pending = false, pendingValue: any, inputStarted = false;
         const emitValue = () => {
@@ -45,7 +48,7 @@ export class JsonStream extends Writable {
             write: (chunk: string | Buffer, _encoding, done) => {
                 try {
                     inputStarted = true;
-                    parser.write(chunk);
+                    input.write(chunk);
                     emitValue();
                     done();
                 }
@@ -56,7 +59,7 @@ export class JsonStream extends Writable {
             final: done => {
                 try {
                     inputStarted = true;
-                    parser.end();
+                    input.end();
                     emitValue();
                     done();
                 }
@@ -64,7 +67,7 @@ export class JsonStream extends Writable {
                     done(error as Error);
                 }
             },
-            destroy: (error, done) => { pending = false; pendingValue = undefined; parser.destroy(error); done(error); },
+            destroy: (error, done) => { pending = false; pendingValue = undefined; input.destroy(error); done(error); },
         });
         this.#parser = parser;
         // A Node value listener is an explicit subscription to the root value.
