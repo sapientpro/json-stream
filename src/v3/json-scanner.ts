@@ -1,5 +1,5 @@
 import { ParserCore } from './core.js';
-import { stepContext } from './selectors.js';
+import { EMPTY_CONTEXT, stepContext } from './selectors.js';
 import { State } from './state.js';
 import { IS_V8, unicodeUnit, readHex4, readLiteral, isSpace } from './lexical.js';
 const QUOTE = 34, BACKSLASH = 92, LBRACE = 123, RBRACE = 125, LBRACKET = 91, RBRACKET = 93, COMMA = 44, COLON_CH = 58, MINUS = 45, PLUS = 43, DOT = 46, ZERO = 48, NINE = 57, LOWER_E = 101, UPPER_E = 69;
@@ -193,8 +193,9 @@ export class JsonScanner extends ParserCore {
             const key = this._retainString ? this._flatten(part) : undefined;
             if (!hit && key !== undefined && key.length <= 64)
                 this._keyCache[slot] = key.length < 13 ? key : (' ' + key).slice(1);
-            this._stack[this._stack.length - 1]!.key = key!;
-            if (this._tracking) this._path.push(key!);
+            const frame = this._stack[this._stack.length - 1]!;
+            frame.key = key!;
+            if (frame.context !== EMPTY_CONTEXT) this._path.push(key!);
             this._state = State.COLON;
             return end + 1;
         }
@@ -212,8 +213,9 @@ export class JsonScanner extends ParserCore {
         if (end < len && buf.charCodeAt(end) === QUOTE) {
             this._pos = end + 1;
             const key = this._retainString ? this._flatten(part) : undefined;
-            this._stack[this._stack.length - 1]!.key = key!;
-            if (this._tracking) this._path.push(key!);
+            const frame = this._stack[this._stack.length - 1]!;
+            frame.key = key!;
+            if (frame.context !== EMPTY_CONTEXT) this._path.push(key!);
             this._state = State.COLON;
             return end + 1;
         }
