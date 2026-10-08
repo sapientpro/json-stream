@@ -1,13 +1,12 @@
 /** Enable measured V8-specific paths only on known runtimes; browsers keep portable defaults. */
 const runtime = globalThis as {Bun?: unknown; process?: {versions?: {v8?: string}}; Deno?: {version?: {v8?: string}}};
-export const IS_V8 = typeof runtime.Bun === 'undefined' && !!(runtime.process?.versions?.v8 || runtime.Deno?.version?.v8);
+export const IS_BUN = typeof runtime.Bun !== 'undefined';
+export const IS_V8 = !IS_BUN && !!(runtime.process?.versions?.v8 || runtime.Deno?.version?.v8);
 
 // Reuse single Unicode units on Bun, where repeated conversion and concatenation
 // are expensive. Other runtimes retain the native conversion path.
 export const unicodeUnit = (() => {
-    if (typeof (globalThis as {
-        Bun?: unknown;
-    }).Bun === 'undefined')
+    if (!IS_BUN)
         return String.fromCharCode;
     const codes = new Int32Array(64).fill(-1);
     const strings: string[] = new Array(64).fill('');
