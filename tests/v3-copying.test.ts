@@ -87,7 +87,8 @@ for (const format of ['json','json5'] as const) describe('copying ' + format, ()
     test('objects retain their original shared identity', () => {
         const parser = createCompactParser({format}); let root: any, child: any;
         parser.onValue('$', value => root=value); parser.onValue('$.child',value=>child=value);
-        parser.write('{"child":{"value":"short"}}'); parser.end(); expect(root.child).toBe(child);
+        parser.write(JSON.stringify({skip:'x'.repeat(70000),child:{value:'short'}}));
+        parser.end(); expect(root.child).toBe(child); expect(child.value).toBe('short');
     });
 });
 
