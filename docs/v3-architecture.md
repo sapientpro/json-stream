@@ -55,10 +55,13 @@ root commitment. A callback can see a completed value before a later syntax erro
 
 JSONL and prefixed-document managers share record consumer bindings and reuse one
 parser via `reset()`, preserving subscriptions and bounded selector transition caches. JSONL splits at LF and forwards partial lines immediately.
-The prefix manager uses an internal scanner hook which stops at END and returns
-the number of consumed input units; the remaining chunk goes back to marker search.
-Prefix seeking is removed from both core scanners. The prefix manager passes an
-offset into the original chunk instead of repeatedly slicing the remaining input;
+Strict input keeps the ordinary write method. Non-strict input selects a managed
+write method once at construction, so normal writes have no per-chunk mode checks.
+
+The prefix manager uses `strictEnd: false`: scanning stops at END and returns
+the number of unconsumed UTF-16 units; the remaining input goes back to marker search.
+Prefix seeking is removed from both core scanners. The prefix manager passes a
+private cursor into the original chunk instead of repeatedly slicing the remaining input;
 Bun copied those tails and became dramatically slower at 64KiB. Reusable plans
 across independent parser instances remain a potential follow-up. Slices,
 filters, unions, recursive JSONPath and negative indexes are rejected in this

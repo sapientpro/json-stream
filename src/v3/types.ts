@@ -25,6 +25,8 @@ export type ParserOptions = CallbackOptions & {
      */
     memoryMode?: 'fast' | 'compact';
     collectJson?: boolean;
+    /** Validate all trailing input; false stops at the first complete document. */
+    strictEnd?: boolean;
     maxDepth?: number;
 };
 export type Format = 'json' | 'json5';
@@ -46,8 +48,10 @@ export interface Parser extends InputSink {
     readonly closed: boolean;
     readonly json: string;
     readonly writable: WritableStream<string | Uint8Array>;
-    write(chunk: string): void;
-    end(): void;
+    /** Unconsumed UTF-16 units from this chunk; strict mode returns zero or throws. */
+    write(chunk: string): number;
+    /** Optional final text chunk, EOF validation, and its unconsumed tail count. */
+    end(chunk?: string): number;
     destroy(error?: Error | null): void;
     onValue<T = any>(path: PathInput, callback: ValueCallback<T> | CallbackObserver<T>): Subscription;
     onString(path: PathInput, callback: ValueCallback<string> | CallbackObserver<string>): Subscription;

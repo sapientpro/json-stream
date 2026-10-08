@@ -51,3 +51,14 @@ for(const Parser of [JsonParser,Json5Parser]) {
  reuse.write('[{},[1,2],{"next":true},[]]');reuse.end();
  deepStrictEqual(first,tree);deepStrictEqual(capturedRoot(reuse),[{},[1,2],{next:true},[]]);
 }
+
+// Public document-boundary contract, including EOF chunks and root reuse.
+for(const Parser of [JsonParser,Json5Parser]) {
+ const p=new Parser({strictEnd:false,collectJson:true}), values=[];
+ p.onValue('$',v=>values.push(v));
+ strictEqual(p.write('{} tail'),5);strictEqual(p.json,'{}');
+ throws(()=>p.write(''),/reset/);p.reset();strictEqual(p.end('12.5'),0);
+ deepStrictEqual(values,[{},12.5]);strictEqual(p.finished,true);
+ throws(()=>new Parser().end('{}[]'),SyntaxError);
+}
+console.log('PASS: strict and managed document boundaries, tail counts, final chunks');

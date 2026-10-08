@@ -47,17 +47,23 @@ export abstract class ParserCore implements Parser {
     protected _failure: Error | null = null;
     protected _writable: WritableStream<Uint8Array | string> | null = null;
     protected _running = false;
-    protected _framed = false;
+    protected readonly _framed: boolean = false;
     declare protected _copyPolicy: CopyPolicy | undefined;
     constructor(options: ParserOptions = {}) {
         if ('retainRoot' in options)
             throw new TypeError('retainRoot was removed; subscribe to $ for the complete value');
-        const { collectJson = false, maxDepth = 1000, maxBufferedChunks = Infinity, onObserverError } = options;
+        const { collectJson = false, strictEnd = true, maxDepth = 1000, maxBufferedChunks = Infinity, onObserverError } = options;
         validateBufferLimit(maxBufferedChunks);
         this._subjectOptions = { maxBufferedChunks, onObserverError };
         this._reportCallback = makeErrorReporter(onObserverError);
         if (maxDepth !== Infinity && (!Number.isSafeInteger(maxDepth) || maxDepth < 0))
             throw new RangeError('maxDepth must be a nonnegative safe integer or Infinity');
+        if (typeof strictEnd !== 'boolean') throw new TypeError('strictEnd must be a boolean');
+        if (!strictEnd) {
+            this._framed = true;
+            this.write = this._writeManaged;
+            this[DOCUMENT_INPUT] = this._writeManaged;
+        }
         this._collect = collectJson;
         this._maxDepth = maxDepth;
         this._state = State.VALUE;
@@ -115,8 +121,8 @@ export abstract class ParserCore implements Parser {
     }
     stringStream(path: PathInput): ReadableStream<string> { return createStringStream(this, path, this._subjectOptions.maxBufferedChunks); }
     get writable(): WritableStream<Uint8Array | string> { return this._writable ??= createWritableStream(this); }
-    write(chunk: string): void;
-    write(chunk: string, offset = -1): void {
+    write(chunk: string): number;
+    write(chunk: string, offset = -1): number {
         if (this._running)
             throw new Error('write() re-entered from an observer callback; use destroy() to stop');
         if (this._state === State.FAILED)
@@ -145,7 +151,7 @@ export abstract class ParserCore implements Parser {
         this._started = true;
         const text = chunk;
         if (this._collect)
-            this._json += text;
+            this._json += offset > 0 ? text.slice(offset) : text;
         if (offset >= 0 && this._pos === this._buf.length) {
             this._consumed += this._pos - offset;
             this._buf = text;
@@ -162,9 +168,7 @@ export abstract class ParserCore implements Parser {
             this._buf = this._buf.slice(this._pos) + (offset > 0 ? text.slice(offset) : text);
             this._pos = 0;
         }
-        else {
-            this._buf += offset > 0 ? text.slice(offset) : text;
-        }
+        else this._buf += offset > 0 ? text.slice(offset) : text;
         this._pinned = 0;
         this._running = true;
         try {
@@ -173,20 +177,30 @@ export abstract class ParserCore implements Parser {
         finally {
             this._running = false;
         }
+        return 0;
     }
-    [DOCUMENT_INPUT](text: string, offset = 0): number {
-        this._framed = true;
-        const carried = this._buf.length - this._pos;
-        (this.write as (chunk: string, offset: number) => void)(text, offset);
-        if (!this.rootReady) return text.length - offset;
-        const consumed = Math.max(0, this._pos - (carried ? carried : offset));
-        // The manager owns the trailer; EOF validation needs only the completed state.
+    /** Only non-strict instances use this entry point; strict writes keep their hot path. */
+    protected _writeManaged(chunk: string, offset = -1): number {
+        if (this._rootAvailable && !this._running && !this.closed)
+            throw new Error('Document is complete; call reset() before write()');
+        (ParserCore.prototype.write as (chunk: string, offset: number) => number).call(this, chunk, offset);
+        if (!this._rootAvailable || this.closed) return 0;
+        const unread = this._buf.length - this._pos;
+        if (this._collect && unread) this._json = this._json.slice(0, -unread);
         this._consumed += this._pos;
         this._buf = '';
         this._pos = 0;
-        return consumed;
+        return unread;
     }
-    end(): void { this._finishDocument(true); }
+    /** Managers reuse the original string to avoid repeated suffix copies on Bun. */
+    [DOCUMENT_INPUT](text: string, offset: number): number {
+        return (this.write as (chunk: string, offset: number) => number)(text, offset);
+    }
+    end(chunk?: string): number {
+        const unread = chunk === undefined ? 0 : this.write(chunk);
+        this._finishDocument(true);
+        return unread;
+    }
     private _finishDocument(close: boolean): void {
         if (this._running)
             throw new Error('end() re-entered');
@@ -554,8 +568,11 @@ export abstract class ParserCore implements Parser {
 function initializeCompact(parser: ParserCore): void {
     // Keep compact allocation and method installation out of the ordinary constructor.
     const policy: CopyPolicy = (parser as unknown as {_copyPolicy: CopyPolicy})._copyPolicy = {large: false};
-    parser.write = function(chunk: string, offset = -1): void {
+    const write = parser.write as (this: ParserCore, chunk: string, offset: number) => number;
+    parser.write = function(chunk: string, offset = -1): number {
         if (typeof chunk === 'string' && chunk.length >= 65536) policy.large = true;
-        (ParserCore.prototype.write as (this: ParserCore, chunk: string, offset: number) => void).call(this, chunk, offset);
+        return write.call(this, chunk, offset);
     };
+    // Managed instances install a direct cursor entry; it must track compact input too.
+    if (Object.hasOwn(parser, DOCUMENT_INPUT)) parser[DOCUMENT_INPUT] = parser.write;
 }

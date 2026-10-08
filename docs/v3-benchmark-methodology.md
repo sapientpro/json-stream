@@ -23,3 +23,7 @@ Forced GC happens outside the sample timer, but its effects can extend into the 
 Reports produced before the explicit mode option used forced GC on Node/Bun. Pass `--gc forced` when reproducing their protocol; other parameters, runtime versions and commit baselines must also match. Older non-v3 benchmark scripts have their own protocols and are not changed by this option.
 
 For paired comparisons, build both versions, pass `--baseline /absolute/path/to/baseline/dist/esm/v3/index.js --baseline-api callback`, and set the workload, chunk sizes, warmup and iteration counts explicitly. The runner alternates baseline/candidate order and launches workers serially. Report absolute MB/s, paired changes and their variability; profiler runs are diagnostics, not substitutes for controls without instrumentation.
+
+Core parser benchmarks default to direct text input (`--input text`). They exclude
+UTF-8 decoding and stream scheduling. Explicit `--input bytes` runs measure the
+decoder adapter as well and belong to separate transport diagnostics.
