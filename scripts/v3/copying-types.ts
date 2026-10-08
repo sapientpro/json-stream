@@ -13,3 +13,6 @@ const writable: WritableStream<string | Uint8Array> = parser.writable;
 createCopyingParser({maxCopyLength:'128'});
 // @ts-expect-error string consumers receive strings
 parser.onString('$.text', (value: number) => {});
+
+// @ts-expect-error byte decoding belongs to transport adapters
+parser.write(new Uint8Array());

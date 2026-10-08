@@ -6,6 +6,8 @@ if(!['natural','forced'].includes(gcMode))throw new Error('gc must be natural or
 const collect=typeof Bun!=='undefined'?()=>Bun.gc(true):globalThis.gc;
 if(gcMode==='forced'&&typeof collect!=='function')throw new Error('Forced GC is unavailable; Node needs --expose-gc');
 const api=await import(job.module);
+const createDecodedInput=api.createDecodedInput??(job.input==='bytes'&&typeof api.createCopyingParser==='function'
+ ?(await import('../../dist/esm/v3/index.js')).createDecodedInput:undefined);
 // Factory-only entries use the same globally registered typed selectors.
 const Any=api.Any??Symbol.for('@sapientpro/json-stream/selector/any');
 const Rest=api.Rest??Symbol.for('@sapientpro/json-stream/selector/rest');
@@ -61,7 +63,7 @@ const run=(capture=false)=>{
  else if(job.mode==='missing')for(let i=0;i<100;i++)add(['never'+i,Any,'id']);
  else if(job.mode==='overlap'){add([Rest]);add(['items',Any,'id']);add(['items',Any]);}
  else if(job.mode==='string'){if(job.legacy)p.chunks('text').subscribe(v=>consume(v,['text']));else p.onString(['text'],consume);}
- const input=job.input==='bytes'&&api.createDecodedInput?api.createDecodedInput(p):p;
+ const input=job.input==='bytes'&&createDecodedInput?createDecodedInput(p):p;
  for(const chunk of chunks)input.write(chunk);input.end();strictEqual(p.finished,true);
  return{root:job.mode==='root-callback'||!legacyRetention?receivedRoot:p.root,count,sum,length,pathSum,lastPath,values};
 };

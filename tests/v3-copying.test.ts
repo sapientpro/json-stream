@@ -2,6 +2,7 @@ import {describe, expect, test} from '@jest/globals';
 import {finished} from 'node:stream/promises';
 import {createCopyingParser} from '../src/v3/copying';
 import {createNodeWritable} from '../src/v3/node';
+import {decodedInput} from './v3-input';
 import type {Format} from '../src/v3/types';
 
 for (const format of ['json','json5'] as const) describe('copying ' + format, () => {
@@ -18,8 +19,9 @@ for (const format of ['json','json5'] as const) describe('copying ' + format, ()
             parser.onValue('$.value', (value,path) => selected.push([value,path]));
             const text = JSON.stringify({skip:'x'.repeat(70000),value});
             const input = bytes ? new TextEncoder().encode(text) : text;
-            parser.write(input.slice(0,input.length-3)); parser.write(input.slice(input.length-3));
-            parser.reset(); parser.write(bytes ? new TextEncoder().encode('{"value":"again"}') : '{"value":"again"}'); parser.end();
+            const transport = decodedInput(parser);
+            transport.write(input.slice(0,input.length-3)); transport.write(input.slice(input.length-3));
+            parser.reset(); transport.write(bytes ? new TextEncoder().encode('{"value":"again"}') : '{"value":"again"}'); transport.end();
             expect(selected).toEqual([[value,['value']],['again',['value']]]);
             expect(observer.text).toBe(value+'again'); expect(observer.ends).toBe(2); expect(observer.completions).toBe(1);
         }
@@ -97,4 +99,10 @@ test('copying options and base validation reject invalid inputs', () => {
     expect(()=>parser.onString('$',null as any)).toThrow(TypeError);
     expect(()=>parser.onValue('$',{} as any)).toThrow(TypeError);
     parser.write('{}'); parser.end(); expect(()=>parser.onString('$',()=>{})).toThrow();
+});
+
+test('copying core accepts text and leaves byte decoding to wrappers', () => {
+    const parser = createCopyingParser();
+    // @ts-expect-error core accepts strings only
+    expect(() => parser.write(new Uint8Array([123,125]))).toThrow(TypeError);
 });

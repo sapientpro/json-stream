@@ -33,7 +33,7 @@ class CopyingParser implements Parser {
 
     #copy<T>(value: T): T {
         return this.#largeInput && typeof value === 'string' && value.length <= this.#maxCopyLength
-            ? value.split('').join('') as T : value;
+            ? copyString(value) as T : value;
     }
 
     #observer<T>(consumer: ValueCallback<T> | CallbackObserver<T>): ValueCallback<T> | CallbackObserver<T> {
@@ -72,7 +72,7 @@ class CopyingParser implements Parser {
     get rootReady(): boolean { return this.#parser.rootReady; }
     get closed(): boolean { return this.#parser.closed; }
     get json(): string { return this.#parser.json; }
-    write(chunk: string | Uint8Array): void {
+    write(chunk: string): void {
         if (chunk.length >= this.#minInputLength) this.#largeInput = true;
         this.#parser.write(chunk);
     }
@@ -89,4 +89,12 @@ class CopyingParser implements Parser {
  */
 export function createCopyingParser(options: CopyingParserOptions = {}): Parser {
     return new CopyingParser(options);
+}
+
+/** Two nonempty join parts allocate independent character storage on tested engines. */
+function copyString(value: string): string {
+    const length = value.length;
+    if (length === 0) return '';
+    if (length === 1) return String.fromCharCode(value.charCodeAt(0));
+    return [value.slice(0, 1), value.slice(1)].join('');
 }

@@ -10,7 +10,7 @@ import {createCopyingParser} from '@sapientpro/json-stream/copying';
 const parser = createCopyingParser();
 const label = parser.getValue<string>('$.label');
 // Feed input directly, through parser.writable, or createNodeWritable(parser).
-parser.write(largeInputChunk);
+parser.write(largeTextChunk);
 parser.end();
 console.log(await label);
 ```
@@ -32,8 +32,12 @@ UTF-16 surrogates are preserved.
 
 | Option | Default | Meaning |
 | --- | ---: | --- |
-| `minInputLength` | 65536 | Input UTF-16 units for text, or bytes for `Uint8Array` |
+| `minInputLength` | 65536 | Input UTF-16 units (the core accepts strings) |
 | `maxCopyLength` | 128 | Maximum output UTF-16 units to copy |
+
+The core accepts only strings. Web/Node wrappers, or `createDecodedInput(parser)`,
+decode bytes before passing text to this facade. The input threshold therefore
+always measures decoded UTF-16 units.
 
 The threshold uses the visible chunk length, not its backing storage size. For
 pre-sliced input borrowed from a larger string, set `minInputLength: 1` to copy
@@ -51,11 +55,12 @@ synchronous callbacks, cancellation and error handling follow the core API.
 ## Why use it
 
 Some engines retain the backing storage of a large string when a consumer keeps
-only a tiny substring. The optional facade uses a short string's code units to
-produce another string, avoiding that retention in the measured engines. The
-normal parser keeps its performance-oriented allocation policy.
+only a tiny substring. The optional facade joins two nonempty parts into another string, avoiding that
+retention in the measured engines. Empty and one-unit strings have separate
+paths; lone surrogates are preserved. This replaces the original per-code-unit
+`split('').join('')` implementation. The normal parser keeps its performance-oriented allocation policy.
 
-In 32 fresh retained-memory probes on Node 26.10.0 and Bun 1.4.2, four small
+In 48 current retained-memory probes on Node 26.11.0 and Bun 1.4.2, four small
 outputs were retained from four large inputs, after the parsers finished:
 
 | Case | Ordinary parser | Copying facade |
@@ -64,8 +69,8 @@ outputs were retained from four large inputs, after the parsers finished:
 | Node, byte string fragments, retained external memory | ~32 MiB | ~0 MiB |
 | Bun, text/bytes, scalar strings or fragments, retained heap | ~64.2 MiB | ~0.18–0.21 MiB |
 
-Node's scalar selected strings already detached in this fixture. Another 64
-fresh probes cover ASCII/Unicode outputs of 1, 4, 12 and 128 units with text and
+Node's scalar selected strings already detached in this fixture. The earlier prototype also had 64
+fresh probes covering ASCII/Unicode outputs of 1, 4, 12 and 128 units with text and
 byte input. The copying cases stayed below 0.22 MiB additional retained heap.
 These are forced-GC diagnostics, not peak-allocation measurements or a portable
 ECMAScript storage guarantee. Heap/external figures can overlap and must not be
@@ -76,9 +81,10 @@ be substantially slower, and can allocate more than retaining the input. Small
 LLM input chunks normally do not need this policy; use the ordinary parser when
 source retention is not a problem. Ordinary parser modules remain unchanged.
 
-[Full throughput table and raw samples](v3-copying-performance.md) include all
-controls and regressions: LLM 128 medians −2.4% to +2.9%; dense short-scalar
-selections with 64 KiB writes −56% to −59%. These costs apply only to the opt-in facade.
+[Full throughput table and raw samples](v3-copying-performance.md) distinguish
+the current two-part implementation from the historical split/join prototype.
+Copying remains an opt-in memory tradeoff; a faster copy primitive does not
+eliminate its cost or the forwarding overhead on small LLM chunks.
 
 ## Reproduce
 
@@ -94,6 +100,6 @@ node scripts/v3/benchmark.mjs --engine node --baseline dist/esm/v3/copying.js --
 ```
 
 The benchmark labels `copying` as its baseline series and `3.0 JSON` as the
-ordinary series. Both import the same scanner files; no staged module copies are
-needed. Timing uses natural GC. Memory diagnostics enable GC only in their own
+ordinary series. Both import the same scanner files. For independently built baselines, use
+`--same-path` to stage each version at the same canonical path in serial workers. Timing uses natural GC. Memory diagnostics enable GC only in their own
 processes. Registration must happen before the first write, as in the core API.
