@@ -39,10 +39,10 @@ jobs:
           cp types.ts types.cts
           cp copying-types.ts copying-types.mts
           cp copying-types.ts copying-types.cts
-          node verify-copying.mjs @sapientpro/json-stream/copying
+          node verify-copying.mjs @sapientpro/json-stream
           "$GITHUB_WORKSPACE/node_modules/.bin/tsc" --noEmit --strict --skipLibCheck --target es2022 --module NodeNext --moduleResolution NodeNext --typeRoots "$GITHUB_WORKSPACE/node_modules/@types" --types node types.mts types.cts copying-types.mts copying-types.cts
           "$GITHUB_WORKSPACE/node_modules/.bin/tsc" --noEmit --strict --skipLibCheck --target es2022 --module commonjs --moduleResolution node --typeRoots "$GITHUB_WORKSPACE/node_modules/@types" --types node copying-types.cts
-          node -e "require('@sapientpro/json-stream');require('@sapientpro/json-stream/node');require('@sapientpro/json-stream/copying')"
+          node -e "require('@sapientpro/json-stream');require('@sapientpro/json-stream/node')"
 
   bun:
     runs-on: ubuntu-latest

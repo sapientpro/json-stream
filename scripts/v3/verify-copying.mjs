@@ -1,11 +1,11 @@
 import {argv} from 'node:process';
-const {createCopyingParser} = await import(argv[2] ?? new URL('../../dist/esm/v3/copying.js', import.meta.url).href);
-const {createDecodedInput} = await import(argv[2]?.endsWith('/copying') ? argv[2].slice(0, -8) : new URL('../../dist/esm/v3/index.js', import.meta.url).href);
+const {createParser, createDecodedInput, JsonLinesParser, PrefixedJsonParser} = await import(argv[2] ?? new URL('../../dist/esm/v3/index.js', import.meta.url).href);
+const createCompactParser = options => createParser({...options, memoryMode: 'compact'});
 class JsonParser {
-    constructor(options = {}) { return createCopyingParser({ ...options, format: 'json' }); }
+    constructor(options = {}) { return createCompactParser({ ...options, format: 'json' }); }
 }
 class Json5Parser {
-    constructor(options = {}) { return createCopyingParser({ ...options, format: 'json5' }); }
+    constructor(options = {}) { return createCompactParser({ ...options, format: 'json5' }); }
 }
 import { deepStrictEqual, strictEqual } from 'node:assert';
 let checks = 0;
@@ -42,9 +42,9 @@ for (const Parser of [JsonParser, Json5Parser])
             strictEqual(state.failed, true);
             checks++;
         }
-// Also exercise promise consumers and the facade's own Web endpoints.
+// Also exercise promise consumers and the parser's own Web endpoints.
 for (const format of ['json', 'json5']) {
-    const parser = createCopyingParser({ format, collectJson: true }), result = parser.getValue('$.value');
+    const parser = createCompactParser({ format, collectJson: true }), result = parser.getValue('$.value');
     strictEqual(parser.writable, parser.writable);
     const reader = parser.stringStream('$.value').getReader(), pending = reader.read();
     const writer = parser.writable.getWriter();
@@ -60,10 +60,23 @@ for (const format of ['json', 'json5']) {
 // Exercise every UTF-16 code unit through both the one-unit and joined copy paths.
 for (const Parser of [JsonParser, Json5Parser]) {
     const expected = Array.from({length:65536}, (_,code) => String.fromCharCode(code) + 'abcdefghijklmnop');
-    const parser = new Parser({minInputLength:1}), values = [];
+    const parser = new Parser({}), values = [];
     parser.onValue('$[*]', value => values.push(value));
     const text = JSON.stringify(expected);
     for (let at=0;at<text.length;at+=65536) parser.write(text.slice(at,at+65536));
     parser.end(); deepStrictEqual(values,expected); checks++;
 }
-console.log(JSON.stringify({ passed: true, checks, scope: 'copying parser: JSON/JSON5, text/bytes, lone surrogates, threshold 128/129, large-to-small cuts, reset, owned paths, observer this/end/error/complete' }));
+// Record wrappers preserve compact policy, paths and record indexes across reset.
+for (const format of ['json', 'json5']) for (const bytes of [false, true]) for (const prefix of [false, true]) {
+    const options = {format, memoryMode:'compact'};
+    const p = prefix ? new PrefixedJsonParser('@', options) : new JsonLinesParser(options);
+    const values = [], fragments = [];
+    p.onValue('$.label', (v,path,i) => values.push([v,path,i]));
+    p.onString('$.label', (v,path,i) => fragments.push([v,path,i]));
+    const doc = JSON.stringify({skip:'x'.repeat(70000),label:'π😀\ud800'});
+    const text = prefix ? '@'+doc+'junk@'+doc : doc+'\n'+doc+'\n';
+    p.write(bytes ? new TextEncoder().encode(text) : text); p.end();
+    const expected = [['π😀\ud800',['label'],0],['π😀\ud800',['label'],1]];
+    deepStrictEqual(values,expected); deepStrictEqual(fragments,expected); checks++;
+}
+console.log(JSON.stringify({ passed: true, checks, scope: 'compact parser and JSONL/prefix: JSON/JSON5, text/bytes, lone surrogates, threshold 128/129, large-to-small cuts, reset, owned paths, observer this/end/error/complete' }));

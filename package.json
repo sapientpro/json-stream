@@ -44,17 +44,7 @@
         "default": "./dist/cjs/v3/node.js"
       }
     },
-    "./package.json": "./package.json",
-    "./copying": {
-      "import": {
-        "types": "./dist/esm/v3/copying.d.ts",
-        "default": "./dist/esm/v3/copying.js"
-      },
-      "require": {
-        "types": "./dist/cjs/v3/copying.d.ts",
-        "default": "./dist/cjs/v3/copying.js"
-      }
-    }
+    "./package.json": "./package.json"
   },
   "scripts": {
     "prepare": "npm run build && npm run test",
@@ -99,9 +89,6 @@
     "*": {
       "node": [
         "dist/cjs/v3/node.d.ts"
-      ],
-      "copying": [
-        "dist/esm/v3/copying.d.ts"
       ]
     }
   }

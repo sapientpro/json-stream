@@ -49,7 +49,7 @@ const expectedIds=value.items?.map(x=>x.id), expectedValues=Array.isArray(value)
 const legacyRetention=Parser ? 'root' in Parser.prototype : false;
 const run=(capture=false)=>{
  const retain=job.mode==='root'||job.mode==='root+ids';
- const options=legacyRetention?{retainRoot:retain}:{};
+ const options=legacyRetention?{retainRoot:retain}:job.memoryMode?{memoryMode:job.memoryMode}:{};
  const p=typeof api.createCopyingParser==='function'?api.createCopyingParser({...options,format:job.format}):new Parser(options);
  let count=0,sum=0,length=0,pathSum=0,lastPath,sub,receivedRoot;const values=[];
  const consume=(v,path)=>{++count;for(const key of path)pathSum+=typeof key==='number'?key:key.length;lastPath=path;if(typeof v==='number')sum+=v;else if(typeof v==='string')length+=v.length;else if(v?.id!==undefined)sum+=v.id;if(capture)values.push(v);if(job.mode==='cancel'&&count===32)sub.unsubscribe();};

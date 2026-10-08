@@ -20,6 +20,10 @@ export type CallbackOptions = {
     onObserverError?: (error: unknown) => void;
 };
 export type ParserOptions = CallbackOptions & {
+    /** 'compact' copies short scalar results/fragments after large input writes, at a throughput cost.
+     * Default 'fast'. Does not deep-copy containers, paths or collected JSON.
+     */
+    memoryMode?: 'fast' | 'compact';
     collectJson?: boolean;
     maxDepth?: number;
 };

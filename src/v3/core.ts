@@ -2,6 +2,8 @@ import { DOCUMENT_INPUT } from './document-input.js';
 import {IS_V8} from './lexical.js';
 import { Any, Rest } from './types.js';
 import type { Path, PathInput, PathSegment, ParserOptions, CallbackOptions, ValueCallback, CallbackObserver, Subscription, Parser } from './types.js';
+import { CopyingChannel } from './copy-channel.js';
+import type { CopyPolicy } from './copy-channel.js';
 import { CallbackChannel, makeErrorReporter, validateBufferLimit } from './channel.js';
 import { EMPTY_CONTEXT, newNode, makeContext, stepContext, childrenOf } from './selectors.js';
 import type { Node, Context, Frame } from './selectors.js';
@@ -46,6 +48,7 @@ export abstract class ParserCore implements Parser {
     protected _writable: WritableStream<Uint8Array | string> | null = null;
     protected _running = false;
     protected _framed = false;
+    declare protected _copyPolicy: CopyPolicy | undefined;
     constructor(options: ParserOptions = {}) {
         if ('retainRoot' in options)
             throw new TypeError('retainRoot was removed; subscribe to $ for the complete value');
@@ -58,6 +61,9 @@ export abstract class ParserCore implements Parser {
         this._collect = collectJson;
         this._maxDepth = maxDepth;
         this._state = State.VALUE;
+        const {memoryMode = 'fast'} = options;
+        if (memoryMode !== 'fast' && memoryMode !== 'compact') throw new TypeError('Invalid memoryMode');
+        if (memoryMode === 'compact') initializeCompact(this);
     }
     get json(): string {
         return this._json;
@@ -81,9 +87,9 @@ export abstract class ParserCore implements Parser {
         const node = this._node(segments);
         if (fragments) {
             this._hasChunks = true;
-            return (node.fragments ??= new CallbackChannel<string>(this._reportCallback)).add(observer as CallbackObserver<string>);
+            return (node.fragments ??= (this._copyPolicy ? new CopyingChannel<string>(this._reportCallback, this._copyPolicy) : new CallbackChannel<string>(this._reportCallback))).add(observer as CallbackObserver<string>);
         }
-        return (node.callbacks ??= new CallbackChannel<T>(this._reportCallback)).add(observer);
+        return (node.callbacks ??= (this._copyPolicy ? new CopyingChannel<T>(this._reportCallback, this._copyPolicy) : new CallbackChannel<T>(this._reportCallback))).add(observer);
     }
     onValue<T = any>(path: PathInput, callback: ValueCallback<T> | CallbackObserver<T>): {
         unsubscribe(): void;
@@ -212,6 +218,7 @@ export abstract class ParserCore implements Parser {
         if (this.closed) throw this._failure ?? new Error('Cannot reset a closed parser; use reset before end');
         this._finishDocument(false);
         if (this.closed) return;
+        if (this._copyPolicy) this._copyPolicy.large = false;
         this._state = State.VALUE;
         this._documentDone = false;
         this._rootAvailable = false;
@@ -541,4 +548,14 @@ export abstract class ParserCore implements Parser {
     protected _finishInput(): void { }
     protected _validateEnd(): boolean { return true; }
     get closed(): boolean { return this._done || this._state === State.FAILED; }
+}
+
+/** Install compact input tracking once; ordinary writes have no policy branch. */
+function initializeCompact(parser: ParserCore): void {
+    // Keep compact allocation and method installation out of the ordinary constructor.
+    const policy: CopyPolicy = (parser as unknown as {_copyPolicy: CopyPolicy})._copyPolicy = {large: false};
+    parser.write = function(chunk: string, offset = -1): void {
+        if (typeof chunk === 'string' && chunk.length >= 65536) policy.large = true;
+        (ParserCore.prototype.write as (this: ParserCore, chunk: string, offset: number) => void).call(this, chunk, offset);
+    };
 }

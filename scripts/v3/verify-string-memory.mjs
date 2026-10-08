@@ -3,7 +3,7 @@ import {pathToFileURL} from 'node:url';
 import path from 'node:path';
 import {strictEqual} from 'node:assert';
 const [format = 'json', input = 'text', scenario = 'none', lifecycle = 'end',
-    module = 'dist/esm/v3/index.js', width, kind = 'unicode'] = process.argv.slice(2);
+    module = 'dist/esm/v3/index.js', width, kind = 'unicode', memoryMode = 'fast'] = process.argv.slice(2);
 if (!['json', 'json5'].includes(format) || !['text', 'bytes'].includes(input) ||
     !['none', 'root', 'selective', 'fragments', 'dense'].includes(scenario) ||
     !['end', 'reset', 'destroy', 'error'].includes(lifecycle)) throw Error('Unknown diagnostic option');
@@ -13,7 +13,7 @@ if (width !== undefined && (!['selective', 'fragments'].includes(scenario) ||
 const {JsonParser, Json5Parser, createCopyingParser} = await import(pathToFileURL(path.resolve(module)));
 const {createDecodedInput} = await import('../../dist/esm/v3/index.js');
 const Parser = format === 'json' ? JsonParser : Json5Parser;
-const create = typeof createCopyingParser === 'function' ? () => createCopyingParser({format}) : () => new Parser();
+const create = typeof createCopyingParser === 'function' ? () => createCopyingParser({format}) : () => new Parser({memoryMode});
 const collectGarbage = typeof Bun !== 'undefined' ? () => Bun.gc(true) : globalThis.gc;
 if (!collectGarbage) throw Error('Run this diagnostic with node --expose-gc or Bun');
 const parsers = [], outputs = [];
