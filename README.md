@@ -23,6 +23,7 @@ controls input pacing. Use JSONL or prefix managers to consume multiple document
 ## Documentation
 
 - [API, retention, paths and migration from 2.x](docs/v3.md)
+- [Opt-in copying of short string results (unreleased)](docs/v3-copying.md)
 - [Streaming strings and pacing](docs/v3.md#streaming-strings-and-pacing)
 - [Web and Node transports](docs/v3.md#transports)
 - [Reset and parser reuse](docs/v3.md#reusing-a-core-parser)

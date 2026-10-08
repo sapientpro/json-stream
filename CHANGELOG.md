@@ -4,6 +4,11 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+- Add the opt-in `@sapientpro/json-stream/copying` entry with `createCopyingParser`
+  for sparse short string results from large input chunks. Default parser modules
+  are unchanged. Copying can substantially slow dense short-string selections;
+  see the memory and throughput measurements in `docs/v3-copying.md`.
+
 ## 3.0.0-alpha.2 — 2026-10-08
 
 - Release completed scanner input retained by RegExp state on end, reset,
