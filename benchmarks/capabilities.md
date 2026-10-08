@@ -1,43 +1,55 @@
 # Capability matrix
 
-Audited against installed versions on 2026-10-01. “Adapter” means possible by composing public APIs or writing consumer logic; it is not a built-in feature. Runtime benchmarks verify Node and Bun only; browser support is documented rather than tested here.
+Audited against the installed versions below on 2026-10-08. These are pinned
+comparison versions, not claims about the newest releases. “Adapter” means
+composition or consumer code. See [the measured comparison](../docs/v3-package-comparison.md)
+for runtime coverage and Unicode boundary probes. `json-stream-lite` is excluded
+from ongoing comparisons as requested; archived release reports remain unchanged.
 
-| Capability | @sapientpro/json-stream 2.0.0 | @streamparser/json 0.0.26 | stream-json 3.7.0 | json-web-streams 1.2.0 | json-stream-lite 1.3.1 |
-|---|---|---|---|---|---|
-| Incremental string input | Yes | Yes | Yes | Yes | Yes |
-| UTF-8 bytes | Yes | Yes | Yes / decoder in core harness | TextDecoderStream adapter | Yes |
-| Browser support | Yes | Yes | Web/core entry | Yes | Yes |
-| Node / Bun | Both benchmarked | Both benchmarked | Both benchmarked | Both benchmarked | Both benchmarked |
-| Runtime dependencies | 0 | 0 | 1: stream-chain | 2: schema spec + JSONPath | 0 |
-| TypeScript declarations | Yes | Yes | Yes | Yes | Yes |
-| Synchronous push parser | write/end | write/end | Public jsonParser core | No; TransformStream | feed + synchronous entity reads |
-| Async pull consumption | Observable async iterator | Adapter / separate wrapper | Stream pipelines | Web Streams | Async entities / iterators |
-| Exact path selection | Segment array / dotted path | Limited JSONPath | Path/regex/predicate filter | JSONPath subset | Manual entity traversal |
-| Wildcard selection | Any | * | Regex/predicate | [*] | Manual traversal |
-| Recursive descendant selection | Rest | Not in documented path subset | Regex/predicate filters | Not in documented subset | Recursive traversal / flattened keys |
-| Multiple paths simultaneously | Independent observers | paths option | Compose filters/pipelines | Query array | Consumer traversal |
-| Await one selected value | value(path) | Adapter | Adapter | Consume one stream result | Entity readAsync; manual traversal |
-| Multicast Observable API | subscribe + RxJS interop | No | No | No | No |
-| Decoded string fragments before completion | chunks / stream(path) | Cumulative partial previews, not independent fragments | stringChunk tokens | No documented API | JsonString.stream/streamAsync |
-| Direct string stream by path | Yes; Any/Rest supported | Callback + paths + partial options | Filter + token pipeline | No | Traverse to JsonString |
-| Memory bounded by selected subtree | retainRoot:false | paths + keepStack:false | Filters + streamers | Selective queries | Consume entities individually |
-| Consumer backpressure | Push parser does not pause; optional queue overflow limit | Push core does not pause; wrappers available | Stream adapters / pipelines | TransformStream | Pull consumption |
-| Partial/incomplete value snapshots | String fragments only | emitPartialTokens + emitPartialValues | Token stream | Completed values only | Incremental entity reads |
-| Strict JSON validation | Deliberately lenient; ignores suffix | Declares JSON compliance | JSON parser / dedicated verifier | Tested against JSONTestSuite | Lenient: observed trailing commas/comments/suffix acceptance |
-| Multiple top-level values / NDJSON | No | separator option | jsonStreaming / JSONL | multi option | Consumer-managed traversal; no equivalent mode confirmed |
-| JSONC comments | No | No | Separate JSONC parser | No | Comment entities / traversal |
-| Streaming stringify | No | No | Stringer/disassembler | No | Yes |
-| Schema validation integration | Consumer callback | Consumer callback | Consumer pipeline | Standard Schema | Consumer callback |
-| Start marker embedded in prose | start option | Preprocess | Preprocess | Preprocess | Preprocess |
-| Configurable depth limit | maxDepth | No documented option | No documented parser option | No documented option | No documented option |
+| Capability | @sapientpro/json-stream 3.0.0-alpha.1 | @streamparser/json 0.0.26 | stream-json 3.7.0 | json-web-streams 1.2.0 |
+|---|---|---|---|---|
+| Input | Text / UTF-8 bytes | Text / UTF-8 bytes | Text core; byte decoder / transports | Text; TextDecoderStream for bytes |
+| Browser / Node transports | Web and Node wrappers | Core; separate wrappers | Web / Node pipelines | Web Streams |
+| Runtime dependencies | 0 | 0 | stream-chain | Standard Schema spec + JSONPath |
+| TypeScript declarations | Yes | Yes | Yes | Yes |
+| Synchronous push | write/end; callbacks run inside write | write/end | Public jsonParser core | No; TransformStream |
+| Selected completed values | onValue / getValue | onValue + paths | Filters + assembler/streamers | JSONParseStream queries |
+| Root retention | Only when subscribed to $ | paths + keepStack | Assembler / streamers | Selected value is buffered |
+| JSONPath | Child-selector subset: $, names, typed [0], [*] | Root/dotted names/wildcards subset | Path / regex / predicate filters | Root/names/wildcards subset |
+| Recursive matches | Terminal Rest in typed selector arrays | Not in documented subset | Regex / predicate filters | Not in documented subset |
+| Filters / slices in JSONPath | Explicitly rejected | Not documented | Consumer filter pipeline | Not in documented subset |
+| Independent decoded string fragments | onString; concrete path and end callback | Cumulative partial previews | stringChunk tokens; filter by path | No public API |
+| String Web stream | stringStream(path) | Adapter | Token/Web pipeline | No |
+| Concurrent consumers | Independent value/string subscriptions | paths array / consumer dispatch | Compose pipelines | Query array |
+| Owned concrete callback paths | Yes; readonly snapshots | Key/stack references; copy if retaining | Consumer assembles path from tokens | Query/match metadata |
+| Strict JSON | Separate strict scanner; end validates suffix | JSON parser | JSON parser plus dedicated verifier | JSON parser |
+| JSON5 | Separate scanner | No documented mode | JSONC, not JSON5 | No documented mode |
+| JSONL | Strict incremental manager; one physical line per record | separator option; not identical JSONL validation | JSONL components | multi values; not identical JSONL validation |
+| Multiple prefixed documents | PrefixedJsonParser / PrefixFilter | Preprocess | Preprocess / pipelines | Preprocess / multi |
+| Reset keeping consumers | reset() before end(); input type stays fixed | No documented equivalent | New pipeline instance | New stream instance |
+| Backpressure | Caller paces writes; wrappers regulate input; callbacks not awaited | Caller paces push core; wrappers | Stream pipelines / public sync core | Web stream backpressure |
+| Pending string queue bound | maxBufferedChunks; overflow unsubscribes | Consumer/wrapper policy | Pipeline queue policy | No fragment stream |
+| Streaming stringify | No | No | Stringer / disassembler | No |
+| Schema integration | Consumer callback | Consumer callback | Consumer pipeline | Standard Schema |
+| Depth limit | maxDepth | No documented option | No documented parser option | No documented option |
 
-Sources: installed READMEs, declarations and public implementations, plus upstream documentation:
+JSONPath support here means each package's stated subset, not full RFC 9535.
+Our numeric indexes distinguish array elements from numeric object keys. `Rest`
+is a typed-array feature, not support for JSONPath descendant syntax `$..name`.
 
-- [@streamparser/json](https://github.com/juanjoDiaz/streamparser-json/tree/main/packages/json): paths, keepStack, partial values, separator, encoding and wrappers.
-- [stream-json](https://github.com/uhop/stream-json): core/Web/Node pipelines, tokens, filters, JSONC, JSONL and stringifier.
-- [json-web-streams](https://github.com/zengm-games/json-web-streams): JSONPath subset, TransformStream, multi and Standard Schema.
-- [json-stream-lite](https://github.com/jacobshirley/json-stream-lite): entity traversal, string streaming, buffers and stringify.
+Backpressure is a scheduling/memory policy, not a single speed characteristic.
+The benchmark includes Web stream scheduling for json-web-streams and uses public
+synchronous cores for push parsers. Faster synchronous delivery does not imply
+waiting for asynchronous consumers. Our callbacks must queue asynchronous work
+and pace subsequent input writes themselves.
 
-Package API capabilities do not guarantee correctness on every Unicode/escape boundary. The benchmark records correctness failures instead of reporting their timings as valid results.
+Sources: installed declarations and implementations, with upstream documentation:
 
-Observed on 1.3.1: json-stream-lite decodes `"\uD83D\uDE00"` as two replacement characters and `"a\/b"` as `"ab"`. Streaming a string with an emoji crossing its 1024-byte output boundary also produces replacement characters. These checks are included in the benchmark's correctness probes.
+- [Our 3.0 API](../docs/v3.md): values, string boundaries, selectors, transports and record managers.
+- [@streamparser/json](https://github.com/juanjoDiaz/streamparser-json/tree/main/packages/json): paths, keepStack, partial values, separator and wrappers.
+- [stream-json](https://github.com/uhop/stream-json): public core, Web/Node pipelines, filters, JSONC, JSONL and stringifier.
+- [json-web-streams](https://github.com/zengm-games/json-web-streams): supported JSONPath subset, multi and Standard Schema.
+
+The benchmark records unsupported operations and failed content checks instead
+of presenting their timings as valid results. Its probes are boundary tests,
+not a complete conformance suite for any competitor.
