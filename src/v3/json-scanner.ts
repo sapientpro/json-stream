@@ -1,4 +1,5 @@
 import { CharCode } from './char-code.js';
+import {JsonSubtreeValidator} from './skip-json.js';
 import { ParserCore } from './core.js';
 import { EMPTY_CONTEXT, stepContext } from './selectors.js';
 import { State } from './state.js';
@@ -98,8 +99,15 @@ const readEscapedRun = (buf: string, pos: number, len: number, retain: boolean):
     return {pos, text};
 };
 export class JsonScanner extends ParserCore {
+    protected declare _skip: JsonSubtreeValidator | undefined;
+    protected _skipContainer(isArray: boolean): boolean {
+        (this._skip ??= new JsonSubtreeValidator()).start(isArray, this._maxDepth - this._stack.length);
+        this._state = State.SKIP;
+        return true;
+    }
     protected _validateEnd(): boolean {
         // RegExp's last subject can keep a completed input buffer alive.
+        this._skip?.release();
         STRING_END.lastIndex = 0;
         STRING_END.test('"');
         return true;
@@ -115,6 +123,7 @@ export class JsonScanner extends ParserCore {
     protected declare _keyMisses: number;
     protected _numPhase = 0;
     protected _resetScanner(): void {
+        this._skip?.release();
         this._numPhase = 0;
         if (this._keyCache) {
             this._readObjectKey = this._readObjectKeyCached;
@@ -223,6 +232,20 @@ export class JsonScanner extends ParserCore {
         this._state = State.STR;
         return end;
     }
+    private _skipInput(buf: string, pos: number, len: number): number {
+        const skip = this._skip!;
+        pos = skip.run(buf, pos, len);
+        if (skip.error >= 0) {this._pos = skip.error; this._fail(this._syntaxError());}
+        if (skip.done) this._emit(undefined);
+        return pos;
+    }
+    /** Selected only while an ignored subtree spans input writes. */
+    protected _runDiscard(): void {
+        this._pos = this._skipInput(this._buf, this._pos, this._buf.length);
+        if (this._state === State.SKIP || this.closed) return;
+        this._run = JsonScanner.prototype._run;
+        this._run();
+    }
     protected _run(): void {
         const buf = this._buf;
         const len = buf.length;
@@ -327,10 +350,26 @@ export class JsonScanner extends ParserCore {
                             if (code === CharCode.LBRACE) {
                                 ++pos;
                                 this._open(false);
+                                if ((this._state as number) === State.SKIP) {
+                                    pos = this._skipInput(buf, pos, len);
+                                    if ((this._state as number) === State.SKIP) {
+                                        this._pos = pos;
+                                        this._run = this._runDiscard;
+                                        return;
+                                    }
+                                }
                             }
                             else if (code === CharCode.LBRACKET) {
                                 ++pos;
                                 this._open(true);
+                                if ((this._state as number) === State.SKIP) {
+                                    pos = this._skipInput(buf, pos, len);
+                                    if ((this._state as number) === State.SKIP) {
+                                        this._pos = pos;
+                                        this._run = this._runDiscard;
+                                        return;
+                                    }
+                                }
                             }
                             else if (code === CharCode.RBRACKET && this._stack[this._stack.length - 1]?.isArray && this._stack[this._stack.length - 1]!.count === 0) {
                                 ++pos;

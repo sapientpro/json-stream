@@ -1,0 +1,160 @@
+{
+  "summaries": {
+    "baseline": {
+      "sampledWallMs": 5550.557,
+      "rows": [
+        {
+          "fn": "write core.js",
+          "ms": 1482.43,
+          "pct": 26.70777004902391
+        },
+        {
+          "fn": "scanStringEnd json-scanner.js",
+          "ms": 1413.606,
+          "pct": 25.46782241854286
+        },
+        {
+          "fn": "_run json-scanner.js",
+          "ms": 1261.817,
+          "pct": 22.733159933318404
+        },
+        {
+          "fn": "_flushTextChunk core.js",
+          "ms": 1065.862,
+          "pct": 19.202793521442985
+        },
+        {
+          "fn": "consume benchmark-worker.mjs",
+          "ms": 83.804,
+          "pct": 1.5098304548534498
+        },
+        {
+          "fn": "run benchmark-worker.mjs",
+          "ms": 72.863,
+          "pct": 1.312715102286131
+        },
+        {
+          "fn": "(garbage collector) ",
+          "ms": 55.562,
+          "pct": 1.0010166547249222
+        },
+        {
+          "fn": "next channel.js",
+          "ms": 50.141,
+          "pct": 0.9033507808315454
+        },
+        {
+          "fn": "(program) ",
+          "ms": 29.516,
+          "pct": 0.531766451547115
+        },
+        {
+          "fn": "(idle) ",
+          "ms": 10.232,
+          "pct": 0.18434185974488687
+        },
+        {
+          "fn": "compileSourceTextModule utils",
+          "ms": 2.277,
+          "pct": 0.04102290995300111
+        },
+        {
+          "fn": " benchmark-worker.mjs",
+          "ms": 2.013,
+          "pct": 0.036266630538160406
+        },
+        {
+          "fn": "childrenOf selectors.js",
+          "ms": 1.702,
+          "pct": 0.03066358925779881
+        },
+        {
+          "fn": "makeContext selectors.js",
+          "ms": 1.424,
+          "pct": 0.025655082904292307
+        }
+      ]
+    },
+    "rebased": {
+      "sampledWallMs": 6134.546,
+      "rows": [
+        {
+          "fn": "scanStringEnd json-scanner.js",
+          "ms": 1782.867,
+          "pct": 29.06273748701208
+        },
+        {
+          "fn": "write core.js",
+          "ms": 1531.617,
+          "pct": 24.967079878445773
+        },
+        {
+          "fn": "_run json-scanner.js",
+          "ms": 1343.153,
+          "pct": 21.894904692213572
+        },
+        {
+          "fn": "_flushTextChunk core.js",
+          "ms": 1126.173,
+          "pct": 18.357886630893304
+        },
+        {
+          "fn": "run benchmark-worker.mjs",
+          "ms": 89.283,
+          "pct": 1.4554133264303504
+        },
+        {
+          "fn": "consume benchmark-worker.mjs",
+          "ms": 89.089,
+          "pct": 1.4522509082171688
+        },
+        {
+          "fn": "(garbage collector) ",
+          "ms": 60.123,
+          "pct": 0.9800725269645056
+        },
+        {
+          "fn": "next channel.js",
+          "ms": 48.283,
+          "pct": 0.78706720921157
+        },
+        {
+          "fn": "(program) ",
+          "ms": 27.491,
+          "pct": 0.4481342221575973
+        },
+        {
+          "fn": "(idle) ",
+          "ms": 7.03,
+          "pct": 0.1145969074158055
+        },
+        {
+          "fn": "childrenOf selectors.js",
+          "ms": 3.627,
+          "pct": 0.05912417968664674
+        },
+        {
+          "fn": " benchmark-worker.mjs",
+          "ms": 2.451,
+          "pct": 0.03995405690983489
+        },
+        {
+          "fn": "compileSourceTextModule utils",
+          "ms": 2.255,
+          "pct": 0.03675903644703292
+        },
+        {
+          "fn": "makeContext selectors.js",
+          "ms": 1.537,
+          "pct": 0.025054828833299157
+        }
+      ]
+    }
+  },
+  "stringKernelSourceIdentical": true,
+  "stringKernelSha256": "915d814dd5fd02f892e6a424dc0e98c38b0018f3d6e9a65fdc49bc330dac5647",
+  "rawProfileHashes": {
+    "baseline": "c4bab6d4d2e41907a422a60ba77b15a9e398bbda629908fb007db74ecf733264",
+    "rebased": "039a532f5f2920daea812343c7e1098a15b16fede456512d1e6104d79d1f0739"
+  }
+}
