@@ -1,3 +1,4 @@
+import { decodedInput } from './v3-input';
 import {describe, expect, test} from '@jest/globals';
 import {JsonParser, Json5Parser, Rest} from '../src/v3/index';
 
@@ -9,7 +10,7 @@ for (const Parser of [JsonParser, Json5Parser]) describe(Parser.name+' numeric e
             const parser = new Parser(); const ids: unknown[] = []; let root: any;
             parser.onValue('$', value => root=value);
             parser.onValue('$.items[*].id', (value,path) => ids.push([value,path]));
-            parser.write(bytes.subarray(0,cut)); parser.write(bytes.subarray(cut)); parser.end();
+            decodedInput(parser).write(bytes.subarray(0,cut)); decodedInput(parser).write(bytes.subarray(cut)); decodedInput(parser).end();
             expect(root).toEqual(JSON.parse(input)); expect(Object.is(root.items[0].other[0],-0)).toBe(true);
             expect(Object.getPrototypeOf(root)).toBe(Object.prototype);
             expect(Object.hasOwn(root,'__proto__')).toBe(true);

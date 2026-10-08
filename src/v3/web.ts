@@ -1,8 +1,9 @@
-import type { InputSink, Parser, PathInput, Subscription } from './types.js';
+import { createDecodedInput } from './decoded-input.js';
+import type { ByteInputSink, InputSink, Parser, PathInput, Subscription } from './types.js';
 import { validateBufferLimit } from './channel.js';
 /** A synchronous parser sink. Producers control when each write is submitted. */
 export function createWritableStream(parser: InputSink): WritableStream<string | Uint8Array> {
-    let target: InputSink | undefined = parser;
+    let target: ByteInputSink | undefined = createDecodedInput(parser);
     return new WritableStream({
         write(chunk) { target!.write(chunk); },
         close() { const active = target!; target = undefined; active.end(); },

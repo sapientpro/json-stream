@@ -1,8 +1,10 @@
-import type { InputSink } from './types.js';
+import { BYTE_INPUT } from './decoded-input.js';
+import type { InputSink, ByteInputSink } from './types.js';
 import { createWritableStream } from './web.js';
 
 /** Transport decoding and lifecycle shared by optional input framers only. */
-export abstract class InputFramer implements InputSink {
+export abstract class InputFramer implements ByteInputSink {
+    readonly [BYTE_INPUT] = true;
     protected _closed = false;
     protected _finished = false;
     protected _started = false;

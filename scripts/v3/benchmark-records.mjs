@@ -2,7 +2,7 @@ import {execFileSync} from 'node:child_process';
 import fs from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {performance} from 'node:perf_hooks';
-import {JsonParser,JsonLinesParser,PrefixedJsonParser} from '../../dist/esm/v3/index.js';
+import {JsonParser,JsonLinesParser,PrefixedJsonParser,createDecodedInput} from '../../dist/esm/v3/index.js';
 const median=a=>a.sort((x,y)=>x-y)[Math.floor(a.length/2)];
 if(process.argv[2]==='--worker') {
  const {kind,dataset,size}=JSON.parse(process.argv[3]);
@@ -14,7 +14,7 @@ if(process.argv[2]==='--worker') {
  function parse(){
   let seen=0,last=-1,chars=0;
   const bind=p=>{p.onValue(dataset==='numbers'?[]:['id'],(v,path)=>{seen++;last=v;void path.length;});if(fragmented)p.onString(['s'],v=>chars+=v.length);};
-  if(kind==='direct')for(const record of records){const p=new JsonParser({});bind(p);for(let pos=0;pos<record.length;pos+=size)p.write(record.subarray(pos,pos+size));p.end();}
+  if(kind==='direct')for(const record of records){const p=new JsonParser({});bind(p);const sink=createDecodedInput(p);for(let pos=0;pos<record.length;pos+=size)sink.write(record.subarray(pos,pos+size));sink.end();}
   else {const p=kind==='jsonl'?new JsonLinesParser({}):new PrefixedJsonParser('data:',{});bind(p);for(let pos=0;pos<input.length;pos+=size)p.write(input.subarray(pos,pos+size));p.end();if(p.recordCount!==count)throw Error('record count');}
   if(seen!==count||last!==count-1||fragmented&&chars!==count*32768)throw Error('incorrect results');
  }

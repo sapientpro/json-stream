@@ -19,3 +19,6 @@ export { PrefixFilter } from './framing.js';
 export { JsonLinesParser, PrefixedJsonParser } from './records.js';
 export type { RecordCallback, RecordObserver } from './records.js';
 export type { InputSink } from './types.js';
+
+export { createDecodedInput } from './decoded-input.js';
+export type { ByteInputSink } from './types.js';

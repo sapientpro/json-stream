@@ -1,3 +1,4 @@
+import { decodedInput } from './v3-input';
 import {expect, test} from '@jest/globals';
 import {JsonParser, Json5Parser} from '../src/v3/index';
 
@@ -20,7 +21,7 @@ test.each(['text', 'bytes'])('scanner cleanup preserves an active parser during 
             }
         }
     });
-    outer.write(input === 'bytes' ? new TextEncoder().encode(text) : text);
-    outer.end();
+    decodedInput(outer).write(input === 'bytes' ? new TextEncoder().encode(text) : text);
+    decodedInput(outer).end();
     expect(values).toEqual(JSON.parse(text).map((value: string, index: number) => [value, [index]]));
 });

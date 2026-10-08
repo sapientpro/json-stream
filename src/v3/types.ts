@@ -28,9 +28,12 @@ export type FormatOptions = ParserOptions & {
     format?: Format;
 };
 export interface InputSink {
-    write(chunk: string | Uint8Array): void;
+    write(chunk: string): void;
     end(): void;
     destroy(error?: Error | null): void;
+}
+export interface ByteInputSink extends Omit<InputSink, 'write'> {
+    write(chunk: string | Uint8Array): void;
 }
 export interface Parser extends InputSink {
     reset(): void;
@@ -39,7 +42,7 @@ export interface Parser extends InputSink {
     readonly closed: boolean;
     readonly json: string;
     readonly writable: WritableStream<string | Uint8Array>;
-    write(chunk: string | Uint8Array): void;
+    write(chunk: string): void;
     end(): void;
     destroy(error?: Error | null): void;
     onValue<T = any>(path: PathInput, callback: ValueCallback<T> | CallbackObserver<T>): Subscription;

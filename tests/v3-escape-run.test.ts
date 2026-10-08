@@ -1,3 +1,4 @@
+import { decodedInput } from './v3-input';
 import {captureRoot, capturedRoot} from './v3-capture';
 import {test,expect} from '@jest/globals';
 import {JsonParser,JsonLinesParser,PrefixedJsonParser} from '../src/v3/index';
@@ -10,7 +11,7 @@ test('batched complete escapes preserve values, fragments and surrogate cuts at 
     const bytes=encoder.encode(input);
     for(let cut=0;cut<=bytes.length;cut++) {
         const p=captureRoot(new JsonParser());let text='';const pieces:string[]=[];p.onString(['s'],v=>{text+=v;pieces.push(v);});
-        p.write(bytes.subarray(0,cut));p.write(bytes.subarray(cut));p.end();expect(capturedRoot(p)).toEqual(expected);expect(text).toBe(expected.s);
+        decodedInput(p).write(bytes.subarray(0,cut));decodedInput(p).write(bytes.subarray(cut));decodedInput(p).end();expect(capturedRoot(p)).toEqual(expected);expect(text).toBe(expected.s);
         for(let i=0;i<pieces.length-1;i++)expect(pieces[i]!.charCodeAt(pieces[i]!.length-1)).not.toBe(0xd83d);
     }
 });

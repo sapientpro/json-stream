@@ -4,7 +4,7 @@ const capturedRoot=parser=>parser.rootReady?capturedValues.get(parser):undefined
 // Differential tests use JSON.parse/JSON5.parse as independent oracles only.
 import {deepStrictEqual, strictEqual} from 'node:assert';
 import JSON5 from 'json5';
-import {JsonParser, Json5Parser, Any} from '../../dist/esm/v3/index.js';
+import {JsonParser, Json5Parser, Any, createDecodedInput} from '../../dist/esm/v3/index.js';
 let seed=987654321,checks=0;
 const random=n=>{seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;return(seed>>>0)%n;};
 const alphabet="abcxufInNa0129+-.,:[]{}/*\\\"' \n\r\t";
@@ -19,7 +19,7 @@ for(const [Parser,oracle,fixtures] of [
   const bytes=new TextEncoder().encode(doc),cut=random(bytes.length+1);
   for(const chunks of [[doc],[bytes.subarray(0,cut),bytes.subarray(cut)]]) {
    let actual,accepted=true;
-   try{const p=captureRoot(new Parser());for(const c of chunks)p.write(c);p.end();actual=capturedRoot(p);}catch{accepted=false;}
+   try{const p=captureRoot(new Parser());const input=createDecodedInput(p);for(const c of chunks)input.write(c);input.end();actual=capturedRoot(p);}catch{accepted=false;}
    try{strictEqual(accepted,valid);if(valid)deepStrictEqual(actual,wanted);}catch(e){console.error({format:Parser.name,doc,accepted,valid,cut});throw e;}
    ++checks;
   }
@@ -30,17 +30,17 @@ for(const [Parser,oracle,fixtures] of [
   const text=Parser===JsonParser?JSON.stringify(root):JSON5.stringify(root),bytes=new TextEncoder().encode(text);
   for(const size of [1,2,3,7,64,1024]) {
    // Preserve closed sibling containers and prior roots across depth/type reuse and reset.
-   const retained=captureRoot(new Parser());
-   for(let at=0;at<bytes.length;at+=size)retained.write(bytes.subarray(at,at+size));
+   const retained=captureRoot(new Parser()), retainedInput=createDecodedInput(retained);
+   for(let at=0;at<bytes.length;at+=size)retainedInput.write(bytes.subarray(at,at+size));
    const priorRoot=capturedRoot(retained);deepStrictEqual(priorRoot,root);retained.reset();
    const next={mixed:[[{id:i}],{nested:[{},[],null]},[false,{last:i}]],empty:{}};
    const nextBytes=new TextEncoder().encode(JSON.stringify(next));
-   for(let at=0;at<nextBytes.length;at+=size)retained.write(nextBytes.subarray(at,at+size));
-   retained.end();deepStrictEqual(capturedRoot(retained),next);deepStrictEqual(priorRoot,root);++checks;
+   for(let at=0;at<nextBytes.length;at+=size)retainedInput.write(nextBytes.subarray(at,at+size));
+   retainedInput.end();deepStrictEqual(capturedRoot(retained),next);deepStrictEqual(priorRoot,root);++checks;
    const p=new Parser({}),values=[],paths=[],fragments=[],ends=[];
    p.onValue(['items',Any],(v,path)=>{values.push(v);paths.push(path);});
    p.onString(['items',Any,'text'],{next:(v,path)=>fragments.push([v,path]),end:path=>ends.push(path)});
-   for(let at=0;at<bytes.length;at+=size)p.write(bytes.subarray(at,at+size));p.end();
+   const input=createDecodedInput(p);for(let at=0;at<bytes.length;at+=size)input.write(bytes.subarray(at,at+size));input.end();
    deepStrictEqual(values,root.items);deepStrictEqual(paths,root.items.map((_,id)=>['items',id]));
    for(let id=0;id<root.items.length;id++)strictEqual(fragments.filter(([,path])=>path[1]===id).map(([v])=>v).join(''),root.items[id].text);
    deepStrictEqual(ends,root.items.map((_,id)=>['items',id,'text']));strictEqual(capturedRoot(p),undefined);++checks;

@@ -1,5 +1,5 @@
 // Compile-only package API checks. Run tsc with --noEmit, strict and NodeNext.
-import {JsonParser, Json5Parser, Any, Rest, createParser, compileJsonPath, type Parser, type Subscription} from '@sapientpro/json-stream';
+import {JsonParser, Json5Parser, Any, Rest, createParser, compileJsonPath, createDecodedInput, type Parser, type Subscription} from '@sapientpro/json-stream';
 import {JsonStream, createNodeWritable} from '@sapientpro/json-stream/node';
 const p: Parser = new JsonParser({});
 const sub: Subscription = p.onValue<number>(['items',Any,'id'],(value,path)=>{value.toFixed();path[0]?.toString();});
@@ -42,3 +42,9 @@ p.onValueJsonPath('$',()=>{});
 p.onValue('$.items[*].id',()=>{});
 p.onString('$.text',()=>{});
 p.getValue();
+
+// Core parsing is text-only; transport adapters own incremental UTF-8 decoding.
+p.write('{}');
+// @ts-expect-error byte input belongs to a transport adapter
+p.write(new Uint8Array());
+createDecodedInput(p).write(new Uint8Array());

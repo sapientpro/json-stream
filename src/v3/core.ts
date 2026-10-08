@@ -38,12 +38,10 @@ export abstract class ParserCore implements Parser {
         path: readonly PathSegment[];
     }[] = [];
     protected _keyMode = false;
-    protected _decoder: InstanceType<typeof TextDecoder> | null = null;
     protected _json = '';
     protected _done = false;
     protected _documentDone = false;
     protected _rootAvailable = false;
-    protected _inputMode: 'text' | 'bytes' | undefined;
     protected _failure: Error | null = null;
     protected _writable: WritableStream<Uint8Array | string> | null = null;
     protected _running = false;
@@ -111,18 +109,15 @@ export abstract class ParserCore implements Parser {
     }
     stringStream(path: PathInput): ReadableStream<string> { return createStringStream(this, path, this._subjectOptions.maxBufferedChunks); }
     get writable(): WritableStream<Uint8Array | string> { return this._writable ??= createWritableStream(this); }
-    write(chunk: string | Uint8Array): void;
-    write(chunk: string | Uint8Array, offset = -1): void {
+    write(chunk: string): void;
+    write(chunk: string, offset = -1): void {
         if (this._running)
             throw new Error('write() re-entered from an observer callback; use destroy() to stop');
         if (this._state === State.FAILED)
             throw this._failure!;
         if (this._done)
             throw new Error('Parser is closed');
-        const mode = typeof chunk === 'string' ? 'text' : 'bytes';
-        if (this._inputMode && this._inputMode !== mode)
-            throw new TypeError('Do not mix text and byte input');
-        this._inputMode = mode;
+        if (typeof chunk !== 'string') throw new TypeError('Parser input must be a string; use a stream wrapper for bytes');
         if (!this._started) {
             this._context = this._rootContext = makeContext([this._root]);
             this._tracking = this._rootContext !== EMPTY_CONTEXT;
@@ -138,13 +133,11 @@ export abstract class ParserCore implements Parser {
                 this._closeString = this._closeStringUnobserved;
                 this._close = this._closeUnobserved;
             }
-            if (IS_V8 && mode === 'text' && this._hasChunks)
+            if (IS_V8 && this._hasChunks)
                 this._flushChunk = this._flushTextChunk;
         }
         this._started = true;
-        const text = typeof chunk === 'string'
-            ? chunk
-            : (this._decoder ??= new TextDecoder('utf-8')).decode(chunk, { stream: true });
+        const text = chunk;
         if (this._collect)
             this._json += text;
         if (offset >= 0 && this._pos === this._buf.length) {
@@ -195,15 +188,6 @@ export abstract class ParserCore implements Parser {
             throw this._failure!;
         if (this._done)
             return;
-        const tail = this._decoder?.decode();
-        if (tail) {
-            this._consumed += this._pos;
-            this._buf = this._buf.slice(this._pos) + tail;
-            this._pos = 0;
-            this._pinned = 0;
-            if (this._collect)
-                this._json += tail;
-        }
         this._eof = true;
         this._running = true;
         try {
@@ -552,7 +536,7 @@ export abstract class ParserCore implements Parser {
             }
         }
     }
-    protected _release(): void { this._stack.length = 0; this._buf = ''; this._pos = 0; this._str = ''; this._parts = null; this._strSinks.length = 0; this._acc = ''; this._decoder = null; this._snapshot = null; this._path.length = 0; this._context = this._rootContext = EMPTY_CONTEXT; }
+    protected _release(): void { this._stack.length = 0; this._buf = ''; this._pos = 0; this._str = ''; this._parts = null; this._strSinks.length = 0; this._acc = ''; this._snapshot = null; this._path.length = 0; this._context = this._rootContext = EMPTY_CONTEXT; }
     protected abstract _run(): void;
     protected _finishInput(): void { }
     protected _validateEnd(): boolean { return true; }

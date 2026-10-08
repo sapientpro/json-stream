@@ -57,7 +57,8 @@ const run=(capture=false)=>{
  else if(job.mode==='missing')for(let i=0;i<100;i++)add(['never'+i,api.Any,'id']);
  else if(job.mode==='overlap'){add([api.Rest]);add(['items',api.Any,'id']);add(['items',api.Any]);}
  else if(job.mode==='string'){if(job.legacy)p.chunks('text').subscribe(v=>consume(v,['text']));else p.onString(['text'],consume);}
- for(const chunk of chunks)p.write(chunk);p.end();strictEqual(p.finished,true);
+ const input=job.input==='bytes'&&api.createDecodedInput?api.createDecodedInput(p):p;
+ for(const chunk of chunks)input.write(chunk);input.end();strictEqual(p.finished,true);
  return{root:job.mode==='root-callback'||!legacyRetention?receivedRoot:p.root,count,sum,length,pathSum,lastPath,values};
 };
 const probe=run(true);

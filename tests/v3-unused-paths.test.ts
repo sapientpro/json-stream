@@ -1,3 +1,4 @@
+import { decodedInput } from './v3-input';
 import {expect, test} from '@jest/globals';
 import {JsonParser, Json5Parser, Any, Rest} from '../src/v3/index';
 
@@ -12,8 +13,8 @@ test.each([JsonParser, Json5Parser])('%p restores concrete paths after unused ne
         p.onValue('$.items[*].id', (v, path) => ids.push([v, path]));
         p.onValue('$.tail.id', (v, path) => ids.push([v, path]));
         p.onString('$.items[*].text', (v, path) => parts.push([v, path]));
-        for (let i = 0; i < bytes.length; i += size) p.write(bytes.subarray(i, i + size));
-        p.reset(); p.write(new TextEncoder().encode('{"skip":[[1],[2]],"tail":{"id":3}}')); p.end();
+        for (let i = 0; i < bytes.length; i += size) decodedInput(p).write(bytes.subarray(i, i + size));
+        p.reset(); decodedInput(p).write(new TextEncoder().encode('{"skip":[[1],[2]],"tail":{"id":3}}')); decodedInput(p).end();
         expect(ids).toEqual([[0, ['items', 0, 'id']], [1, ['items', 1, 'id']], [2, ['tail', 'id']], [3, ['tail', 'id']]]);
         for (let i = 0; i < 2; i++) expect(parts.filter(([, path]) => (path as unknown[])[1] === i).map(([v]) => v).join('')).toBe(value.items[i].text);
     }

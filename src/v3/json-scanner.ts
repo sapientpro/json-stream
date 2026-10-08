@@ -1,8 +1,8 @@
+import { CharCode } from './char-code.js';
 import { ParserCore } from './core.js';
 import { EMPTY_CONTEXT, stepContext } from './selectors.js';
 import { State } from './state.js';
 import { IS_V8, unicodeUnit, readHex4, readLiteral, isSpace } from './lexical.js';
-const QUOTE = 34, BACKSLASH = 92, LBRACE = 123, RBRACE = 125, LBRACKET = 91, RBRACKET = 93, COMMA = 44, COLON_CH = 58, MINUS = 45, PLUS = 43, DOT = 46, ZERO = 48, NINE = 57, LOWER_E = 101, UPPER_E = 69;
 // Use the native scanner only after a short prefix; tiny strings need no match allocation.
 const IS_BUN = typeof (globalThis as {
     Bun?: unknown;
@@ -27,7 +27,7 @@ const scanStringEnd = (buf: string, pos: number, len: number): number => {
     const scanEnd = Math.min(len, pos + 32);
     while (end < scanEnd) {
         const code = buf.charCodeAt(end);
-        if (code === QUOTE || code === BACKSLASH || code < 32)
+        if (code === CharCode.QUOTE || code === CharCode.BACKSLASH || code < 32)
             return end;
         ++end;
     }
@@ -44,7 +44,7 @@ const readEscapedRun = (buf: string, pos: number, len: number, retain: boolean):
         let end = buf.indexOf('"', pos);
         while (end >= 0) {
             let before = end - 1;
-            while (before >= pos && buf.charCodeAt(before) === BACKSLASH) --before;
+            while (before >= pos && buf.charCodeAt(before) === CharCode.BACKSLASH) --before;
             if (((end - before - 1) & 1) === 0) break;
             end = buf.indexOf('"', end + 1);
         }
@@ -52,7 +52,7 @@ const readEscapedRun = (buf: string, pos: number, len: number, retain: boolean):
             end = len;
             const slash = buf.lastIndexOf('\\', end - 1);
             let before = slash - 1;
-            while (before >= pos && buf.charCodeAt(before) === BACKSLASH) --before;
+            while (before >= pos && buf.charCodeAt(before) === CharCode.BACKSLASH) --before;
             if ((slash - before) & 1) {
                 const tail = end - slash;
                 if (tail === 1 || (buf[slash + 1] === 'u' && tail < 6)) end = slash;
@@ -69,8 +69,8 @@ const readEscapedRun = (buf: string, pos: number, len: number, retain: boolean):
     let text = '';
     while (pos < len) {
         const code = buf.charCodeAt(pos);
-        if (code < 32 || code === QUOTE) break;
-        if (code === BACKSLASH) {
+        if (code < 32 || code === CharCode.QUOTE) break;
+        if (code === CharCode.BACKSLASH) {
             const ch = buf[pos + 1];
             if (ch === 'u') {
                 if (pos + 6 > len) break;
@@ -178,7 +178,7 @@ export class JsonScanner extends ParserCore {
         const slot = buf.charCodeAt(pos) & 63;
         const cached = this._keyCache[slot];
         const hit = cached !== undefined && pos + cached.length < len &&
-            buf.charCodeAt(pos + cached.length) === QUOTE && buf.startsWith(cached, pos);
+            buf.charCodeAt(pos + cached.length) === CharCode.QUOTE && buf.startsWith(cached, pos);
         const end = hit ? pos + cached!.length : scanStringEnd(buf, pos, len);
         const part = hit ? cached! : buf.slice(pos, end);
         if (hit) this._keyMisses = 0;
@@ -188,7 +188,7 @@ export class JsonScanner extends ParserCore {
             this._pos = pos;
             this._fail(this._syntaxError());
         }
-        if (end < len && buf.charCodeAt(end) === QUOTE) {
+        if (end < len && buf.charCodeAt(end) === CharCode.QUOTE) {
             this._pos = end + 1;
             const key = this._retainString ? this._flatten(part) : undefined;
             if (!hit && key !== undefined && key.length <= 64)
@@ -210,7 +210,7 @@ export class JsonScanner extends ParserCore {
             this._pos = pos;
             this._fail(this._syntaxError());
         }
-        if (end < len && buf.charCodeAt(end) === QUOTE) {
+        if (end < len && buf.charCodeAt(end) === CharCode.QUOTE) {
             this._pos = end + 1;
             const key = this._retainString ? this._flatten(part) : undefined;
             const frame = this._stack[this._stack.length - 1]!;
@@ -252,7 +252,7 @@ export class JsonScanner extends ParserCore {
                     this._pos = pos;
                     this._fail(this._syntaxError());
                 }
-                if (buf.charCodeAt(pos) === QUOTE) {
+                if (buf.charCodeAt(pos) === CharCode.QUOTE) {
                     ++pos;
                     this._pos = pos;
                     this._closeString();
@@ -324,19 +324,19 @@ export class JsonScanner extends ParserCore {
                         case State.VALUE:
                             if (this._tracking)
                                 this._context = this._stack.length ? this._stack[this._stack.length - 1]!.arrayContext ?? stepContext(this._stack[this._stack.length - 1]!.context, this._path[this._path.length - 1]!) : this._rootContext;
-                            if (code === LBRACE) {
+                            if (code === CharCode.LBRACE) {
                                 ++pos;
                                 this._open(false);
                             }
-                            else if (code === LBRACKET) {
+                            else if (code === CharCode.LBRACKET) {
                                 ++pos;
                                 this._open(true);
                             }
-                            else if (code === RBRACKET && this._stack[this._stack.length - 1]?.isArray && this._stack[this._stack.length - 1]!.count === 0) {
+                            else if (code === CharCode.RBRACKET && this._stack[this._stack.length - 1]?.isArray && this._stack[this._stack.length - 1]!.count === 0) {
                                 ++pos;
                                 this._close();
                             }
-                            else if (code === QUOTE) {
+                            else if (code === CharCode.QUOTE) {
                                 ++pos;
                                 this._keyMode = false;
                                 this._retainString = this._shouldRetain();
@@ -344,19 +344,19 @@ export class JsonScanner extends ParserCore {
                                     this._findChunkSinks(this._root, 0);
                                 this._state = State.STR;
                             }
-                            else if ((code >= ZERO && code <= NINE) || code === MINUS) {
-                                const start = pos, negative = code === MINUS;
+                            else if ((code >= CharCode.ZERO && code <= CharCode.NINE) || code === CharCode.MINUS) {
+                                const start = pos, negative = code === CharCode.MINUS;
                                 let finish = pos + (negative ? 1 : 0), digits = 0, integer = 0;
                                 while (finish < len && digits < 8) {
                                     const digit = buf.charCodeAt(finish);
-                                    if (digit < ZERO || digit > NINE)
+                                    if (digit < CharCode.ZERO || digit > CharCode.NINE)
                                         break;
-                                    integer = integer * 10 + digit - ZERO;
+                                    integer = integer * 10 + digit - CharCode.ZERO;
                                     ++finish;
                                     ++digits;
                                 }
                                 let next = buf.charCodeAt(finish);
-                                if (digits && (digits === 1 || buf.charCodeAt(start + (negative ? 1 : 0)) !== ZERO) && finish < len && (next === COMMA || next === RBRACE || next === RBRACKET || isSpace(next))) {
+                                if (digits && (digits === 1 || buf.charCodeAt(start + (negative ? 1 : 0)) !== CharCode.ZERO) && finish < len && (next === CharCode.COMMA || next === CharCode.RBRACE || next === CharCode.RBRACKET || isSpace(next))) {
                                     pos = finish;
                                     this._pos = pos;
                                     this._acc = '';
@@ -366,20 +366,20 @@ export class JsonScanner extends ParserCore {
                                 // Grammar transitions occur between runs, never on each digit.
                                 while (finish < len) {
                                     const digit = buf.charCodeAt(finish);
-                                    if (digit < ZERO || digit > NINE)
+                                    if (digit < CharCode.ZERO || digit > CharCode.NINE)
                                         break;
                                     ++finish;
                                     ++digits;
                                 }
-                                let valid = digits > 0 && (digits === 1 || buf.charCodeAt(start + (negative ? 1 : 0)) !== ZERO);
+                                let valid = digits > 0 && (digits === 1 || buf.charCodeAt(start + (negative ? 1 : 0)) !== CharCode.ZERO);
                                 let phase = valid ? 1 : 0;
                                 next = buf.charCodeAt(finish);
-                                if (valid && next === DOT) {
+                                if (valid && next === CharCode.DOT) {
                                     const fractionStart = ++finish;
                                     phase = 2;
                                     while (finish < len) {
                                         const digit = buf.charCodeAt(finish);
-                                        if (digit < ZERO || digit > NINE)
+                                        if (digit < CharCode.ZERO || digit > CharCode.NINE)
                                             break;
                                         ++finish;
                                     }
@@ -388,18 +388,18 @@ export class JsonScanner extends ParserCore {
                                         phase = 3;
                                     next = buf.charCodeAt(finish);
                                 }
-                                if (valid && (next === LOWER_E || next === UPPER_E)) {
+                                if (valid && (next === CharCode.LOWER_E || next === CharCode.UPPER_E)) {
                                     ++finish;
                                     phase = 4;
                                     const sign = buf.charCodeAt(finish);
-                                    if (sign === PLUS || sign === MINUS) {
+                                    if (sign === CharCode.PLUS || sign === CharCode.MINUS) {
                                         ++finish;
                                         phase = 5;
                                     }
                                     const exponentStart = finish;
                                     while (finish < len) {
                                         const digit = buf.charCodeAt(finish);
-                                        if (digit < ZERO || digit > NINE)
+                                        if (digit < CharCode.ZERO || digit > CharCode.NINE)
                                             break;
                                         ++finish;
                                     }
@@ -408,7 +408,7 @@ export class JsonScanner extends ParserCore {
                                         phase = 6;
                                     next = buf.charCodeAt(finish);
                                 }
-                                if (valid && finish < len && (next === COMMA || next === RBRACE || next === RBRACKET || isSpace(next))) {
+                                if (valid && finish < len && (next === CharCode.COMMA || next === CharCode.RBRACE || next === CharCode.RBRACKET || isSpace(next))) {
                                     pos = finish;
                                     this._pos = pos;
                                     this._acc = '';
@@ -436,12 +436,12 @@ export class JsonScanner extends ParserCore {
                         case State.OBJ_FIRST:
                         case State.OBJ_KEY:
                             // a trailing comma leaves OBJ_KEY facing the closing brace
-                            if (code === RBRACE && this._state === State.OBJ_FIRST) {
+                            if (code === CharCode.RBRACE && this._state === State.OBJ_FIRST) {
                                 ++pos;
                                 this._close();
                                 break;
                             }
-                            if (code !== QUOTE) {
+                            if (code !== CharCode.QUOTE) {
                                 this._pos = pos;
                                 this._fail(this._syntaxError());
                             }
@@ -452,7 +452,7 @@ export class JsonScanner extends ParserCore {
                             else pos = this._readObjectKey(buf, pos, len);
                             break;
                         case State.COLON:
-                            if (code !== COLON_CH) {
+                            if (code !== CharCode.COLON) {
                                 this._pos = pos;
                                 this._fail(this._syntaxError());
                             }
@@ -460,11 +460,11 @@ export class JsonScanner extends ParserCore {
                             this._state = State.VALUE;
                             break;
                         case State.OBJ_NEXT:
-                            if (code === RBRACE) {
+                            if (code === CharCode.RBRACE) {
                                 ++pos;
                                 this._close();
                             }
-                            else if (code === COMMA) {
+                            else if (code === CharCode.COMMA) {
                                 ++pos;
                                 this._state = State.OBJ_KEY;
                             }
@@ -474,11 +474,11 @@ export class JsonScanner extends ParserCore {
                             }
                             break;
                         case State.ARR_NEXT:
-                            if (code === RBRACKET) {
+                            if (code === CharCode.RBRACKET) {
                                 ++pos;
                                 this._close();
                             }
-                            else if (code === COMMA) {
+                            else if (code === CharCode.COMMA) {
                                 ++pos;
                                 this._state = State.VALUE;
                             }
@@ -551,7 +551,7 @@ export class JsonScanner extends ParserCore {
                     let end = pos, phase = this._numPhase;
                     while (end < len) {
                         const code = buf.charCodeAt(end);
-                        if (phase !== 7 && code >= ZERO && code <= NINE) {
+                        if (phase !== 7 && code >= CharCode.ZERO && code <= CharCode.NINE) {
                             // One grammar transition per digit run, not per digit.
                             if (phase === 0)
                                 phase = 1;
@@ -564,18 +564,18 @@ export class JsonScanner extends ParserCore {
                                 if (end >= len)
                                     break;
                                 const digit = buf.charCodeAt(end);
-                                if (digit < ZERO || digit > NINE)
+                                if (digit < CharCode.ZERO || digit > CharCode.NINE)
                                     break;
                             } while (true);
                             continue;
                         }
-                        if (phase === 1 && code === DOT)
+                        if (phase === 1 && code === CharCode.DOT)
                             phase = 2;
-                        else if ((phase === 1 || phase === 3) && (code === LOWER_E || code === UPPER_E))
+                        else if ((phase === 1 || phase === 3) && (code === CharCode.LOWER_E || code === CharCode.UPPER_E))
                             phase = 4;
-                        else if (phase === 4 && (code === PLUS || code === MINUS))
+                        else if (phase === 4 && (code === CharCode.PLUS || code === CharCode.MINUS))
                             phase = 5;
-                        else if (code === MINUS || code === PLUS || code === DOT || code === LOWER_E || code === UPPER_E || (code >= ZERO && code <= NINE))
+                        else if (code === CharCode.MINUS || code === CharCode.PLUS || code === CharCode.DOT || code === CharCode.LOWER_E || code === CharCode.UPPER_E || (code >= CharCode.ZERO && code <= CharCode.NINE))
                             phase = 7;
                         else
                             break;

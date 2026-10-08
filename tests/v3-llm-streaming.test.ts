@@ -1,3 +1,4 @@
+import { decodedInput } from './v3-input';
 import {captureRoot, capturedRoot} from './v3-capture';
 import {describe, expect, test} from '@jest/globals';
 import {JsonParser, Json5Parser} from '../src/v3/index';
@@ -19,10 +20,10 @@ describe.each([JsonParser, Json5Parser])('%s LLM string delivery', Parser => {
         const bytes = encoder.encode(input);
         for (let at = 0; at < bytes.length; at += size) {
             ++writes; writing = true;
-            parser.write(bytes.subarray(at, at + size));
+            decodedInput(parser).write(bytes.subarray(at, at + size));
             writing = false;
         }
-        parser.end();
+        decodedInput(parser).end();
         expect(firstWrite).toBe(Math.ceil((encoder.encode(prefix).length + encoder.encode('П').length) / size));
         expect(text).toBe(value);
         expect(capturedRoot(parser)).toBeUndefined();

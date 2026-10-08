@@ -4,14 +4,14 @@ const capturedRoot=parser=>parser.rootReady?capturedValues.get(parser):undefined
 import {deepStrictEqual, strictEqual, throws, rejects} from 'node:assert';
 import {finished} from 'node:stream/promises';
 const packageName=process.argv[2];
-const {JsonParser,Json5Parser,createParser,Any,compileJsonPath}=await import(packageName??new URL('../../dist/esm/v3/index.js',import.meta.url).href);
+const {JsonParser,Json5Parser,createParser,Any,compileJsonPath,createDecodedInput}=await import(packageName??new URL('../../dist/esm/v3/index.js',import.meta.url).href);
 const {JsonStream,createNodeWritable}=await import(packageName?packageName+'/node':new URL('../../dist/esm/v3/node.js',import.meta.url).href);
 for(const Parser of [JsonParser,Json5Parser]) {
  const p=new Parser({});const result=p.getValue('$.items[0].id'),values=[],fragments=[],ends=[];
  p.onValue(['items',Any,'id'],(value,path)=>values.push([value,path]));
  p.onString(['items',Any,'text'],{next:(fragment,path)=>fragments.push([fragment,path]),end:path=>ends.push(path)});
  const bytes=new TextEncoder().encode('{"items":[{"id":42,"text":"€😀"},{"id":43,"text":""}]}');
- for(const byte of bytes)p.write(Uint8Array.of(byte));p.end();
+ const input=createDecodedInput(p);for(const byte of bytes)input.write(Uint8Array.of(byte));input.end();
  strictEqual(await result,42);deepStrictEqual(values,[[42,['items',0,'id']],[43,['items',1,'id']]]);
  strictEqual(fragments.map(([v])=>v).join(''),'€😀');deepStrictEqual(ends,[['items',0,'text'],['items',1,'text']]);strictEqual(capturedRoot(p),undefined);strictEqual(p.finished,true);
  const strings=captureRoot(new Parser());const stream=strings.stringStream(['s']);strings.write('{"s":"hello');strings.write(' world"}');strings.end();

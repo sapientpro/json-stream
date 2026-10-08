@@ -1,7 +1,7 @@
 # Candidate architecture
 
 `src/v3/core.ts` owns builders, retention, selector contexts, concrete paths,
-consumer lifecycle and incremental transport decoding. `json-scanner.ts` and
+consumer lifecycle. It accepts strings only. `json-scanner.ts` and
 `json5-scanner.ts` are separate hot loops with the same structural state contract.
 They call core methods directly; no token objects, intermediate queues or generic
 format check occur on each character.
@@ -29,7 +29,11 @@ A V8 root-value subscription uses the same simple builder with full retention,
 without child selector transitions or concrete paths. This selection stays fixed for
 the document. It applies to both dialects without a released 2.x fallback.
 
-Web and Node wrappers adapt input pacing to the synchronous core. String output
+Web and Node wrappers own incremental UTF-8 decoding and input pacing.
+The synchronous `createDecodedInput` adapter shares the same decoding lifecycle: it
+flushes at EOF, releases the decoder after failure/cancellation, and rejects mixed
+text/byte writes before consuming them. JSONL and prefix managers retain their own
+transport policies, including strict JSONL UTF-8 and BOM rejection. String output
 streams own their queues and unsubscribe on cancellation/overflow. No asynchronous
 callback work suspends the scanner inside a write. A future resumable output API
 would need an explicit suspension contract rather than implicitly awaiting user

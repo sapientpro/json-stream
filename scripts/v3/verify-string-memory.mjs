@@ -7,7 +7,7 @@ const [format = 'json', input = 'text', scenario = 'none', lifecycle = 'end',
 if (!['json', 'json5'].includes(format) || !['text', 'bytes'].includes(input) ||
     !['none', 'root', 'selective', 'fragments', 'dense'].includes(scenario) ||
     !['end', 'reset', 'destroy', 'error'].includes(lifecycle)) throw Error('Unknown diagnostic option');
-const {JsonParser, Json5Parser} = await import(pathToFileURL(path.resolve(module)));
+const {JsonParser, Json5Parser, createDecodedInput} = await import(pathToFileURL(path.resolve(module)));
 const Parser = format === 'json' ? JsonParser : Json5Parser;
 const collectGarbage = typeof Bun !== 'undefined' ? () => Bun.gc(true) : globalThis.gc;
 if (!collectGarbage) throw Error('Run this diagnostic with node --expose-gc or Bun');
@@ -35,14 +35,15 @@ function add(i) {
     if (scenario === 'selective' || scenario === 'dense') parser.onValue('$.selected', save);
     if (scenario === 'fragments') parser.onString('$.selected', save);
     const text = '{"ignored":"' + 'x'.repeat(8 * 1024 * 1024) + '","selected":"' + selected + '"}';
-    parser.write(input === 'bytes' ? new TextEncoder().encode(text) : text);
+    const transport = input === 'bytes' && createDecodedInput ? createDecodedInput(parser) : parser;
+    transport.write(input === 'bytes' ? new TextEncoder().encode(text) : text);
     if (lifecycle === 'error') {
         let failed = false;
-        try { parser.write(input === 'bytes' ? new Uint8Array([33]) : '!'); }
+        try { transport.write(input === 'bytes' ? new Uint8Array([33]) : '!'); }
         catch (error) { if (!(error instanceof SyntaxError)) throw error; failed = true; }
         strictEqual(failed, true);
-    } else parser[lifecycle]();
-    parsers.push(parser);
+    } else if (lifecycle === 'end') transport.end(); else parser[lifecycle]();
+    parsers.push({parser,transport});
     const memory = process.memoryUsage();
     for (const key of Object.keys(sampledHigh)) sampledHigh[key] = Math.max(sampledHigh[key], memory[key]);
 }

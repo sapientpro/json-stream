@@ -1,3 +1,4 @@
+import { decodedInput } from './v3-input';
 import {describe, expect, test} from '@jest/globals';
 import {JsonParser} from '../src/v3/index';
 
@@ -15,7 +16,7 @@ describe('large escaped string fragments',()=>{
                 const last=fragment.charCodeAt(fragment.length-1);
                 expect(last>=0xD800&&last<=0xDBFF).toBe(false);
             },end:path=>{expect(path).toEqual(['text']);ended++;}});
-            parser.write(bytes.subarray(0,cut));parser.write(bytes.subarray(cut));parser.end();
+            decodedInput(parser).write(bytes.subarray(0,cut));decodedInput(parser).write(bytes.subarray(cut));decodedInput(parser).end();
             expect(fragments.join('')).toBe(text);expect(root).toEqual({text,after:1});expect(ended).toBe(1);
         }
     });
