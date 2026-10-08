@@ -4,6 +4,10 @@ This draft changes the strict JSON implementation without adding public options
 or changing callbacks, value retention, decoded string streaming or transports.
 It is not part of the alpha.2 release and is **not ready to merge**.
 
+Current main41 rebase controls, rejected continuation experiment and profile findings:
+[updated report](v3-subtree-after-rebase.md). The original alpha.2 measurements below
+are historical; they do not describe the rebased baseline.
+
 ## Decision and execution
 
 The existing cached selector context identifies consumers and possible descendant
