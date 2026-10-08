@@ -13,4 +13,5 @@ export const enum State {
     LIT = 11,
     END = 12,
     FAILED = 13,
+    SKIP = 14,
 }

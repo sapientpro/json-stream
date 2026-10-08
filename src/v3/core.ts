@@ -444,11 +444,14 @@ export abstract class ParserCore implements Parser {
             return true;
         return this._hasValueSink(this._root, 0);
     }
+    protected _skipContainer(_isArray: boolean): boolean { return false; }
     protected _open(isArray: boolean): void {
         if (this._stack.length >= this._maxDepth) {
             this._fail(new SyntaxError('Json nesting deeper than ' + this._maxDepth));
         }
-        const container = this._shouldRetain() ? (isArray ? [] : {}) : undefined;
+        const retain = this._shouldRetain();
+        if (!retain && this._context === EMPTY_CONTEXT && this._skipContainer(isArray)) return;
+        const container = retain ? (isArray ? [] : {}) : undefined;
         this._stack.push({ container, isArray, key: '', count: 0, context: this._context, arrayContext: this._tracking && isArray && !this._context.indexed ? stepContext(this._context, 0) : undefined });
         if (isArray && this._context !== EMPTY_CONTEXT)
             this._path.push(0);
