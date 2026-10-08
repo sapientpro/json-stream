@@ -4,6 +4,19 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+## 3.0.0-alpha.2 — 2026-10-08
+
+- Release completed scanner input retained by RegExp state on end, reset,
+  cancellation and errors. Consumer-held string slices remain a separate memory
+  limitation; rejected copying prototypes are documented.
+- Skip concrete path maintenance inside branches with no reachable consumers,
+  preserving retained values, array counts and strict structural validation.
+- Reuse validated nested JSON keys and bounded JSON5 identifier entries.
+- Inline numeric state dispatch while keeping string scanning on its direct path.
+- Refresh four-package comparisons for Node/Bun and a secondary Deno subset,
+  including the capability matrix, content checks and immutable raw samples.
+  Throughput uses natural GC; forced collection is limited to diagnostics.
+
 - Reduce JSON5 token boundary allocations and scanner closures, preserving
   token validation, incremental strings and callback timing.
 

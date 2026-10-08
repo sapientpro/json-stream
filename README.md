@@ -3,7 +3,7 @@
 Incremental JSON and JSON5 parsing with selective value callbacks, streaming
 strings, JSONPath selectors and Web/Node input adapters. No runtime dependencies.
 
-The 3.0 API is an **alpha preview**, with breaking changes from 2.x.
+The current preview is **3.0.0-alpha.2**, with breaking changes from 2.x.
 For the stable 2.x API, see [2.0.1](https://github.com/sapientpro/json-stream/tree/2.0.1).
 
 ```ts
