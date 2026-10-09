@@ -23,7 +23,7 @@ const rand = (n) => {
     seed ^= seed << 5;
     return (seed >>> 0) % n;
 };
-const parse = (text, chunks, options) => {
+const parse = (chunks, options) => {
     const p = new JsonParser(options),
         input = createDecodedInput(p),
         got = [];
@@ -42,13 +42,13 @@ const fixtures = [
     '[]',
     '{}',
     '[1,0,-0,1.25,2e-3,1E+2,true,false,null]',
-    '{"a":{"b":["\\u0041","\\uD800","\\\\","\\\"",[],{}]},"__proto__":1}',
+    '{"a":{"b":["\\u0041","\\uD800","\\\\","\\"",[],{}]},"__proto__":1}',
     '["π😀","a\\nb",-1e200,1e-200]',
     '[[[[[[0]]]]]]',
 ];
 for (let i = 0; i < 6000; i++) {
     let part = fixtures[rand(fixtures.length)];
-    const alphabet = 'abcxufInNa0129+-.,:[]{}/*\\\" \n\r\t';
+    const alphabet = 'abcxufInNa0129+-.,:[]{}/*\\" \n\r\t';
     for (let j = 0, n = rand(4); j < n; j++) {
         const at = rand(part.length + 1),
             mode = rand(3),
@@ -75,7 +75,7 @@ for (let i = 0; i < 6000; i++) {
         [text.slice(0, cut), text.slice(cut)],
         [bytes.subarray(0, cut), bytes.subarray(cut)],
     ]) {
-        const result = parse(text, chunks);
+        const result = parse(chunks);
         strictEqual(result.accepted, valid, text);
         if (valid) deepStrictEqual(result.got, [[wanted.keep, ['keep']]]);
         checks++;
@@ -87,7 +87,7 @@ for (const part of fixtures) {
     for (let cut = 0; cut <= bytes.length; cut++)
         for (const raw of [text, bytes]) {
             const c = Math.min(cut, raw.length);
-            const result = parse(text, [raw.slice(0, c), raw.slice(c)]);
+            const result = parse([raw.slice(0, c), raw.slice(c)]);
             strictEqual(result.accepted, true);
             deepStrictEqual(result.got, [['tail', ['keep']]]);
             checks++;

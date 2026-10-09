@@ -93,20 +93,20 @@ describe.each([JsonParser, Json5Parser])('recursive contexts', (Parser) => {
         for (let cut = 0; cut <= text.length; cut++) {
             const parser = new Parser();
             const found = paths.map(() => [] as [any, readonly PathSegment[]][]);
-            paths.forEach((path, i) =>
-                parser.onValue(path, (value, concrete) => found[i]!.push([value, concrete])),
-            );
+            paths.forEach((path, i) => {
+                parser.onValue(path, (value, concrete) => found[i]!.push([value, concrete]));
+            });
             // A separate registration at the same leaf should still receive its own callback.
             const duplicate: unknown[] = [];
             parser.onValue([Rest, 'id'], (value, concrete) => duplicate.push([value, concrete]));
             parser.write(text.slice(0, cut));
             parser.write(text.slice(cut));
             parser.end();
-            paths.forEach((path, i) =>
+            paths.forEach((path, i) => {
                 expect(found[i]).toEqual(
                     completed(source).filter(([, concrete]) => matches(path, concrete)),
-                ),
-            );
+                );
+            });
             expect(duplicate).toEqual(found[1]);
         }
     });
@@ -153,15 +153,15 @@ describe.each([JsonParser, Json5Parser])('recursive contexts', (Parser) => {
                 Array.from({ length: 1 + random(5) }, () => alphabet[random(alphabet.length)]!),
             );
             const found = selectors.map(() => [] as unknown[]);
-            selectors.forEach((path, i) =>
-                parser.onValue(path, (value, concrete) => found[i]!.push([value, concrete])),
-            );
+            selectors.forEach((path, i) => {
+                parser.onValue(path, (value, concrete) => found[i]!.push([value, concrete]));
+            });
             for (let start = 0; start < text.length; start += 13)
                 parser.write(text.slice(start, start + 13));
             parser.end();
-            selectors.forEach((path, i) =>
-                expect(found[i]).toEqual(all.filter(([, concrete]) => matches(path, concrete))),
-            );
+            selectors.forEach((path, i) => {
+                expect(found[i]).toEqual(all.filter(([, concrete]) => matches(path, concrete)));
+            });
         }
     });
     test('recursive string fragments, values, unsubscribe and reset', () => {

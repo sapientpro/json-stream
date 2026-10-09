@@ -1,5 +1,5 @@
 import { decodedInput } from './input';
-import { captureRoot, capturedRoot } from './capture';
+import { capturedRoot } from './capture';
 import { describe, expect, test } from '@jest/globals';
 import { JsonParser, Json5Parser } from '../src/index';
 const encoder = new TextEncoder();

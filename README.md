@@ -49,10 +49,14 @@ npm run test:formats
 npm run benchmark
 ```
 
-Biome provides `lint`, `format`, `format:check` and `check`. Its explicit file list
-currently covers callback channels, framing/record managers and their new tests;
-expand it as other files are cleaned up. Lazy assignments, existing generic `any`
-defaults and checked array-index assertions are allowed.
+Biome provides `lint`, `format`, `format:check` and `check` across `src/`, `tests/`,
+`scripts/` and the Jest configuration. CI enforces formatting and lint for all of
+these files, including lint warnings. Lazy assignments, generic `any` defaults and checked array-index
+assertions are allowed. Template-literal style is optional; inline `const enum`
+codes and control characters in validation regexes are intentional. The JSON
+scanner permits constant loop conditions because digit runs exit through explicit
+bounds/character checks. Constructor-return shims in the compact-memory diagnostic
+have local, documented exceptions.
 
 Benchmarks include setup and use natural GC, serial workers and correctness checks. See [current throughput and reproduction](docs/performance.md). Detailed reports and raw samples stay in ignored `notes/`.
 The current implementation lives in `src/`, with tests in `tests/` and tools in

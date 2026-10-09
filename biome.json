@@ -1,12 +1,6 @@
 {
     "files": {
-        "includes": [
-            "src/channel.ts",
-            "src/framing.ts",
-            "src/records.ts",
-            "tests/differential.test.ts",
-            "tests/record-errors.test.ts"
-        ]
+        "includes": ["src/**", "tests/**", "scripts/**", "jest.config.js"]
     },
     "formatter": {
         "indentStyle": "space",
@@ -22,15 +16,30 @@
         "rules": {
             "preset": "recommended",
             "style": {
-                "noNonNullAssertion": "off"
+                "noNonNullAssertion": "off",
+                "useTemplate": "off"
             },
             "suspicious": {
                 "noExplicitAny": "off",
-                "noAssignInExpressions": "off"
+                "noAssignInExpressions": "off",
+                "noConstEnum": "off",
+                "noControlCharactersInRegex": "off"
             }
         }
     },
     "assist": {
         "enabled": false
-    }
+    },
+    "overrides": [
+        {
+            "includes": ["src/json-scanner.ts"],
+            "linter": {
+                "rules": {
+                    "correctness": {
+                        "noConstantCondition": "off"
+                    }
+                }
+            }
+        }
+    ]
 }

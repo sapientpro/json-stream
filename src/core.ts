@@ -9,7 +9,6 @@ import type {
     CallbackOptions,
     ValueCallback,
     CallbackObserver,
-    Subscription,
     Parser,
 } from './types.js';
 import { CopyingChannel } from './copy-channel.js';
@@ -316,7 +315,7 @@ export abstract class ParserCore implements Parser {
     protected _syntaxError(): SyntaxError {
         return new SyntaxError('Json syntax error at ' + (this._consumed + this._pos));
     }
-    protected _fail(error: Error, shouldThrow = true): never | void {
+    protected _fail(error: Error, shouldThrow = true): void {
         if (this._state === State.FAILED || this._done) return;
         this._state = State.FAILED;
         this._failure = error;

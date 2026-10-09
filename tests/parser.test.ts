@@ -40,7 +40,7 @@ for (const Parser of [JsonParser, Json5Parser])
             p.end();
             expect(root).toEqual(JSON.parse(input));
             expect(Object.getPrototypeOf(root)).toBe(Object.prototype);
-            expect(Object.prototype.hasOwnProperty.call(root, '__proto__')).toBe(true);
+            expect(Object.hasOwn(root, '__proto__')).toBe(true);
             expect(capturedRoot(p)).toBeUndefined();
         });
         test('wildcards, terminal Rest and overlapping selectors own concrete paths', () => {

@@ -1,5 +1,5 @@
 import type { PathSegment } from './types.js';
-import { CallbackChannel } from './channel.js';
+import type { CallbackChannel } from './channel.js';
 export type Node = {
     callbacks?: CallbackChannel<any>;
     fragments?: CallbackChannel<string>;

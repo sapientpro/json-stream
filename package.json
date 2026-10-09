@@ -61,10 +61,10 @@
     "benchmark:competitors:deno": "npm run build && node scripts/competitors.mjs --engine deno --checks && node scripts/competitors.mjs --engine deno --secondary && node scripts/competitors-report.mjs --engines node,bun,deno",
     "test:copying": "node scripts/verify-copying.mjs && bun scripts/verify-copying.mjs",
     "prepublishOnly": "npm run build && npm run test",
-    "lint": "biome lint .",
+    "lint": "biome lint --error-on-warnings .",
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "check": "biome check ."
+    "check": "biome check --error-on-warnings ."
   },
   "engines": {
     "node": ">=22"

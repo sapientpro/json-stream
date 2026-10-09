@@ -103,7 +103,9 @@ describe.each([JsonParser, Json5Parser])('consumer lifecycle', (Parser) => {
             });
         });
         for (let pos = 0; pos < Math.max(...inputs.map((input) => input.length)); pos += 5)
-            parsers.forEach((parser, i) => parser.write(inputs[i]!.slice(pos, pos + 5)));
+            parsers.forEach((parser, i) => {
+                parser.write(inputs[i]!.slice(pos, pos + 5));
+            });
         parsers.forEach((parser, i) => {
             parser.end();
             const expected = JSON.parse(inputs[i]!);
