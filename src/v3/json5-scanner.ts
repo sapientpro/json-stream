@@ -114,12 +114,12 @@ export class Json5Scanner extends ParserCore {
                 if (code === this._quote) {
                     this._pos = pos;
                     this._closeString();
+                    continue;
                 }
-                else if (code === CharCode.BACKSLASH)
-                    this._state = State.ESC;
-                else
+                if (code !== CharCode.BACKSLASH)
                     this._failAt(pos);
-                continue;
+                // Continue into ESC in this iteration, including JSON5-only escapes.
+                this._state = State.ESC;
             }
             if (this._state === State.ESC) {
                 if (pos === len)
@@ -167,16 +167,32 @@ export class Json5Scanner extends ParserCore {
                 continue;
             }
             if (this._state === State.UESC) {
-                while (pos < len && this._acc.length < this._hexLength) {
-                    const ch = buf[pos++]!;
-                    if (hexDigit(ch.charCodeAt(0)) < 0)
-                        this._failAt(pos);
-                    this._acc += ch;
+                const missing = this._hexLength - this._acc.length;
+                let text: string, at: number;
+                if (missing === this._hexLength && pos + missing <= len) {
+                    text = buf;
+                    at = pos;
+                    pos += missing;
                 }
-                if (this._acc.length < this._hexLength)
-                    break;
+                else {
+                    const take = Math.min(missing, len - pos);
+                    this._acc += buf.slice(pos, pos + take);
+                    pos += take;
+                    if (this._acc.length < this._hexLength)
+                        break;
+                    text = this._acc;
+                    at = 0;
+                }
+                let value: number;
+                if (this._hexLength === 4) value = readHex4(text, at);
+                else {
+                    const a = hexDigit(text.charCodeAt(at)), b = hexDigit(text.charCodeAt(at + 1));
+                    value = (a | b) < 0 ? -1 : (a << 4) | b;
+                }
+                if (value < 0)
+                    this._failAt(pos);
                 if (this._retainString || this._strSinks.length)
-                    this._str += unicodeUnit(parseInt(this._acc, 16));
+                    this._str += unicodeUnit(value);
                 this._acc = '';
                 this._state = State.STR;
                 continue;
