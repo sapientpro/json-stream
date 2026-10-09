@@ -4,10 +4,10 @@ Compared with [PR #19](https://github.com/sapientpro/json-stream/pull/19), commi
 
 Text chunk sizes are UTF-16 code units; byte chunk sizes are bytes. Throughput always uses encoded fixture bytes. JSONPath strings compile once at registration. The harness uses equivalent typed selector arrays on both sides for parsing controls.
 
-Build the baseline in a separate checkout and pass its ESM `dist/esm/v3/index.js` to the candidate's harness. For example:
+Build the baseline in a separate checkout and pass its ESM `dist/esm/index.js` to the candidate's harness. For example:
 
 ```sh
-node scripts/v3/benchmark.mjs --baseline /absolute/baseline/dist/esm/v3/index.js --baseline-api callback --baseline-label PR19 --cases llm/string,escapes/string --sizes 32,128,1024 --pairs 3 --warmups 160 --iterations 32 --output /tmp/subscriptions-node.json
+node scripts/benchmark.mjs --baseline /absolute/baseline/dist/esm/v3/index.js --baseline-api callback --baseline-label PR19 --cases llm/string,escapes/string --sizes 32,128,1024 --pairs 3 --warmups 160 --iterations 32 --output /tmp/subscriptions-node.json
 ```
 
 Use `--engine bun` for Bun, `--input text` for decoded text, or `--cases integers/root,objects/root,objects/ids,wide\ object/root --sizes 1024,65536` for full-result and selection controls.

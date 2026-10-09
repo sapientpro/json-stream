@@ -20,18 +20,20 @@ jobs:
           cache: npm
       # `prepare` runs build + test
       - run: npm ci
-      - run: node scripts/v3/smoke.mjs
-      - run: node scripts/v3/verify.mjs
-      - run: node scripts/v3/verify-copying.mjs
-      - run: node scripts/v3/verify-boundaries.mjs
-      - run: node scripts/v3/verify-subtrees.mjs
+      - run: npm run build:legacy
+      - run: npm run test:legacy -- --runInBand
+      - run: node scripts/smoke.mjs
+      - run: node scripts/verify.mjs
+      - run: node scripts/verify-copying.mjs
+      - run: node scripts/verify-boundaries.mjs
+      - run: node scripts/verify-subtrees.mjs
       - run: npx --yes @arethetypeswrong/cli --pack .
       - name: Smoke test the packed tarball
         run: |
           npm pack --pack-destination /tmp
           mkdir -p /tmp/consumer
           # run from the consumer, or ESM self-reference resolves back to this repo
-          cp scripts/v3/smoke.mjs scripts/v3/smoke.cjs scripts/v3/types.ts scripts/v3/copying-types.ts scripts/v3/verify-copying.mjs scripts/v3/verify-boundaries.mjs /tmp/consumer/
+          cp scripts/smoke.mjs scripts/smoke.cjs scripts/types.ts scripts/copying-types.ts scripts/verify-copying.mjs scripts/verify-boundaries.mjs /tmp/consumer/
           cd /tmp/consumer
           npm init -y > /dev/null
           npm install /tmp/sapientpro-json-stream-*.tgz
@@ -58,11 +60,11 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: npm ci
       - run: bunx jest
-      - run: bun scripts/v3/smoke.mjs
-      - run: bun scripts/v3/verify.mjs
-      - run: bun scripts/v3/verify-copying.mjs
-      - run: bun scripts/v3/verify-boundaries.mjs
-      - run: bun scripts/v3/verify-subtrees.mjs
+      - run: bun scripts/smoke.mjs
+      - run: bun scripts/verify.mjs
+      - run: bun scripts/verify-copying.mjs
+      - run: bun scripts/verify-boundaries.mjs
+      - run: bun scripts/verify-subtrees.mjs
 
   deno:
     runs-on: ubuntu-latest
@@ -74,7 +76,7 @@ jobs:
           cache: npm
       - uses: denoland/setup-deno@v2
       - run: npm ci
-      - run: deno run --allow-read scripts/v3/smoke.mjs
-      - run: deno run --allow-read scripts/v3/verify-copying.mjs
-      - run: deno run --allow-read scripts/v3/verify-boundaries.mjs
-      - run: deno run --allow-read scripts/v3/verify-subtrees.mjs
+      - run: deno run --allow-read scripts/smoke.mjs
+      - run: deno run --allow-read scripts/verify-copying.mjs
+      - run: deno run --allow-read scripts/verify-boundaries.mjs
+      - run: deno run --allow-read scripts/verify-subtrees.mjs

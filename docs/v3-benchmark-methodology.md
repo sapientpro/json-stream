@@ -5,15 +5,15 @@ The v3 benchmark uses natural garbage collection by default. It does not call GC
 Use `--gc natural` for normal performance comparisons:
 
 ```sh
-node scripts/v3/benchmark.mjs --engine node --gc natural
-node scripts/v3/benchmark.mjs --engine bun --gc natural
+node scripts/benchmark.mjs --engine node --gc natural
+node scripts/benchmark.mjs --engine bun --gc natural
 ```
 
 Use `--gc forced` for a separate workload that collects between short document batches:
 
 ```sh
-node scripts/v3/benchmark.mjs --engine node --gc forced
-node scripts/v3/benchmark.mjs --engine bun --gc forced
+node scripts/benchmark.mjs --engine node --gc forced
+node scripts/benchmark.mjs --engine bun --gc forced
 ```
 
 The runner exposes GC only in the Node forced mode. Bun uses its GC API in that mode. Deno supports the natural mode here; the runner rejects forced mode for Deno. The selected mode is recorded in each result and in runner protocol metadata. The JSON parser itself does not call GC or require any GC flag.
@@ -27,3 +27,10 @@ For paired comparisons, build both versions, pass `--baseline /absolute/path/to/
 Core parser benchmarks default to direct text input (`--input text`). They exclude
 UTF-8 decoding and stream scheduling. Explicit `--input bytes` runs measure the
 decoder adapter as well and belong to separate transport diagnostics.
+
+Current builds emit `dist/esm/index.js`. Baselines built from older 3.0 tags/PRs
+may still emit `dist/esm/v3/index.js`; use that checkout's actual entry path.
+Archived 2.x controls emit `legacy/v2/dist/esm/parser.js` and use
+`--baseline-api observable`. The current default benchmark never selects legacy
+code implicitly. `npm run benchmark` runs Node and Bun serially and forwards
+workload options to both; `benchmark:node` / `benchmark:bun` select one runtime.

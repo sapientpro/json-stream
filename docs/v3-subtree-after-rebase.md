@@ -101,4 +101,4 @@ The offset/public-write cleanup is separate: private DOCUMENT_INPUT keeps the or
 
 ## Reproduce
 
-Build main3ec857c separately and this branch. Run scripts/v3/benchmark.mjs with --baseline /path/to/main41/dist/esm/v3/index.js --baseline-api callback --same-path --input text --pairs 3 --warmups 128 --iterations 32 --cpu; choose --format json, --sizes 32,128 and --cases llm/string for the main regression. Other rows can be reproduced using the workload/subscription and size from the table. The complete runner, variants and intermediate raw data remain under ignored notes/analysis/v3-subtree-after-memory/main41.
+Build main3ec857c separately and this branch. Run scripts/benchmark.mjs with --baseline /path/to/main41/dist/esm/v3/index.js --baseline-api callback --same-path --input text --pairs 3 --warmups 128 --iterations 32 --cpu; choose --format json, --sizes 32,128 and --cases llm/string for the main regression. Other rows can be reproduced using the workload/subscription and size from the table. The complete runner, variants and intermediate raw data remain under ignored notes/analysis/v3-subtree-after-memory/main41.

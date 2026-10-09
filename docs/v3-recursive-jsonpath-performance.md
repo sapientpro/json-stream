@@ -57,7 +57,7 @@ previous transition path. Scanners are unchanged. See [selector semantics](v3.md
 Reproduce existing-selector controls after building the baseline separately:
 
 ```sh
-node scripts/v3/benchmark.mjs --baseline /path/to/baseline/v3/index.js --baseline-api callback --baseline-label main45 --same-path --format json --engine node --sizes 65536 --cases 'objects/ids,objects/overlap,objects/root,wide object/root,decimals/scalar,llm/string' --pairs 3 --cpu
+node scripts/benchmark.mjs --baseline /path/to/baseline/v3/index.js --baseline-api callback --baseline-label main45 --same-path --format json --engine node --sizes 65536 --cases 'objects/ids,objects/overlap,objects/root,wide object/root,decimals/scalar,llm/string' --pairs 3 --cpu
 ```
 
 Use `--engine bun` for Bun, `--sizes 32 --cases llm/string` for LLM32, and

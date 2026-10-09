@@ -20,28 +20,28 @@
     "stream",
     "parser"
   ],
-  "main": "dist/cjs/v3/index.js",
-  "module": "dist/esm/v3/index.js",
-  "types": "dist/esm/v3/index.d.ts",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/esm/v3/index.d.ts",
-        "default": "./dist/esm/v3/index.js"
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
       },
       "require": {
-        "types": "./dist/cjs/v3/index.d.ts",
-        "default": "./dist/cjs/v3/index.js"
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
       }
     },
     "./node": {
       "import": {
-        "types": "./dist/esm/v3/node.d.ts",
-        "default": "./dist/esm/v3/node.js"
+        "types": "./dist/esm/node.d.ts",
+        "default": "./dist/esm/node.js"
       },
       "require": {
-        "types": "./dist/cjs/v3/node.d.ts",
-        "default": "./dist/cjs/v3/node.js"
+        "types": "./dist/cjs/node.d.ts",
+        "default": "./dist/cjs/node.js"
       }
     },
     "./package.json": "./package.json"
@@ -50,17 +50,21 @@
     "prepare": "npm run build && npm run test",
     "build": "rm -rf dist && tsc -p tsconfig.json && tsc -p tsconfig-esm.json && node scripts/dist-type.mjs",
     "test": "jest",
-    "benchmark": "npm run build && node --expose-gc scripts/benchmark.mjs && bun scripts/benchmark.mjs && node scripts/benchmark-report.mjs",
-    "benchmark:competitors": "npm run build && node scripts/v3/competitors.mjs --engine node --checks && bun scripts/v3/competitors.mjs --engine bun --checks && node scripts/v3/competitors.mjs --engine node && bun scripts/v3/competitors.mjs --engine bun && node scripts/v3/competitors-report.mjs",
-    "benchmark:competitors:node": "npm run build && node scripts/v3/competitors.mjs --engine node",
-    "benchmark:competitors:bun": "npm run build && bun scripts/v3/competitors.mjs --engine bun",
-    "benchmark:regression": "node --expose-gc scripts/benchmark-regression.mjs && bun scripts/benchmark-regression.mjs",
-    "benchmark:node": "npm run build && node --expose-gc scripts/benchmark.mjs",
-    "benchmark:bun": "npm run build && bun scripts/benchmark.mjs",
-    "test:formats": "node scripts/v3/verify.mjs && bun scripts/v3/verify.mjs",
-    "benchmark:v3": "npm run build && node scripts/v3/benchmark.mjs",
-    "benchmark:competitors:deno": "npm run build && node scripts/v3/competitors.mjs --engine deno --checks && node scripts/v3/competitors.mjs --engine deno --secondary && node scripts/v3/competitors-report.mjs --engines node,bun,deno",
-    "test:copying": "node scripts/v3/verify-copying.mjs && bun scripts/v3/verify-copying.mjs"
+    "benchmark": "npm run build && node scripts/benchmark-all.mjs",
+    "benchmark:competitors": "npm run build && node scripts/competitors.mjs --engine node --checks && bun scripts/competitors.mjs --engine bun --checks && node scripts/competitors.mjs --engine node && bun scripts/competitors.mjs --engine bun && node scripts/competitors-report.mjs",
+    "benchmark:competitors:node": "npm run build && node scripts/competitors.mjs --engine node",
+    "benchmark:competitors:bun": "npm run build && bun scripts/competitors.mjs --engine bun",
+    "benchmark:regression": "npm run benchmark --",
+    "benchmark:node": "npm run build && node scripts/benchmark.mjs --engine node",
+    "benchmark:bun": "npm run build && node scripts/benchmark.mjs --engine bun",
+    "test:formats": "node scripts/verify.mjs && bun scripts/verify.mjs",
+    "benchmark:v3": "npm run benchmark --",
+    "benchmark:competitors:deno": "npm run build && node scripts/competitors.mjs --engine deno --checks && node scripts/competitors.mjs --engine deno --secondary && node scripts/competitors-report.mjs --engines node,bun,deno",
+    "test:copying": "node scripts/verify-copying.mjs && bun scripts/verify-copying.mjs",
+    "build:legacy": "tsc -p legacy/v2/tsconfig.json && tsc -p legacy/v2/tsconfig-esm.json && node scripts/dist-type.mjs legacy/v2/dist",
+    "test:legacy": "jest --testMatch '<rootDir>/legacy/v2/tests/**/*.test.ts'",
+    "benchmark:legacy": "npm run build:legacy && node --expose-gc legacy/v2/scripts/benchmark.mjs && bun legacy/v2/scripts/benchmark.mjs && node legacy/v2/scripts/benchmark-report.mjs",
+    "benchmark:legacy:regression": "node --expose-gc legacy/v2/scripts/benchmark-regression.mjs && bun legacy/v2/scripts/benchmark-regression.mjs"
   },
   "engines": {
     "node": ">=22"
@@ -78,17 +82,15 @@
     "typescript": "^5.7.3"
   },
   "files": [
-    "dist/cjs/v3",
-    "dist/esm/v3",
-    "dist/cjs/package.json",
-    "dist/esm/package.json",
+    "dist/cjs",
+    "dist/esm",
     "CHANGELOG.md",
     "docs"
   ],
   "typesVersions": {
     "*": {
       "node": [
-        "dist/cjs/v3/node.d.ts"
+        "dist/cjs/node.d.ts"
       ]
     }
   },

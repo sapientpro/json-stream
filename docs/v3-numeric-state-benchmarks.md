@@ -80,11 +80,11 @@ Also tested dense numbering with STR=0 and swapping STR to 1. STR=0 actually rem
 
 ESM/CJS builds, all 407 tests, 1465 additional all-split valid/error differential checks, and 22,400 JSON/JSON5 differential checks on each of Node and Bun passed.
 
-Use the public `scripts/v3/benchmark.mjs` with a separately built `ee8dbe0` baseline. For example, from the candidate checkout (BASELINE_MODULE is an absolute path to the baseline's dist/esm/v3/index.js):
+Use the public `scripts/benchmark.mjs` with a separately built `ee8dbe0` baseline. For example, from the candidate checkout (BASELINE_MODULE is an absolute path to the baseline's dist/esm/index.js):
 
 ```sh
-node scripts/v3/benchmark.mjs --engine node --baseline "$BASELINE_MODULE" --baseline-api callbacks --baseline-label ee8dbe0 --format json --cases llm/string --sizes 128 --gc natural --pairs 3 --warmups 1024 --iterations 512
-node scripts/v3/benchmark.mjs --engine bun --baseline "$BASELINE_MODULE" --baseline-api callbacks --baseline-label ee8dbe0 --format json --cases llm/string --chunk-unit codepoint --chunk-pattern 1,3,8,2,16,4,32,5,48,7 --gc natural --pairs 3 --warmups 1024 --iterations 512
+node scripts/benchmark.mjs --engine node --baseline "$BASELINE_MODULE" --baseline-api callbacks --baseline-label ee8dbe0 --format json --cases llm/string --sizes 128 --gc natural --pairs 3 --warmups 1024 --iterations 512
+node scripts/benchmark.mjs --engine bun --baseline "$BASELINE_MODULE" --baseline-api callbacks --baseline-label ee8dbe0 --format json --cases llm/string --chunk-unit codepoint --chunk-pattern 1,3,8,2,16,4,32,5,48,7 --gc natural --pairs 3 --warmups 1024 --iterations 512
 ```
 
 Other cases use the same runner's case/size/input options. Use `--format json5 --syntax json5` for the JSON5 syntax control. Experimental frozen modules and raw local profiling data remain private ignored notes; they are not required by the public runner.

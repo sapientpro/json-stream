@@ -18,8 +18,8 @@ A separate retained-heap probe parses twelve 8 MiB ignored strings with short or
 This measures residual live heap after reset, not peak memory. RSS includes allocator and runtime memory; it does not equal the number of retained input bytes. The rejected first memo prototype retained approximately 8 MiB on Node and 96 MiB on Bun in this probe.
 
 ```sh
-node --expose-gc scripts/v3/verify-identifier-memory.mjs
-bun scripts/v3/verify-identifier-memory.mjs
+node --expose-gc scripts/verify-identifier-memory.mjs
+bun scripts/verify-identifier-memory.mjs
 ```
 
 Pass a separately built baseline ESM entry as the first argument to compare. A second argument chooses `reset` (default), `end`, `destroy` or `error`. Forced collection is confined to this optional memory diagnostic.
@@ -79,7 +79,7 @@ A `super._release()` method made V8 allocate an additional class context. `_run`
 Build the baseline separately, then build the patched checkout. Run Node and Bun sequentially:
 
 ```sh
-node scripts/v3/benchmark.mjs --engine node \
+node scripts/benchmark.mjs --engine node \
   --baseline /absolute/path/to/baseline/dist/esm/v3/index.js \
   --baseline-api callback --baseline-label 2da504d --same-path --cpu \
   --format json5 --syntax json5 --cases objects/root,objects/ids \

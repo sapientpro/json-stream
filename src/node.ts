@@ -1,64 +1,94 @@
-import {Writable} from 'node:stream';
-import {Emitted, JsonParser, ParserOptions, Path} from "./parser.js";
-import {Observable} from "./subject.js";
-
-export {Any, Rest, JsonParser} from "./parser.js";
-export type {Path, PathSegment, Emitted, ParserOptions} from "./parser.js";
-export type {Observable, Observer, Subscription, ObserverErrorHandler} from "./subject.js";
-
-type Callback = (error?: Error | null) => void;
-
-export class JsonStream extends Writable {
-  readonly #parser: JsonParser;
-
-  constructor(start?: string, collectJson?: boolean);
-  constructor(options?: ParserOptions);
-  constructor(start: string | ParserOptions = '', collectJson: boolean = false) {
-    const parser = new JsonParser(typeof start === 'string' ? {start, collectJson} : start);
-    super({
-      defaultEncoding: 'utf-8',
-      decodeStrings: false,
-      write: (chunk: Buffer | string, encoding: BufferEncoding, callback: Callback) => {
-        try {
-          const wasFinished = parser.finished;
-          parser.write(chunk);
-          if (!wasFinished && parser.finished) this.emit('value', parser.root);
-        } catch (e) {
-          return callback(e as Error);
-        }
-        callback();
-      },
-      final: (callback: Callback) => {
-        try {
-          const wasFinished = parser.finished;
-          parser.end();
-          if (!wasFinished) this.emit('value', parser.root);
-        } catch (e) {
-          return callback(e as Error);
-        }
-        callback();
-      },
-      destroy: (error: Error | null, callback: Callback) => {
-        parser.destroy(error);
-        callback(error);
-      }
+import { createDecodedInput } from './decoded-input.js';
+import { Writable } from 'node:stream';
+import { createParser } from './index.js';
+import type { InputSink, Parser, FormatOptions, PathInput, ValueCallback, CallbackObserver, Subscription } from './types.js';
+export * from './index.js';
+/** The Node wrapper adds transport pacing; parsing and callbacks stay synchronous. */
+export function createNodeWritable(parser: InputSink): Writable {
+    const input = createDecodedInput(parser);
+    return new Writable({
+        decodeStrings: false,
+        write(chunk: string | Buffer, _encoding, done) {
+            try {
+                input.write(chunk);
+                done();
+            }
+            catch (error) {
+                done(error as Error);
+            }
+        },
+        final(done) {
+            try {
+                input.end();
+                done();
+            }
+            catch (error) {
+                done(error as Error);
+            }
+        },
+        destroy(error, done) { input.destroy(error); done(error); },
     });
-    this.#parser = parser;
-  }
-
-  get json(): string {
-    return this.#parser.json;
-  }
-
-  public observe<T = any>(path: Path = []): Observable<Emitted<T>> {
-    return this.#parser.observe<T>(path);
-  }
-
-  public stream(path: Path): ReadableStream<string> {
-    return this.#parser.stream(path);
-  }
-
-  public value<T = any>(path: Path = []): Promise<T> {
-    return this.#parser.value<T>(path);
-  }
+}
+export class JsonStream extends Writable {
+    readonly #parser: Parser;
+    constructor(options: FormatOptions = {}) {
+        const parser = createParser(options);
+        const input = createDecodedInput(parser);
+        let valueSubscription: Subscription | undefined;
+        let pending = false, pendingValue: any, inputStarted = false;
+        const emitValue = () => {
+            if (pending && parser.rootReady) {
+                const value = pendingValue;
+                pending = false; pendingValue = undefined;
+                this.emit('value', value);
+            }
+        };
+        super({
+            decodeStrings: false,
+            write: (chunk: string | Buffer, _encoding, done) => {
+                try {
+                    inputStarted = true;
+                    input.write(chunk);
+                    emitValue();
+                    done();
+                }
+                catch (error) {
+                    done(error as Error);
+                }
+            },
+            final: done => {
+                try {
+                    inputStarted = true;
+                    input.end();
+                    emitValue();
+                    done();
+                }
+                catch (error) {
+                    done(error as Error);
+                }
+            },
+            destroy: (error, done) => { pending = false; pendingValue = undefined; input.destroy(error); done(error); },
+        });
+        this.#parser = parser;
+        // A Node value listener is an explicit subscription to the root value.
+        this.on('newListener', event => {
+            if (event === 'value' && inputStarted)
+                throw new Error('Register value listeners before the first write');
+            if (event === 'value' && !valueSubscription)
+                valueSubscription = parser.onValue('$', value => { pendingValue = value; pending = true; });
+        });
+        this.on('removeListener', event => {
+            if (event === 'value' && !this.listenerCount('value')) {
+                valueSubscription?.unsubscribe(); valueSubscription = undefined;
+                pending = false; pendingValue = undefined;
+            }
+        });
+    }
+    get rootReady(): boolean { return this.#parser.rootReady; }
+    get json(): string { return this.#parser.json; }
+    get parsed(): boolean { return this.#parser.finished; }
+    onValue<T = any>(path: PathInput, callback: ValueCallback<T> | CallbackObserver<T>): Subscription { return this.#parser.onValue(path, callback); }
+    onString(path: PathInput, callback: ValueCallback<string> | CallbackObserver<string>): Subscription { return this.#parser.onString(path, callback); }
+    getValue<T = any>(path: PathInput = '$'): Promise<T> { return this.#parser.getValue(path); }
+    stringStream(path: PathInput): ReadableStream<string> { return this.#parser.stringStream(path); }
 }

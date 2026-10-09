@@ -190,12 +190,12 @@ Build alpha.2 in a separate checkout to provide the baseline module below.
 ```sh
 npm run build
 npm test -- --runInBand
-node scripts/v3/verify-subtrees.mjs
-bun scripts/v3/verify-subtrees.mjs
-deno run --allow-read scripts/v3/verify-subtrees.mjs
-node --expose-gc scripts/v3/verify-subtree-memory.mjs text end
-bun scripts/v3/verify-subtree-memory.mjs bytes error
-node scripts/v3/benchmark.mjs --engine node --baseline /path/to/alpha2/dist/esm/v3/index.js --baseline-api callback --baseline-label alpha2 --same-path --format json --input bytes --sizes 128,65536 --pairs 3 --warmups 128 --iterations 24 --cpu --cases 'discarded metadata/ids,objects/missing,llm/string'
+node scripts/verify-subtrees.mjs
+bun scripts/verify-subtrees.mjs
+deno run --allow-read scripts/verify-subtrees.mjs
+node --expose-gc scripts/verify-subtree-memory.mjs text end
+bun scripts/verify-subtree-memory.mjs bytes error
+node scripts/benchmark.mjs --engine node --baseline /path/to/alpha2/dist/esm/v3/index.js --baseline-api callback --baseline-label alpha2 --same-path --format json --input bytes --sizes 128,65536 --pairs 3 --warmups 128 --iterations 24 --cpu --cases 'discarded metadata/ids,objects/missing,llm/string'
 ```
 
 Use `--engine bun` for Bun and `--input text` for text. For JSON5 controls use

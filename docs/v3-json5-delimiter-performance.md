@@ -94,7 +94,7 @@ a control rather than an established benefit.
 Build a baseline checkout at `ba84e17`, then build the candidate. For example:
 
 ```sh
-node scripts/v3/benchmark.mjs --engine node --baseline /path/to/baseline/dist/esm/v3/index.js --baseline-api callback --baseline-label PR27 --format json5 --syntax json5 --cases objects/root,objects/ids,decimals/scalar,llm/string --sizes 1024,65536 --input text --pairs 3 --warmups 512 --iterations 64 --output /tmp/json5-delimiters-node.json
+node scripts/benchmark.mjs --engine node --baseline /path/to/baseline/dist/esm/v3/index.js --baseline-api callback --baseline-label PR27 --format json5 --syntax json5 --cases objects/root,objects/ids,decimals/scalar,llm/string --sizes 1024,65536 --input text --pairs 3 --warmups 512 --iterations 64 --output /tmp/json5-delimiters-node.json
 ```
 
 Use `--engine bun` for Bun. For token-sized LLM input, select `llm/string`,

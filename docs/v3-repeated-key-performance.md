@@ -100,7 +100,7 @@ This is a workload-specific tradeoff: Node tiny documents show a possible approx
 Build an unchanged 195daf6 checkout and pass its absolute compiled ESM entry point as the baseline. For example, from the patched checkout:
 
 ```sh
-node scripts/v3/benchmark.mjs --engine node --baseline /absolute/path/to/baseline/dist/esm/v3/index.js --baseline-api callback --baseline-label 195daf6 --format json --pairs 3 --warmups 256 --iterations 32 --sizes 1024 --cases objects/ids,objects/overlap,objects/missing,'wide object/root',llm/string
+node scripts/benchmark.mjs --engine node --baseline /absolute/path/to/baseline/dist/esm/v3/index.js --baseline-api callback --baseline-label 195daf6 --format json --pairs 3 --warmups 256 --iterations 32 --sizes 1024 --cases objects/ids,objects/overlap,objects/missing,'wide object/root',llm/string
 ```
 
 Use `--engine bun` for Bun; vary `--sizes` for 128 or 65536 bytes. Token controls use `--cases llm/string --chunk-unit codepoint --chunk-pattern 1,3,8,2,16,4,32,5,48,7` and either `--input text` or `--input bytes`. Tiny controls use `--cases small/root --input text --warmups 4096 --iterations 4096`.

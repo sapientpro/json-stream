@@ -66,9 +66,9 @@ other queue limits and application-level retention need their own measurements.
 
 ```sh
 npm run build
-node scripts/v3/verify-long-streams.mjs
+node scripts/verify-long-streams.mjs
 # Or only Node, with a chosen output file:
-node scripts/v3/verify-long-streams.mjs --engines node --output notes/analysis/v3-long-streams/node.json
+node scripts/verify-long-streams.mjs --engines node --output notes/analysis/v3-long-streams/node.json
 ```
 
 The default output is `notes/analysis/v3-long-streams/results.json`. The parent

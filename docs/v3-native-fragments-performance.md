@@ -74,7 +74,7 @@ Build and 394 tests across 21 suites pass, including every UTF-8 cut through a l
 Build the alpha tag in a separate checkout and pass its compiled ESM entry as the baseline:
 
 ```sh
-node scripts/v3/benchmark.mjs --baseline /path/to/alpha/dist/esm/v3/index.js --baseline-api callback --baseline-label alpha.1 --cases llm/string,escapes/string --sizes 128,1024,65536 --pairs 3 --warmups 120 --iterations 64
+node scripts/benchmark.mjs --baseline /path/to/alpha/dist/esm/v3/index.js --baseline-api callback --baseline-label alpha.1 --cases llm/string,escapes/string --sizes 128,1024,65536 --pairs 3 --warmups 120 --iterations 64
 ```
 
 No CPU profiling tools, runtime dependencies, release or publication are added by this change.

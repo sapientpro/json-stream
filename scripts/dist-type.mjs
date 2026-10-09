@@ -2,5 +2,6 @@
 //dist/esm as CommonJS (or sniffs it, with a warning).
 import {writeFileSync} from 'node:fs';
 
-writeFileSync('dist/cjs/package.json', '{"type":"commonjs"}\n');
-writeFileSync('dist/esm/package.json', '{"type":"module"}\n');
+const directory = process.argv[2] ?? 'dist';
+writeFileSync(directory + '/cjs/package.json', '{"type":"commonjs"}\n');
+writeFileSync(directory + '/esm/package.json', '{"type":"module"}\n');

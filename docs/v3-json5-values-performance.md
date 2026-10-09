@@ -70,7 +70,7 @@ before emission. No whole-document JSON.parse path is introduced.
 Reproduce after building the baseline separately:
 
 ```sh
-node scripts/v3/benchmark.mjs --baseline /path/to/baseline/v3/index.js --baseline-api callback --baseline-label main44 --same-path --format json5 --syntax json5 --engine node --sizes 65536 --cases 'decimals/missing,decimals/descendants,exponents/missing,decimals/scalar,objects/root,wide object/root,objects/ids,literals/scalar' --pairs 3 --cpu
+node scripts/benchmark.mjs --baseline /path/to/baseline/v3/index.js --baseline-api callback --baseline-label main44 --same-path --format json5 --syntax json5 --engine node --sizes 65536 --cases 'decimals/missing,decimals/descendants,exponents/missing,decimals/scalar,objects/root,wide object/root,objects/ids,literals/scalar' --pairs 3 --cpu
 ```
 
 Use `--engine bun` for Bun, `--syntax json` for quoted JSON input through JSON5,

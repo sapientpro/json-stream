@@ -18,7 +18,7 @@ strings were added explicitly as a guard workload.
 Reproduce with a built PR17 checkout:
 
 ```sh
-node scripts/v3/benchmark.mjs --engine node --baseline /path/to/pr17/dist/esm/v3/index.js --baseline-api callback --baseline-label PR17 --pairs 3 --warmups 160 --cases 'escapes/string,objects/ids,short strings/scalar,short escaped strings/scalar,unicode/string,long string/root'
+node scripts/benchmark.mjs --engine node --baseline /path/to/pr17/dist/esm/v3/index.js --baseline-api callback --baseline-label PR17 --pairs 3 --warmups 160 --cases 'escapes/string,objects/ids,short strings/scalar,short escaped strings/scalar,unicode/string,long string/root'
 ```
 
 Main target: Node 26 escaped fragments 112.6→127.9 MB/s (+13.6%) at 1 KiB and

@@ -2,7 +2,7 @@
 
 Baseline: PR18 (`ba97d14e0636078c0997ecf2c765bdab5fc0b3d7`). These measurements predate the subscription-only API change; they use the PR18 scanner. The current equivalent is `onString('$.text', callback)` without a retention option.
 
-Primary LLM workload: a JSON object with metadata followed by a long `text` field containing Ukrainian text, emoji, newlines, quoted code and backslashes. `onString(['text'])` receives decoded fragments with `retainRoot: false`. The escape-heavy fixture is a separate stress case. Fixture definitions live in `scripts/v3/benchmark-worker.mjs`.
+Primary LLM workload: a JSON object with metadata followed by a long `text` field containing Ukrainian text, emoji, newlines, quoted code and backslashes. `onString(['text'])` receives decoded fragments with `retainRoot: false`. The escape-heavy fixture is a separate stress case. Fixture definitions live in `scripts/benchmark-worker.mjs`.
 
 Protocol: UTF-8 byte input, 32/128/1024-byte chunks, three serial fresh processes per case, 160 warmups and seven samples of 32 parses. The table gives median throughput across those processes, in decimal MB/s of encoded JSON input. Construction, registration and consumed concrete callback paths are included; reconstructed text is checked. These are local throughput measurements, not network or model latency measurements.
 
@@ -27,9 +27,9 @@ This verifies delivery timing by write index, rather than claiming nanosecond la
 
 ```sh
 npm run build
-node scripts/v3/benchmark.mjs --engine node --format json --pairs 3 --warmups 160 --iterations 32 --sizes 32,128,1024 --cases 'llm/string,escapes/string'
-node scripts/v3/benchmark.mjs --engine bun --format json --pairs 3 --warmups 160 --iterations 32 --sizes 32,128,1024 --cases 'llm/string,escapes/string'
-node scripts/v3/benchmark.mjs --engine deno --format json --pairs 3 --warmups 160 --iterations 32 --sizes 32,128,1024 --cases 'llm/string,escapes/string'
+node scripts/benchmark.mjs --engine node --format json --pairs 3 --warmups 160 --iterations 32 --sizes 32,128,1024 --cases 'llm/string,escapes/string'
+node scripts/benchmark.mjs --engine bun --format json --pairs 3 --warmups 160 --iterations 32 --sizes 32,128,1024 --cases 'llm/string,escapes/string'
+node scripts/benchmark.mjs --engine deno --format json --pairs 3 --warmups 160 --iterations 32 --sizes 32,128,1024 --cases 'llm/string,escapes/string'
 ```
 
 For already-decoded LLM text chunks, repeat with `--input text`; byte-input throughput does not represent that mode. JSON5 is tested for delivery correctness here; the throughput table uses strict JSON. Do not infer the same timing for JSON5, Web/Node adapters, async consumption or full-value retention.

@@ -1,6 +1,6 @@
 # Candidate architecture
 
-`src/v3/core.ts` owns builders, retention, selector contexts, concrete paths,
+`src/core.ts` owns builders, retention, selector contexts, concrete paths,
 consumer lifecycle. It accepts strings only. `json-scanner.ts` and
 `json5-scanner.ts` are separate hot loops with the same structural state contract.
 They call core methods directly; no token objects, intermediate queues or generic
