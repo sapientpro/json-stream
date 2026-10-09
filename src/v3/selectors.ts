@@ -16,6 +16,8 @@ export type Node = {
 };
 export type Context = {
     nodes: Node[];
+    /** Conservative snapshot: consumers can unsubscribe, but cannot register after parsing starts. */
+    hasValues: boolean;
     edges: {
         [key: string]: Context | null;
     };
@@ -25,21 +27,24 @@ export type Context = {
     indexed: boolean;
     fallback?: Context;
 };
-export const EMPTY_CONTEXT: Context = { nodes: [], edges: Object.create(null), indexes: Object.create(null), indexed: false };
+export const EMPTY_CONTEXT: Context = { nodes: [], hasValues: false, edges: Object.create(null), indexes: Object.create(null), indexed: false };
 export const makeContext = (nodes: Node[]): Context => {
     nodes = nodes.filter(node => node.callbacks?.observed || node.fragments?.observed || node.any || node.rest || Object.keys(node.children).length || Object.keys(node.indexes).length);
     if (!nodes.length)
         return EMPTY_CONTEXT;
     const edges: Context['edges'] = Object.create(null);
     const indexes: Context['indexes'] = Object.create(null);
-    for (const node of nodes)
+    let hasValues = false;
+    for (const node of nodes) {
+        if (node.callbacks?.observed) hasValues = true;
         if (!node.tail) {
             for (const key of Object.keys(node.children))
                 edges[key] = null;
             for (const key of Object.keys(node.indexes))
                 indexes[Number(key)] = null;
         }
-    return { nodes, edges, indexes, indexed: Object.keys(indexes).length > 0 };
+    }
+    return { nodes, hasValues, edges, indexes, indexed: Object.keys(indexes).length > 0 };
 };
 export const stepContext = (context: Context, key: PathSegment): Context => {
     if (context === EMPTY_CONTEXT)
