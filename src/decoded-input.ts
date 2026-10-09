@@ -5,12 +5,13 @@ export const BYTE_INPUT = Symbol('byte-input');
 
 /** One transport owns one decoder, including its EOF flush and cancellation. */
 export function createDecodedInput(target: InputSink): ByteInputSink {
-    if ((target as InputSink & {[BYTE_INPUT]?: boolean})[BYTE_INPUT]) return target as ByteInputSink;
+    if ((target as InputSink & { [BYTE_INPUT]?: boolean })[BYTE_INPUT])
+        return target as ByteInputSink;
     let decoder: InstanceType<typeof TextDecoder> | undefined;
     let mode: 'text' | 'bytes' | undefined;
     let closed = false;
     let running = false;
-    let failure: {error: unknown} | undefined;
+    let failure: { error: unknown } | undefined;
     return {
         write(chunk) {
             if (running) throw new Error('write() re-entered');
@@ -23,15 +24,23 @@ export function createDecodedInput(target: InputSink): ByteInputSink {
             mode = nextMode;
             running = true;
             try {
-                target.write(typeof chunk === 'string' ? chunk :
-                    (decoder ??= new TextDecoder('utf-8', {fatal: true, ignoreBOM: true})).decode(chunk, {stream: true}));
+                target.write(
+                    typeof chunk === 'string'
+                        ? chunk
+                        : (decoder ??= new TextDecoder('utf-8', {
+                              fatal: true,
+                              ignoreBOM: true,
+                          })).decode(chunk, { stream: true }),
+                );
             } catch (error) {
-                failure = {error};
+                failure = { error };
                 decoder = undefined;
                 closed = true;
                 target.destroy(error as Error);
                 throw error;
-            } finally { running = false; }
+            } finally {
+                running = false;
+            }
         },
         end() {
             if (running) throw new Error('end() re-entered');
@@ -42,12 +51,19 @@ export function createDecodedInput(target: InputSink): ByteInputSink {
                 const tail = decoder?.decode();
                 if (tail) target.write(tail);
                 target.end();
-            } catch (error) { failure = {error}; target.destroy(error as Error); throw error; }
-            finally { running = false; closed = true; decoder = undefined; }
+            } catch (error) {
+                failure = { error };
+                target.destroy(error as Error);
+                throw error;
+            } finally {
+                running = false;
+                closed = true;
+                decoder = undefined;
+            }
         },
         destroy(error) {
             // Forward destruction even after a failed write, so stream owners can clean up.
-            if (error) failure ??= {error};
+            if (error) failure ??= { error };
             closed = true;
             decoder = undefined;
             target.destroy(error);

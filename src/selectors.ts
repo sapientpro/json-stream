@@ -29,11 +29,25 @@ export type Context = {
     recursive: boolean;
     fallback?: Context;
 };
-export const EMPTY_CONTEXT: Context = { nodes: [], hasValues: false, edges: Object.create(null), indexes: Object.create(null), indexed: false, recursive: false };
+export const EMPTY_CONTEXT: Context = {
+    nodes: [],
+    hasValues: false,
+    edges: Object.create(null),
+    indexes: Object.create(null),
+    indexed: false,
+    recursive: false,
+};
 export const makeContext = (nodes: Node[]): Context => {
-    nodes = nodes.filter(node => node.callbacks?.observed || node.fragments?.observed || node.any || node.rest || Object.keys(node.children).length || Object.keys(node.indexes).length);
-    if (!nodes.length)
-        return EMPTY_CONTEXT;
+    nodes = nodes.filter(
+        (node) =>
+            node.callbacks?.observed ||
+            node.fragments?.observed ||
+            node.any ||
+            node.rest ||
+            Object.keys(node.children).length ||
+            Object.keys(node.indexes).length,
+    );
+    if (!nodes.length) return EMPTY_CONTEXT;
     const edges: Context['edges'] = Object.create(null);
     const indexes: Context['indexes'] = Object.create(null);
     let hasValues = false;
@@ -51,20 +65,23 @@ export const makeContext = (nodes: Node[]): Context => {
             for (const key of Object.keys(rest.indexes)) indexes[Number(key)] = null;
         }
     }
-    return { nodes, hasValues, edges, indexes, indexed: Object.keys(indexes).length > 0, recursive };
+    return {
+        nodes,
+        hasValues,
+        edges,
+        indexes,
+        indexed: Object.keys(indexes).length > 0,
+        recursive,
+    };
 };
 export const stepContext = (context: Context, key: PathSegment): Context => {
-    if (context === EMPTY_CONTEXT)
-        return EMPTY_CONTEXT;
+    if (context === EMPTY_CONTEXT) return EMPTY_CONTEXT;
     const numeric = typeof key === 'number';
     const edges = numeric ? context.indexes : context.edges;
     const cached = edges[key];
-    if (cached)
-        return cached;
-    if (cached === undefined && context.fallback)
-        return context.fallback;
-    if (context.recursive)
-        return stepRecursiveContext(context, key, edges, cached);
+    if (cached) return cached;
+    if (cached === undefined && context.fallback) return context.fallback;
+    if (context.recursive) return stepRecursiveContext(context, key, edges, cached);
     const nodes: Node[] = [];
     for (const node of context.nodes) {
         if (node.tail) {
@@ -73,25 +90,27 @@ export const stepContext = (context: Context, key: PathSegment): Context => {
         }
         if (cached === null) {
             const exact = numeric ? node.indexes[key as number] : node.children[key];
-            if (exact)
-                nodes.push(exact);
+            if (exact) nodes.push(exact);
         }
-        if (node.any)
-            nodes.push(node.any);
-        if (node.rest)
-            nodes.push(node.rest);
+        if (node.any) nodes.push(node.any);
+        if (node.rest) nodes.push(node.rest);
     }
     const next = makeContext(nodes);
-    if (cached === null)
-        edges[key] = next;
-    else
-        context.fallback = next;
+    if (cached === null) edges[key] = next;
+    else context.fallback = next;
     return next;
 };
 /** Recursive states persist while their suffix advances independently. */
-const stepRecursiveContext = (context: Context, key: PathSegment, edges: Context['edges'], cached: Context | null | undefined): Context => {
+const stepRecursiveContext = (
+    context: Context,
+    key: PathSegment,
+    edges: Context['edges'],
+    cached: Context | null | undefined,
+): Context => {
     const nodes: Node[] = [];
-    const add = (node: Node) => { if (!nodes.includes(node)) nodes.push(node); };
+    const add = (node: Node) => {
+        if (!nodes.includes(node)) nodes.push(node);
+    };
     const numeric = typeof key === 'number';
     for (const source of context.nodes) {
         for (let node: Node | undefined = source; node; node = node.rest) {
@@ -117,12 +136,15 @@ export type Frame = {
     context: Context;
     arrayContext: Context | undefined;
 };
-export const newNode = (): Node => ({ children: Object.create(null), indexes: Object.create(null), any: undefined, rest: undefined });
+export const newNode = (): Node => ({
+    children: Object.create(null),
+    indexes: Object.create(null),
+    any: undefined,
+    rest: undefined,
+});
 export const childrenOf = (node: Node): Node[] => {
     const out = [...Object.values(node.children), ...Object.values(node.indexes)];
-    if (node.any)
-        out.push(node.any!);
-    if (node.rest)
-        out.push(node.rest!);
+    if (node.any) out.push(node.any!);
+    if (node.rest) out.push(node.rest!);
     return out;
 };

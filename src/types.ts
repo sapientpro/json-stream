@@ -53,8 +53,14 @@ export interface Parser extends InputSink {
     /** Optional final text chunk, EOF validation, and its unconsumed tail count. */
     end(chunk?: string): number;
     destroy(error?: Error | null): void;
-    onValue<T = any>(path: PathInput, callback: ValueCallback<T> | CallbackObserver<T>): Subscription;
-    onString(path: PathInput, callback: ValueCallback<string> | CallbackObserver<string>): Subscription;
+    onValue<T = any>(
+        path: PathInput,
+        callback: ValueCallback<T> | CallbackObserver<T>,
+    ): Subscription;
+    onString(
+        path: PathInput,
+        callback: ValueCallback<string> | CallbackObserver<string>,
+    ): Subscription;
     getValue<T = any>(path?: PathInput): Promise<T>;
     stringStream(path: PathInput): ReadableStream<string>;
 }
