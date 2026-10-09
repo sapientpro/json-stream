@@ -4,6 +4,9 @@ import type { InputSink, ByteInputSink } from '../src/types';
 const inputs = new WeakMap<InputSink, ByteInputSink>();
 export function decodedInput(parser: InputSink): ByteInputSink {
     let input = inputs.get(parser);
-    if (!input) { input = createDecodedInput(parser); inputs.set(parser, input); }
+    if (!input) {
+        input = createDecodedInput(parser);
+        inputs.set(parser, input);
+    }
     return input;
 }

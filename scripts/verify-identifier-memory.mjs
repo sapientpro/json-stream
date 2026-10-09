@@ -1,8 +1,8 @@
 // Optional retained-heap diagnostic; never imported by the parser or throughput workers.
-import {pathToFileURL} from 'node:url';
+import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 const module = pathToFileURL(path.resolve(process.argv[2] ?? 'dist/esm/index.js')).href;
-const {Json5Parser} = await import(module);
+const { Json5Parser } = await import(module);
 const mode = process.argv[3] ?? 'reset';
 if (!['reset', 'end', 'destroy', 'error'].includes(mode)) throw new Error('Unknown lifecycle mode');
 const collect = typeof Bun !== 'undefined' ? () => Bun.gc(true) : globalThis.gc;
@@ -12,8 +12,12 @@ for (let i = 0; i < 3; i++) collect();
 const before = process.memoryUsage();
 function add(i) {
     const name = String.fromCharCode(65 + i) + 'LongIdentifierForMemory' + i;
-    const text = '[{ignored:"' + 'x'.repeat(8 * 1024 * 1024) + '",'
-        + name + ':1,\\u0041EscapedIdentifier:2}]';
+    const text =
+        '[{ignored:"' +
+        'x'.repeat(8 * 1024 * 1024) +
+        '",' +
+        name +
+        ':1,\\u0041EscapedIdentifier:2}]';
     const parser = new Json5Parser();
     if (mode === 'error') {
         try {
@@ -31,10 +35,23 @@ function add(i) {
 for (let i = 0; i < 12; i++) add(i);
 // Leave allocation stack frames before collecting, especially on Bun.
 for (let i = 0; i < 3; i++) {
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
     collect();
 }
 const after = process.memoryUsage();
-console.log(JSON.stringify({module, mode, parsers:held.length, inputMiB:96,
-    retainedHeapMiB:(after.heapUsed - before.heapUsed) / 1048576,
-    rssMiB:after.rss / 1048576, before, after}, null, 2));
+console.log(
+    JSON.stringify(
+        {
+            module,
+            mode,
+            parsers: held.length,
+            inputMiB: 96,
+            retainedHeapMiB: (after.heapUsed - before.heapUsed) / 1048576,
+            rssMiB: after.rss / 1048576,
+            before,
+            after,
+        },
+        null,
+        2,
+    ),
+);

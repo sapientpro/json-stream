@@ -1,16 +1,17 @@
-import {readFileSync, writeFileSync, mkdirSync} from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
-const args=process.argv.slice(2),option=(k,d)=>args.includes(k)?args[args.indexOf(k)+1]:d;
-const inputDirectory=option('--input-dir','notes/benchmarks/results');
-const reportPath=option('--output','notes/benchmarks/package-comparison.md');
-const engines=option('--engines','node,bun').split(',');
-const packages=['sapient','streamparser','stream-json','json-web-streams'];
-const median=xs=>[...xs].sort((a,b)=>a-b)[Math.floor(xs.length/2)];
-const key=r=>[r.dataset,r.mode,r.input,r.size].join('/');
-const first=JSON.parse(readFileSync(`${inputDirectory}/v3-competitors-${engines[0]}.json`));
-const measuredDate=new Date(first.date).toLocaleDateString('en-CA',{timeZone:'Europe/Kyiv'});
-const revision=first.sourceRevision??'not recorded';
-let doc=`# Streaming package comparison, 3.0 alpha
+const args = process.argv.slice(2),
+    option = (k, d) => (args.includes(k) ? args[args.indexOf(k) + 1] : d);
+const inputDirectory = option('--input-dir', 'notes/benchmarks/results');
+const reportPath = option('--output', 'notes/benchmarks/package-comparison.md');
+const engines = option('--engines', 'node,bun').split(',');
+const packages = ['sapient', 'streamparser', 'stream-json', 'json-web-streams'];
+const median = (xs) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+const key = (r) => [r.dataset, r.mode, r.input, r.size].join('/');
+const first = JSON.parse(readFileSync(`${inputDirectory}/v3-competitors-${engines[0]}.json`));
+const measuredDate = new Date(first.date).toLocaleDateString('en-CA', { timeZone: 'Europe/Kyiv' });
+const revision = first.sourceRevision ?? 'not recorded';
+let doc = `# Streaming package comparison, 3.0 alpha
 
 Measured on ${measuredDate}; recorded parser source revision \`${revision}\`, on ${first.cpu}.
 Pinned versions: our ${first.versions.sapient}, @streamparser/json ${first.versions.streamparser}, stream-json ${first.versions['stream-json']},
@@ -52,36 +53,81 @@ a close result as a win.
 ## Results
 
 `;
-const todos=[];
-for(const engine of engines){
- const file=`${inputDirectory}/v3-competitors-${engine}.json`,data=JSON.parse(readFileSync(file));
- const groups=Map.groupBy(data.results,key);
- for(const [k,rows]of groups)for(const id of packages)if(rows.filter(r=>r.id===id).length!==data.protocol.repetitions)throw Error(`Incomplete ${engine} ${k} ${id}`);
- const ok=data.results.filter(r=>r.status==='ok').length,failed=data.results.filter(r=>r.status==='failed').length,unsupported=data.results.filter(r=>r.status==='unsupported').length;
- doc+=`### ${engine}${engine==='deno'?' (secondary subset)':''}\n\n\`${data.runtime.split('\n')[0]}\`; ${groups.size} scenarios, ${data.results.length} workers: ${ok} valid, ${unsupported} unsupported, ${failed} failed.\n\n| Workload | Input / chunk | Ours | @streamparser/json | stream-json | json-web-streams |\n|---|---|---:|---:|---:|---:|\n`;
- for(const [k,rows]of groups){
-  const r=rows[0],scores={};
-  const cells=packages.map(id=>{const found=rows.filter(r=>r.id===id);if(found.some(r=>r.status==='failed'))return 'failed';if(found.some(r=>r.status!=='ok'))return 'unsupported';const score=median(found.map(r=>r.mbps));scores[id]=score;return score.toFixed(1);});
-  doc+=`| ${r.dataset} / ${r.mode} | ${r.input} / ${r.size.toLocaleString('en-US')} | ${cells.join(' | ')} |\n`;
-  const fastest=Object.entries(scores).sort((a,b)=>b[1]-a[1])[0];
-  if(fastest && scores.sapient){const difference=(fastest[1]/scores.sapient-1)*100;
-   let task;
-   if(fastest[0]==='sapient')task='Keep this case as a regression control; no new optimization justified by this comparison.';
-   else if(difference<5)task='Repeat with longer warmups and rotating process pairs before proposing any change; the gap is small.';
-   else if(engine==='bun'&&r.dataset==='short strings')task='Compare stream-json\'s inline complete-string value fast path against our scanner/close/emit calls. Measure whole-string completion and JIT layout separately; keep Node, escapes and chunk cuts as controls.';
-   else if(engine==='bun'&&r.dataset==='unicode'&&r.input==='bytes')task='Decode the exact byte chunks outside timing and feed the resulting identical text chunks to both parsers; separately time TextDecoder versus TextDecoderStream. Separate input transport from string construction before changing the scanner.';
-   else if(r.dataset==='tiny')task='Separate parser construction/subscription cost from steady-state reset reuse; retain the fresh-parser result as the public control.';
-   else if(fastest[0]==='json-web-streams')task='Measure JS builder/property writes and array allocation separately from scanning. Keep native JSON.parse aggregation as a recorded optional idea only; do not route LLM fragments through whole-value buffering.';
-   else if(r.mode==='string')task='Separate escape decoding, fragment delivery and UTF-8 decoder costs. Compare only equivalent independent-fragment delivery; previews must remain a separate column.';
-   else task='Profile builder/token work for this data shape, preserving strict validation and the selective-value callback contract.';
-   todos.push(`- [ ] **${engine}: ${k}** — fastest ${fastest[0]}, ${fastest[1].toFixed(1)} vs ours ${scores.sapient?.toFixed(1)} MB/s (${difference.toFixed(1)}% gap). ${task}`);
-  }
- }
- doc+='\n';
- const failures=data.results.filter(r=>r.status==='failed');if(failures.length)doc+='Failures and stack traces are preserved in the raw result file. Failed cases are not ranked.\n\n';
+const todos = [];
+for (const engine of engines) {
+    const file = `${inputDirectory}/v3-competitors-${engine}.json`,
+        data = JSON.parse(readFileSync(file));
+    const groups = Map.groupBy(data.results, key);
+    for (const [k, rows] of groups)
+        for (const id of packages)
+            if (rows.filter((r) => r.id === id).length !== data.protocol.repetitions)
+                throw Error(`Incomplete ${engine} ${k} ${id}`);
+    const ok = data.results.filter((r) => r.status === 'ok').length,
+        failed = data.results.filter((r) => r.status === 'failed').length,
+        unsupported = data.results.filter((r) => r.status === 'unsupported').length;
+    doc += `### ${engine}${engine === 'deno' ? ' (secondary subset)' : ''}\n\n\`${data.runtime.split('\n')[0]}\`; ${groups.size} scenarios, ${data.results.length} workers: ${ok} valid, ${unsupported} unsupported, ${failed} failed.\n\n| Workload | Input / chunk | Ours | @streamparser/json | stream-json | json-web-streams |\n|---|---|---:|---:|---:|---:|\n`;
+    for (const [k, rows] of groups) {
+        const r = rows[0],
+            scores = {};
+        const cells = packages.map((id) => {
+            const found = rows.filter((r) => r.id === id);
+            if (found.some((r) => r.status === 'failed')) return 'failed';
+            if (found.some((r) => r.status !== 'ok')) return 'unsupported';
+            const score = median(found.map((r) => r.mbps));
+            scores[id] = score;
+            return score.toFixed(1);
+        });
+        doc += `| ${r.dataset} / ${r.mode} | ${r.input} / ${r.size.toLocaleString('en-US')} | ${cells.join(' | ')} |\n`;
+        const fastest = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
+        if (fastest && scores.sapient) {
+            const difference = (fastest[1] / scores.sapient - 1) * 100;
+            let task;
+            if (fastest[0] === 'sapient')
+                task =
+                    'Keep this case as a regression control; no new optimization justified by this comparison.';
+            else if (difference < 5)
+                task =
+                    'Repeat with longer warmups and rotating process pairs before proposing any change; the gap is small.';
+            else if (engine === 'bun' && r.dataset === 'short strings')
+                task =
+                    "Compare stream-json's inline complete-string value fast path against our scanner/close/emit calls. Measure whole-string completion and JIT layout separately; keep Node, escapes and chunk cuts as controls.";
+            else if (engine === 'bun' && r.dataset === 'unicode' && r.input === 'bytes')
+                task =
+                    'Decode the exact byte chunks outside timing and feed the resulting identical text chunks to both parsers; separately time TextDecoder versus TextDecoderStream. Separate input transport from string construction before changing the scanner.';
+            else if (r.dataset === 'tiny')
+                task =
+                    'Separate parser construction/subscription cost from steady-state reset reuse; retain the fresh-parser result as the public control.';
+            else if (fastest[0] === 'json-web-streams')
+                task =
+                    'Measure JS builder/property writes and array allocation separately from scanning. Keep native JSON.parse aggregation as a recorded optional idea only; do not route LLM fragments through whole-value buffering.';
+            else if (r.mode === 'string')
+                task =
+                    'Separate escape decoding, fragment delivery and UTF-8 decoder costs. Compare only equivalent independent-fragment delivery; previews must remain a separate column.';
+            else
+                task =
+                    'Profile builder/token work for this data shape, preserving strict validation and the selective-value callback contract.';
+            todos.push(
+                `- [ ] **${engine}: ${k}** — fastest ${fastest[0]}, ${fastest[1].toFixed(1)} vs ours ${scores.sapient?.toFixed(1)} MB/s (${difference.toFixed(1)}% gap). ${task}`,
+            );
+        }
+    }
+    doc += '\n';
+    const failures = data.results.filter((r) => r.status === 'failed');
+    if (failures.length)
+        doc +=
+            'Failures and stack traces are preserved in the raw result file. Failed cases are not ranked.\n\n';
 }
-const checkSummary=['| Runtime | Passed | Unsupported | Failed |','|---|---:|---:|---:|',...engines.map(engine=>{const d=JSON.parse(readFileSync(`${inputDirectory}/v3-competitors-${engine}-checks.json`));return `| ${engine} | ${d.results.filter(r=>r.status==='ok').length} | ${d.results.filter(r=>r.status==='unsupported').length} | ${d.results.filter(r=>r.status==='failed').length} |`;})].join('\n');
-doc+=`## Why workloads differ
+const checkSummary = [
+    '| Runtime | Passed | Unsupported | Failed |',
+    '|---|---:|---:|---:|',
+    ...engines.map((engine) => {
+        const d = JSON.parse(
+            readFileSync(`${inputDirectory}/v3-competitors-${engine}-checks.json`),
+        );
+        return `| ${engine} | ${d.results.filter((r) => r.status === 'ok').length} | ${d.results.filter((r) => r.status === 'unsupported').length} | ${d.results.filter((r) => r.status === 'failed').length} |`;
+    }),
+].join('\n');
+doc += `## Why workloads differ
 
 The source explains architectural differences; it does not establish how many
 percent each mechanism contributes without a profile or isolated experiment.
@@ -146,7 +192,18 @@ Implementation references:
 - [stream-json source](https://github.com/uhop/stream-json): core parser, assembler, pick and streamArray.
 - [@streamparser/json source](https://github.com/juanjoDiaz/streamparser-json/tree/main/packages/json): tokenizer, partial options and buffers.
 `;
-mkdirSync(path.dirname(reportPath),{recursive:true});
-writeFileSync(reportPath,doc);
-const todo=option('--todo');if(todo){mkdirSync(path.dirname(todo),{recursive:true});writeFileSync(todo,`# Package comparison follow-ups, ${measuredDate}\n\nThese are hypotheses and measurement tasks, not diagnosed causes. Native aggregate parsing remains optional future work.\n\n`+todos.join('\n\n')+'\n');}
-console.log(`Wrote report for ${engines.join(', ')} and ${todos.length} per-case follow-ups${todo?' to '+todo:''}.`);
+mkdirSync(path.dirname(reportPath), { recursive: true });
+writeFileSync(reportPath, doc);
+const todo = option('--todo');
+if (todo) {
+    mkdirSync(path.dirname(todo), { recursive: true });
+    writeFileSync(
+        todo,
+        `# Package comparison follow-ups, ${measuredDate}\n\nThese are hypotheses and measurement tasks, not diagnosed causes. Native aggregate parsing remains optional future work.\n\n` +
+            todos.join('\n\n') +
+            '\n',
+    );
+}
+console.log(
+    `Wrote report for ${engines.join(', ')} and ${todos.length} per-case follow-ups${todo ? ' to ' + todo : ''}.`,
+);

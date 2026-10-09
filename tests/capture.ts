@@ -1,8 +1,8 @@
-import type {Parser} from '../src/types';
+import type { Parser } from '../src/types';
 const values = new WeakMap<object, unknown>();
 /** Grammar tests explicitly subscribe to the root instead of relying on implicit retention. */
 export function captureRoot<T extends Pick<Parser, 'onValue' | 'rootReady'>>(parser: T): T {
-    parser.onValue('$', value => values.set(parser, value));
+    parser.onValue('$', (value) => values.set(parser, value));
     return parser;
 }
 export function capturedRoot(parser: Pick<Parser, 'rootReady'>): any {

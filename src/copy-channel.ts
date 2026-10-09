@@ -1,7 +1,7 @@
-import {CallbackChannel} from './channel.js';
-import type {PathSegment} from './types.js';
+import { CallbackChannel } from './channel.js';
+import type { PathSegment } from './types.js';
 
-export type CopyPolicy = {large: boolean};
+export type CopyPolicy = { large: boolean };
 
 /** Short scalar results only: containers, paths and long strings keep their identity. */
 function copyShort<T>(value: T, policy: CopyPolicy): T {
@@ -14,6 +14,13 @@ function copyShort<T>(value: T, policy: CopyPolicy): T {
 }
 
 export class CopyingChannel<T> extends CallbackChannel<T> {
-    constructor(report: (error: unknown) => void, private readonly policy: CopyPolicy) { super(report); }
-    next(value: T, path: readonly PathSegment[]): void { super.next(copyShort(value, this.policy), path); }
+    constructor(
+        report: (error: unknown) => void,
+        private readonly policy: CopyPolicy,
+    ) {
+        super(report);
+    }
+    next(value: T, path: readonly PathSegment[]): void {
+        super.next(copyShort(value, this.policy), path);
+    }
 }
