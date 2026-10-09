@@ -3,7 +3,9 @@
 Incremental JSON and JSON5 parsing with selective value callbacks, streaming
 strings, JSONPath selectors and Web/Node input adapters. No runtime dependencies.
 
-The current preview is **3.0.0-alpha.2**, with breaking changes from 2.x.
+This README documents **unreleased `main`**, with breaking changes from 2.x.
+The source package version is still **3.0.0-alpha.2**; features merged after that
+tag, including recursive JSONPath and compact memory mode, need a new release.
 For the stable 2.x API, see [2.0.1](https://github.com/sapientpro/json-stream/tree/2.0.1).
 
 ```ts
@@ -19,6 +21,12 @@ parser.end();
 
 Register consumers before the first write. Callbacks run synchronously; the caller
 controls input pacing. Use JSONL or prefix managers to consume multiple documents.
+The core accepts strings; input adapters decode UTF-8 bytes. Subscribe to `$` or
+call `getValue()` before writing to retain the complete root.
+
+Selectors support names, typed array indexes, wildcards and recursive descent
+such as `$..id` and `$..*`. Filters, slices, unions and negative indexes are
+explicitly rejected. See [supported paths and streaming semantics](docs/v3.md#paths-and-jsonpath).
 
 ## Documentation
 
@@ -30,7 +38,7 @@ controls input pacing. Use JSONL or prefix managers to consume multiple document
 - [JSON Lines and prefixed documents](docs/v3.md#json-lines-and-prefixed-documents)
 - [Architecture and tradeoffs](docs/v3-architecture.md)
 - [Performance measurements](docs/v3-performance.md)
-- [Current package comparison: Node, Bun and Deno](docs/v3-package-comparison.md)
+- [Package comparison snapshot: Node, Bun and Deno](docs/v3-package-comparison.md)
 - [Long-stream lifecycle and memory checks](docs/v3-long-stream-memory.md)
 - [Package capability matrix](benchmarks/capabilities.md)
 - [Subscription API before/after measurements](docs/v3-subscriptions-performance.md)

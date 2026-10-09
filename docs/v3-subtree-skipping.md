@@ -1,10 +1,14 @@
-# Validation-only subtree skipping — draft experiment
+# Validation-only subtree skipping — historical experiment
 
-This draft changes the strict JSON implementation without adding public options
+Status update: PR #39 was merged as `e12b3a7`. The original measurements and
+rejected variants below are preserved; they describe the experiment at their
+recorded revisions, not the latest `main`. See the [API](v3.md) for current behavior.
+
+At the time of this report, this draft changed the strict JSON implementation without adding public options
 or changing callbacks, value retention, decoded string streaming or transports.
-It is not part of the alpha.2 release and is **not ready to merge**.
+It was not part of the alpha.2 tag and was initially **not ready to merge**.
 
-Current main41 rebase controls, rejected continuation experiment and profile findings:
+Later main41 rebase controls, rejected continuation experiment and profile findings:
 [updated report](v3-subtree-after-rebase.md). The original alpha.2 measurements below
 are historical; they do not describe the rebased baseline.
 

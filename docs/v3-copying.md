@@ -2,7 +2,7 @@
 
 Use `memoryMode: 'compact'` when keeping short string results or streamed
 fragments from large input chunks retains too much source storage. The default
-is `'fast'`. This option is not part of the published `3.0.0-alpha.2` release.
+is `'fast'`. This option is not part of the `3.0.0-alpha.2` tag.
 
 ```ts
 import {JsonParser, Json5Parser, JsonLinesParser, PrefixedJsonParser} from '@sapientpro/json-stream';

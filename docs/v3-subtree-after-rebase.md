@@ -1,6 +1,10 @@
 # Subtree skipping after main41 rebase
 
-2026-10-09. Baseline main3ec857c, including merged PR38/40/41. PR39 remains draft. Runtime adaptation resolves shared character-code imports and moves byte input in tests/diagnostics through createDecodedInput. Managed tails, final chunks, reset, compact and prefix/JSONL behavior are checked. Public parser API is unchanged by PR39.
+Historical rebase report. PR #39 subsequently merged as `e12b3a7`; the
+measurements, rejected variants and follow-up ideas below retain their original
+context and are not a current merge-readiness assessment.
+
+2026-10-09. Baseline main3ec857c, including merged PR38/40/41. PR39 was still draft during these measurements. Runtime adaptation resolves shared character-code imports and moves byte input in tests/diagnostics through createDecodedInput. Managed tails, final chunks, reset, compact and prefix/JSONL behavior are checked. Public parser API is unchanged by PR39.
 
 ## Fresh broad controls
 

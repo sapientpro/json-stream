@@ -14,6 +14,8 @@ Measured on ${measuredDate}; recorded parser source revision \`${revision}\`, on
 Pinned versions: our ${first.versions.sapient}, @streamparser/json ${first.versions.streamparser}, stream-json ${first.versions['stream-json']},
 json-web-streams ${first.versions['json-web-streams']}. JSON only in these throughput tables; JSON5 and record-manager
 capabilities are listed in [the capability matrix](../benchmarks/capabilities.md).
+This is a snapshot of the recorded revision, not a measurement of the latest
+main. The capability matrix tracks our newer unreleased API independently.
 
 ## Protocol and interpretation
 

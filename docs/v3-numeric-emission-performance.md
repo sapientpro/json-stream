@@ -1,5 +1,11 @@
 # Numeric materialization during emission
 
+Historical strict-JSON emitter report. PR #45 subsequently added cached-consumer
+numeric conversion avoidance to JSON5 through a different path. The rejected
+JSON5 variant and measurements below remain historical; see
+[JSON5 value fast paths](v3-json5-values-performance.md) for the later change.
+
+
 Baseline: JSONPath subscriptions PR #20 (`b4ac4c2`). The strict JSON scanner on V8 passes validated decimal, exponent and long-integer source ranges into a specialized emitter. Conversion happens only when a value callback or retained parent needs the number. Small integer arithmetic and numeric grammar validation are unchanged. No token objects or per-number closures are introduced.
 
 Bun and JSON5 retain eager conversion: enabling the specialized emitter there regressed exponent throughput by roughly 11% in Bun and JSON5 decimals by roughly 6% in Node. The emitter still preserves cancellation, destruction, root completion, selected paths and retained parent construction.
