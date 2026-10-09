@@ -81,7 +81,8 @@
     "dist/esm",
     "CHANGELOG.md",
     "docs/v3.md",
-    "docs/v3-copying.md"
+    "docs/v3-copying.md",
+    "docs/performance.md"
   ],
   "typesVersions": {
     "*": {

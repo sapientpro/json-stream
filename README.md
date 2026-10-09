@@ -36,11 +36,8 @@ explicitly rejected. See [supported paths and streaming semantics](docs/v3.md#pa
 - [Reset and parser reuse](docs/v3.md#reusing-a-core-parser)
 - [JSON Lines and prefixed documents](docs/v3.md#json-lines-and-prefixed-documents)
 - [Architecture and tradeoffs](docs/v3-architecture.md)
-- [Performance measurements](docs/v3-performance.md)
-- [Package comparison snapshot: Node, Bun and Deno](docs/v3-package-comparison.md)
-- [Long-stream lifecycle and memory checks](docs/v3-long-stream-memory.md)
+- [Approximate current throughput (MB/s)](docs/performance.md)
 - [Package capability matrix](benchmarks/capabilities.md)
-- [Subscription API before/after measurements](docs/v3-subscriptions-performance.md)
 
 ## Development
 
@@ -51,10 +48,10 @@ npm run test:formats
 npm run benchmark
 ```
 
-Benchmarks include setup and use natural GC, serial workers and correctness checks. See [benchmark GC modes](docs/v3-benchmark-methodology.md) for the separate forced-GC workload.
+Benchmarks include setup and use natural GC, serial workers and correctness checks. See [current throughput and reproduction](docs/performance.md). Detailed reports and raw samples stay in ignored `notes/`.
 The current implementation lives in `src/`, with tests in `tests/` and tools in
 `scripts/`. The 2.x implementation remains in its Git release tags rather than
-this working tree; see [release-baseline comparisons](docs/v3-benchmark-methodology.md#comparing-with-a-2x-release).
+this working tree.
 `npm run benchmark` runs the current parser on Node and Bun; `benchmark:v3`
 remains a compatibility alias.
 

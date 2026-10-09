@@ -4,6 +4,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+- Keep one approximate current-throughput snapshot in public documentation;
+  move historical experiments, reports and raw measurements into local `notes/`.
+
 - Ignore additional arguments to public `write`, including the index supplied by
   `Array.forEach`; reserve cursor input for internal document managers.
 - Preserve BOM during transport decoding and reject malformed/truncated UTF-8

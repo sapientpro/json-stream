@@ -8,3 +8,6 @@ yarn-error.log*
 # generated benchmark output
 benchmarks/results/
 
+
+# Local investigations and benchmark history
+/notes/
