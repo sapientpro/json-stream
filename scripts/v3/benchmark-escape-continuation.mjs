@@ -2,7 +2,7 @@ import {performance} from 'node:perf_hooks';
 import {deepStrictEqual,strictEqual} from 'node:assert';
 import {pathToFileURL} from 'node:url';
 import {resolve} from 'node:path';
-// Usage: node|bun scripts/v3/benchmark-escape-continuation.mjs BASELINE_ESM_ENTRY CANDIDATE_ESM_ENTRY [--focus]
+// Usage: node|bun scripts/v3/benchmark-escape-continuation.mjs BASELINE_ESM_ENTRY CANDIDATE_ESM_ENTRY [--focus] [--cases=llm:32,hex:32]
 const [baseline,candidate]=process.argv.slice(2);
 if(!baseline||!candidate)throw new Error('Provide baseline and candidate ESM entry paths');
 const {JsonParser:Before}=await import(pathToFileURL(resolve(baseline)).href);
@@ -21,7 +21,10 @@ for(const name of ['llm','ascii','unicode','dense','hex'])for(const size of [32,
 for(const name of ['objects','short'])cases.push({name,size:65536,mode:'root'});
 const median=x=>[...x].sort((a,b)=>a-b)[x.length>>1];
 const focus=process.argv.includes('--focus');
-if(focus)for(let i=cases.length-1;i>=0;i--)if(!((cases[i].name==='llm'&&[32,65536].includes(cases[i].size))||(cases[i].name==='dense'&&cases[i].size===65536)||(cases[i].name==='hex'&&cases[i].size===32)))cases.splice(i,1);
+const selected=process.argv.find(arg=>arg.startsWith('--cases='))?.slice(8).split(',');
+if(selected)for(let i=cases.length-1;i>=0;i--)if(!selected.includes(cases[i].name+':'+cases[i].size))cases.splice(i,1);
+if(focus&&!selected)for(let i=cases.length-1;i>=0;i--)if(!((cases[i].name==='llm'&&[32,65536].includes(cases[i].size))||(cases[i].name==='dense'&&cases[i].size===65536)||(cases[i].name==='hex'&&cases[i].size===32)))cases.splice(i,1);
+if(!cases.length)throw new Error('No benchmark cases selected');
 const results=[];
 for(const c of cases){
  const expected=fixtures[c.name];
