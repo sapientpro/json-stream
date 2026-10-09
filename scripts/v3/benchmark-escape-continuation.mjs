@@ -2,11 +2,14 @@ import {performance} from 'node:perf_hooks';
 import {deepStrictEqual,strictEqual} from 'node:assert';
 import {pathToFileURL} from 'node:url';
 import {resolve} from 'node:path';
-// Usage: node|bun scripts/v3/benchmark-escape-continuation.mjs BASELINE_ESM_ENTRY CANDIDATE_ESM_ENTRY [--focus] [--cases=llm:32,hex:32]
+// Usage: node|bun scripts/v3/benchmark-escape-continuation.mjs BASELINE_ESM_ENTRY CANDIDATE_ESM_ENTRY [--focus] [--format=json|json5] [--cases=llm:32,hex:32]
 const [baseline,candidate]=process.argv.slice(2);
 if(!baseline||!candidate)throw new Error('Provide baseline and candidate ESM entry paths');
-const {JsonParser:Before}=await import(pathToFileURL(resolve(baseline)).href);
-const {JsonParser:After}=await import(pathToFileURL(resolve(candidate)).href);
+const format=process.argv.find(arg=>arg.startsWith('--format='))?.slice(9)??'json';
+if(!['json','json5'].includes(format))throw new Error('Expected --format=json or json5');
+const parserName=format==='json5'?'Json5Parser':'JsonParser';
+const {[parserName]:Before}=await import(pathToFileURL(resolve(baseline)).href);
+const {[parserName]:After}=await import(pathToFileURL(resolve(candidate)).href);
 const fixtures={
  llm:{text:('Текст 😀: "value", C:\\tmp\\file.\n').repeat(800)},
  ascii:{text:'abcdef012345'.repeat(2000)},
@@ -16,8 +19,14 @@ const fixtures={
  objects:{items:Array.from({length:3000},(_,id)=>({id,name:'item'+id,active:true,text:'some text 😀'}))},
  short:Array.from({length:10000},(_,i)=>'s'+i),
 };
+if(format==='json5'){
+ fixtures.xhex={text:'ABé'.repeat(8000)};
+ fixtures.continuations={text:'ab'.repeat(8000)};
+ fixtures.single={text:fixtures.llm.text};
+}
 const cases=[];
 for(const name of ['llm','ascii','unicode','dense','hex'])for(const size of [32,128,65536])cases.push({name,size,mode:'string'});
+if(format==='json5')for(const name of ['xhex','continuations','single'])for(const size of [32,128,65536])cases.push({name,size,mode:'string'});
 for(const name of ['objects','short'])cases.push({name,size:65536,mode:'root'});
 const median=x=>[...x].sort((a,b)=>a-b)[x.length>>1];
 const focus=process.argv.includes('--focus');
@@ -30,6 +39,9 @@ for(const c of cases){
  const expected=fixtures[c.name];
  let text=JSON.stringify(expected);
  if(c.name==='hex')text=text.replace(/[^\x00-\x7f]/g,ch=>'\\u'+ch.charCodeAt(0).toString(16).padStart(4,'0'));
+ if(c.name==='xhex')text="{text:'"+'\\x41\\x42\\xE9'.repeat(8000)+"'}";
+ if(c.name==='continuations')text="{text:'"+'a\\\r\nb\\\n'.repeat(8000)+"'}";
+ if(c.name==='single')text="{text:'"+JSON.stringify(expected.text).slice(1,-1)+"'}";
  const chunks=[];for(let i=0;i<text.length;i+=c.size)chunks.push(text.slice(i,i+c.size));
  // Keep construction and write call sites separate: a shared runner mixes V8 feedback
  // from both library versions. Two closures from one factory still share function metadata.
@@ -53,4 +65,4 @@ for(const c of cases){
  const b=median(before),a=median(after);
  results.push({...c,bytes:Buffer.byteLength(text),beforeMs:b,afterMs:a,speedup:(b/a-1)*100,beforeCpu:median(bcpu),afterCpu:median(acpu),before,after});
 }
-console.log(JSON.stringify({runtime:typeof Bun==='undefined'?process.version:'Bun '+Bun.version,results}));
+console.log(JSON.stringify({format,runtime:typeof Bun==='undefined'?process.version:'Bun '+Bun.version,results}));

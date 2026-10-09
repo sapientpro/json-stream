@@ -4,6 +4,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+- Decode JSON5 string escapes within the current scanner iteration and collect
+  split Unicode/hex escapes in bounded slices, preserving incremental string
+  delivery, JSON5 escape rules and surrogate boundaries.
+
 - Add optional `memoryMode: 'compact'` to JSON/JSON5 parsers and JSONL/prefix
   managers. It copies short scalar results and streamed fragments after large
   input writes to reduce retained source storage. Default is `'fast'`; copying
