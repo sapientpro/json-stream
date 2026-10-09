@@ -4,11 +4,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { deepStrictEqual, strictEqual } from 'node:assert';
-import { JsonParser, Json5Parser, JsonLinesParser, PrefixedJsonParser } from '../../dist/esm/v3/index.js';
+import { JsonParser, Json5Parser, JsonLinesParser, PrefixedJsonParser, createDecodedInput } from '../../dist/esm/v3/index.js';
 if (process.argv[2] === '--worker') {
     const job = JSON.parse(process.argv[3]), errors = [], options = { format: job.format, maxBufferedChunks: 4, onObserverError: e => errors.push(String(e)) };
     const Parser = job.format === 'json' ? JsonParser : Json5Parser;
     const parser = job.manager === 'core' ? new Parser(options) : job.manager === 'jsonl' ? new JsonLinesParser(options) : new PrefixedJsonParser('BEGIN', options);
+    // Core accepts text only; byte transport owns decoding and its EOF flush.
+    // Record managers already own their decoder; this adapter preserves that policy.
+    const inputSink = job.input === 'bytes' ? createDecodedInput(parser) : parser;
     const encoder = new TextEncoder(), held = [], fragmentText = ('π😀BEGIN\\\n"').repeat(24) + String.fromCharCode(0xd800), checkpoints = [1000, 5000, 20000], snapshots = [];
     let values = 0, ends = 0, fragments = 0, pending = '', current = 0, subscription, stream;
     parser.onValue('$.items[*]', (value, path, index) => {
@@ -64,10 +67,10 @@ if (process.argv[2] === '--worker') {
         const input = job.input === 'text' ? doc : encoder.encode(doc), sizes = [8, 32, 128];
         for (let at = 0, n = current % 3; at < input.length; n++) {
             const size = sizes[n % 3];
-            parser.write(input.slice(at, at + size));
+            inputSink.write(input.slice(at, at + size));
             at += size;
         }
-        if (job.manager === 'core')
+        if (job.manager === 'core' && current < 19999)
             parser.reset();
         strictEqual(values, current + 1);
         if (job.consumer === 'normal')
@@ -75,12 +78,9 @@ if (process.argv[2] === '--worker') {
         if (checkpoints.includes(current + 1))
             await snapshot(current + 1);
     }
-    if (job.manager === 'core')
-        parser.destroy();
-    else {
-        parser.end();
-        strictEqual(parser.recordCount, 20000);
-    }
+    inputSink.end();
+    strictEqual(parser.closed, true);
+    if (job.manager !== 'core') strictEqual(parser.recordCount, 20000);
     if (stream) {
         let rejected = false;
         try {

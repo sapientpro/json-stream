@@ -1,6 +1,7 @@
 # Long-stream lifecycle and retained-memory checks
 
-Measured against `3.0.0-alpha.2` (`0d58acb`), using Node 26.10.0 and Bun 1.4.2.
+Measured on 2026-10-09 against the parser in `main` (`fbe36c4`,
+`3.0.0-alpha.2`), using Node 26.11.0 and Bun 1.4.2.
 This is an optional correctness and retained-memory diagnostic, not a throughput
 benchmark. It does not change the parser or its public API.
 
@@ -28,8 +29,11 @@ The three consumer lifecycles are:
 
 All modes validate selected values and paths. Managers also validate record
 indices/counts. Eight retained results and paths are checked again after parsing.
-Observer errors must remain absent. The normal-consumer cases delivered
-1,773,302 fragments per engine.
+Observer errors must remain absent. Every input is closed through `end()`, and
+the parser must report that it is closed. Core parsers reset between records; the
+last record is validated by `end()`. Byte cases use `createDecodedInput()`: the
+core receives strings only, while managers preserve their own decoding policy.
+The normal-consumer cases delivered 1,773,290 fragments per engine.
 
 JSON Lines uses strict JSON by default. The JSON5 cases explicitly opt into the
 existing extension and keep each record on **one physical line**; they do not
@@ -43,8 +47,8 @@ closing the parser. The parser and eight retained results remain live.
 
 | Engine | Largest heap growth from 1,000 to 20,000 records, across 36 cases |
 | --- | ---: |
-| Node | 0.096 MiB |
-| Bun | 0.056 MiB |
+| Node | 0.101 MiB |
+| Bun | 0.053 MiB |
 
 All 72 cases passed. These fixtures showed no sustained retained-heap growth
 proportional to record count. The numbers are observations, not portable test
