@@ -60,11 +60,7 @@
     "test:formats": "node scripts/verify.mjs && bun scripts/verify.mjs",
     "benchmark:v3": "npm run benchmark --",
     "benchmark:competitors:deno": "npm run build && node scripts/competitors.mjs --engine deno --checks && node scripts/competitors.mjs --engine deno --secondary && node scripts/competitors-report.mjs --engines node,bun,deno",
-    "test:copying": "node scripts/verify-copying.mjs && bun scripts/verify-copying.mjs",
-    "build:legacy": "tsc -p legacy/v2/tsconfig.json && tsc -p legacy/v2/tsconfig-esm.json && node scripts/dist-type.mjs legacy/v2/dist",
-    "test:legacy": "jest --testMatch '<rootDir>/legacy/v2/tests/**/*.test.ts'",
-    "benchmark:legacy": "npm run build:legacy && node --expose-gc legacy/v2/scripts/benchmark.mjs && bun legacy/v2/scripts/benchmark.mjs && node legacy/v2/scripts/benchmark-report.mjs",
-    "benchmark:legacy:regression": "node --expose-gc legacy/v2/scripts/benchmark-regression.mjs && bun legacy/v2/scripts/benchmark-regression.mjs"
+    "test:copying": "node scripts/verify-copying.mjs && bun scripts/verify-copying.mjs"
   },
   "engines": {
     "node": ">=22"
@@ -74,7 +70,6 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.6",
     "jest": "^30.5.2",
-    "json-stream-lite": "1.3.1",
     "json-web-streams": "1.2.0",
     "json5": "2.2.3",
     "stream-json": "3.7.0",

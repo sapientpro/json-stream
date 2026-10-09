@@ -20,8 +20,6 @@ jobs:
           cache: npm
       # `prepare` runs build + test
       - run: npm ci
-      - run: npm run build:legacy
-      - run: npm run test:legacy -- --runInBand
       - run: node scripts/smoke.mjs
       - run: node scripts/verify.mjs
       - run: node scripts/verify-copying.mjs

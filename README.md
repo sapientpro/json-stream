@@ -54,10 +54,9 @@ npm run benchmark
 
 Benchmarks include setup and use natural GC, serial workers and correctness checks. See [benchmark GC modes](docs/v3-benchmark-methodology.md) for the separate forced-GC workload.
 The current implementation lives in `src/`, with tests in `tests/` and tools in
-`scripts/`. Archived 2.x sources, tests and tools live in `legacy/v2/`, are built
-only by `npm run build:legacy`, and are excluded from the npm package.
-Use `npm run test:legacy -- --runInBand` for the old regression suite; see
-[legacy controls](legacy/v2/README.md). `npm run benchmark` runs the current parser
-on Node and Bun; `benchmark:v3` remains a compatibility alias.
+`scripts/`. The 2.x implementation remains in its Git release tags rather than
+this working tree; see [release-baseline comparisons](docs/v3-benchmark-methodology.md#comparing-with-a-2x-release).
+`npm run benchmark` runs the current parser on Node and Bun; `benchmark:v3`
+remains a compatibility alias.
 
 MIT licensed.
