@@ -1,8 +1,8 @@
-# Optional compact memory mode (unreleased)
+# Optional compact memory mode
 
 Use `memoryMode: 'compact'` when keeping short string results or streamed
 fragments from large input chunks retains too much source storage. The default
-is `'fast'`. This option is not part of the `3.0.0-alpha.2` tag.
+is `'fast'`. This option was added in `3.0.0-alpha.3`.
 
 ```ts
 import {JsonParser, Json5Parser, JsonLinesParser, PrefixedJsonParser} from '@sapientpro/json-stream';

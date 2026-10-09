@@ -2,7 +2,22 @@
 
 This project follows [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 3.0.0-alpha.3 — 2026-10-09
+
+- **Breaking since alpha.2:** core parsers now accept strings only. UTF-8 decoding
+  belongs to Web/Node transports and `createDecodedInput(parser)`; record managers
+  retain their own text/byte input handling.
+- Promote the current parser, tests and tools to the normal project layout.
+  Remove the retired 2.x implementation; immutable release tags remain available
+  for historical comparisons. Default benchmarks now run the current parser on
+  Node and Bun with natural GC.
+- Validate unselected strict-JSON subtrees without building values, preserving
+  syntax, depth limits, retained ancestors and incremental input boundaries.
+- Batch partial strict-JSON escape continuation without delaying decoded string
+  delivery; extend long-stream lifecycle and memory checks.
+- Resolve development-dependency security alerts and remove the unused
+  json-stream-lite comparison dependency.
+
 
 - Support recursive JSONPath selectors (`$..id`, `$..*`, `$..[0]`) and typed `Rest` with suffixes through cached subscription contexts. Recursive callbacks emit each concrete node once in value-completion order.
 

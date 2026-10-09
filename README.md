@@ -3,9 +3,8 @@
 Incremental JSON and JSON5 parsing with selective value callbacks, streaming
 strings, JSONPath selectors and Web/Node input adapters. No runtime dependencies.
 
-This README documents **unreleased `main`**, with breaking changes from 2.x.
-The source package version is still **3.0.0-alpha.2**; features merged after that
-tag, including recursive JSONPath and compact memory mode, need a new release.
+This README documents the **3.0.0-alpha.3 preview**, with breaking changes from
+2.x and earlier alphas. Core parsers accept strings; transports decode bytes.
 For the stable 2.x API, see [2.0.1](https://github.com/sapientpro/json-stream/tree/2.0.1).
 
 ```ts
@@ -31,7 +30,7 @@ explicitly rejected. See [supported paths and streaming semantics](docs/v3.md#pa
 ## Documentation
 
 - [API, retention, paths and migration from 2.x](docs/v3.md)
-- [Opt-in copying of short string results (unreleased)](docs/v3-copying.md)
+- [Opt-in copying of short string results](docs/v3-copying.md)
 - [Streaming strings and pacing](docs/v3.md#streaming-strings-and-pacing)
 - [Web and Node transports](docs/v3.md#transports)
 - [Reset and parser reuse](docs/v3.md#reusing-a-core-parser)

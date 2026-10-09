@@ -5,7 +5,7 @@ Pinned versions: our 3.0.0-alpha.1, @streamparser/json 0.0.26, stream-json 3.7.0
 json-web-streams 1.2.0. JSON only in these throughput tables; JSON5 and record-manager
 capabilities are listed in [the capability matrix](../benchmarks/capabilities.md).
 This is a snapshot of the recorded revision, not a measurement of the latest
-main. The capability matrix tracks our newer unreleased API independently.
+main. The capability matrix tracks our newer API independently.
 
 ## Protocol and interpretation
 
