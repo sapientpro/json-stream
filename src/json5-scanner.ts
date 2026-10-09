@@ -3,7 +3,6 @@ import { ParserCore } from './core.js';
 import { EMPTY_CONTEXT, stepContext } from './selectors.js';
 import { State } from './state.js';
 import { unicodeUnit, hexDigit, readHex4, readLiteral, isSpace, decodeIdentifier } from './lexical.js';
-const IDENT = 14, SKIP_LF = 15;
 const JSON5_TOKEN_END = /[\t\n\v\f\r \u00a0\ufeff\u2028\u2029\p{Zs},:{}\[\]\/]/gu;
 const JSON5_SPACE = /[\t\n\v\f\r \u00a0\ufeff\u2028\u2029\p{Zs}]/u;
 const JSON5_NUMBER = /^[+-]?(?:Infinity|NaN|0[xX][0-9a-fA-F]+|(?:(?:0|[1-9][0-9]*)(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?)$/;
@@ -35,7 +34,7 @@ export class Json5Scanner extends ParserCore {
     protected _finishToken(pos: number): void {
         const text = this._acc;
         this._acc = '';
-        if (this._state === IDENT) {
+        if (this._state === State.IDENT) {
             const name = decodeIdentifier(text);
             if (name === undefined)
                 this._failAt(pos);
@@ -102,7 +101,7 @@ export class Json5Scanner extends ParserCore {
             if (this._framed && this._state === State.END) break;
             if (this._state === State.FAILED || this._done)
                 break;
-            if (this._state === SKIP_LF) {
+            if (this._state === State.SKIP_LF) {
                 if (pos === len && !this._eof)
                     break;
                 if (buf.charCodeAt(pos) === 10)
@@ -110,7 +109,7 @@ export class Json5Scanner extends ParserCore {
                 this._state = State.STR;
                 continue;
             }
-            if (this._state === State.NUM || this._state === IDENT) {
+            if (this._state === State.NUM || this._state === State.IDENT) {
                 const start = pos;
                 pos = this._tokenEnd(buf, pos, len);
                 this._acc += buf.slice(start, pos);
@@ -183,7 +182,7 @@ export class Json5Scanner extends ParserCore {
                     continue;
                 }
                 if (code === 13) {
-                    this._state = SKIP_LF;
+                    this._state = State.SKIP_LF;
                     continue;
                 }
                 if (code === 10 || code === 0x2028 || code === 0x2029) {
@@ -290,7 +289,7 @@ export class Json5Scanner extends ParserCore {
                         this._keyMode = false;
                         this._retainString = this._shouldRetain();
                         if (this._hasChunks)
-                            this._findChunkSinks(this._root, 0);
+                            this._findChunkSinks();
                         this._state = State.STR;
                     }
                     else {
@@ -351,7 +350,7 @@ export class Json5Scanner extends ParserCore {
                     }
                     else {
                         this._acc = '';
-                        this._state = IDENT;
+                        this._state = State.IDENT;
                     }
                     break;
                 case State.COLON:

@@ -13,7 +13,7 @@ export abstract class InputFramer implements ByteInputSink {
     private running = false;
     private failure?: Error;
     private stream?: WritableStream<string | Uint8Array>;
-    constructor(private readonly fatalUtf8 = false) { }
+    constructor(private readonly fatalUtf8 = true) { }
     get closed(): boolean { return this._closed; }
     get finished(): boolean { return this._finished; }
     get writable(): WritableStream<string | Uint8Array> { return this.stream ??= createWritableStream(this); }

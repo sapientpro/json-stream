@@ -137,7 +137,6 @@ export class JsonScanner extends ParserCore {
     protected _closeNumber(): void {
         const text = this._acc;
         this._acc = '';
-        const phase = this._numPhase;
         this._numPhase = 0;
         if (!JSON_NUMBER.test(text))
             this._fail(this._syntaxError());
@@ -235,7 +234,7 @@ export class JsonScanner extends ParserCore {
     private _skipInput(buf: string, pos: number, len: number): number {
         const skip = this._skip!;
         pos = skip.run(buf, pos, len);
-        if (skip.error >= 0) {this._pos = skip.error; this._fail(this._syntaxError());}
+        if (skip.error >= 0) {this._pos = skip.error; this._fail(skip.depthExceeded ? new SyntaxError('Json nesting deeper than ' + this._maxDepth) : this._syntaxError());}
         if (skip.done) this._emit(undefined);
         return pos;
     }
@@ -382,7 +381,7 @@ export class JsonScanner extends ParserCore {
                                 this._keyMode = false;
                                 this._retainString = this._shouldRetain();
                                 if (this._hasChunks)
-                                    this._findChunkSinks(this._root, 0);
+                                    this._findChunkSinks();
                                 this._state = State.STR;
                             }
                             else if ((code >= CharCode.ZERO && code <= CharCode.NINE) || code === CharCode.MINUS) {

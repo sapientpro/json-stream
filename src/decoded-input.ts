@@ -24,11 +24,12 @@ export function createDecodedInput(target: InputSink): ByteInputSink {
             running = true;
             try {
                 target.write(typeof chunk === 'string' ? chunk :
-                    (decoder ??= new TextDecoder('utf-8')).decode(chunk, {stream: true}));
+                    (decoder ??= new TextDecoder('utf-8', {fatal: true, ignoreBOM: true})).decode(chunk, {stream: true}));
             } catch (error) {
                 failure = {error};
                 decoder = undefined;
                 closed = true;
+                target.destroy(error as Error);
                 throw error;
             } finally { running = false; }
         },
@@ -41,7 +42,7 @@ export function createDecodedInput(target: InputSink): ByteInputSink {
                 const tail = decoder?.decode();
                 if (tail) target.write(tail);
                 target.end();
-            } catch (error) { failure = {error}; throw error; }
+            } catch (error) { failure = {error}; target.destroy(error as Error); throw error; }
             finally { running = false; closed = true; decoder = undefined; }
         },
         destroy(error) {

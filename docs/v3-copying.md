@@ -65,7 +65,7 @@ mode unless retained source storage is a measured problem.
 The mode is selected at construction/subscription time. Normal `write()` and
 `CallbackChannel.next()` have no memory-mode condition, although setup and code
 layout can still affect normal-mode timings. See the
-[performance controls and raw samples](v3-copying-performance.md), including
+[performance controls and raw samples](https://github.com/sapientpro/json-stream/blob/main/docs/v3-copying-performance.md), including
 regressions. This replaces the earlier, unreleased `/copying` facade; that entry
 point and its configurable thresholds are not exported.
 

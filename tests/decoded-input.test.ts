@@ -1,5 +1,5 @@
 import {test, expect} from '@jest/globals';
-import {JsonParser, Json5Parser, createDecodedInput, JsonLinesParser} from '../src';
+import {JsonParser, Json5Parser, createDecodedInput, JsonLinesParser, PrefixedJsonParser, PrefixFilter} from '../src';
 import {createNodeWritable} from '../src/node';
 import {finished} from 'node:stream/promises';
 
@@ -23,13 +23,13 @@ for (const Parser of [JsonParser, Json5Parser]) {
         sink.end(); await finished(sink); expect(value).toEqual({text:'П😀漢字'});
     });
 }
-test('transport flushes incomplete UTF-8 at EOF instead of dropping it', () => {
+test('transport rejects incomplete UTF-8 at EOF instead of replacing or dropping it', () => {
     for (const bytes of [Uint8Array.of(34,0xe2,0x82), Uint8Array.of(123,125,0xe2,0x82)]) {
         const parser = new JsonParser({collectJson:true}); const input = createDecodedInput(parser);
         input.write(bytes);
-        expect(() => input.end()).toThrow(SyntaxError);
+        expect(() => input.end()).toThrow();
         expect(parser.closed).toBe(true);
-        expect(parser.json).toContain('�');
+        expect(parser.json).not.toContain('�');
     }
 });
 test('transport reentry cannot corrupt the decoder; reset keeps decoder on the transport', () => {
@@ -51,16 +51,28 @@ test('Web and Node transports preserve JSONL BOM and fatal UTF-8 rules', async (
     const bad = new JsonLinesParser().writable.getWriter();
     await expect(bad.write(Uint8Array.of(34,0xff,34,10))).rejects.toThrow();
 });
-test('transport preserves BOM decoding across cuts and empty byte writes', () => {
-    const bytes = new TextEncoder().encode('\ufeff{"text":"😀"}');
-    for (let cut = 0; cut <= bytes.length; ++cut) {
-        const parser = new JsonParser(); let root: unknown;
+test('transport preserves BOM for each dialect at every byte cut', () => {
+    const text = '\ufeff{"text":"😀"}', bytes = new TextEncoder().encode(text);
+    for (const Parser of [JsonParser, Json5Parser]) for (let cut = 0; cut <= bytes.length; ++cut) {
+        const parser = new Parser(); let root: unknown;
         parser.onValue('$', v => root = v);
         const input = createDecodedInput(parser);
-        input.write(bytes.subarray(0,cut)); input.write(new Uint8Array());
-        input.write(bytes.subarray(cut)); input.end(); input.end();
-        expect(root).toEqual({text:'😀'});
-        expect(() => input.write(new Uint8Array())).toThrow(/closed/);
+        const consume = () => {
+            input.write(bytes.subarray(0,cut)); input.write(new Uint8Array());
+            input.write(bytes.subarray(cut)); input.end();
+        };
+        if (Parser === JsonParser) expect(consume).toThrow(SyntaxError);
+        else { consume(); expect(root).toEqual({text:'😀'}); }
+    }
+});
+test('malformed UTF-8 fails without substituting a value and rejects waiting consumers', async () => {
+    for (const Parser of [JsonParser, Json5Parser]) {
+        const parser = new Parser(), input = createDecodedInput(parser);
+        const pending = parser.getValue('$');
+        const rejection = expect(pending).rejects.toMatchObject({name: 'TypeError'});
+        expect(() => input.write(Uint8Array.of(34, 0xff, 34))).toThrow();
+        expect(parser.closed).toBe(true);
+        await rejection;
     }
 });
 test('transport rejects mixed input before consuming it and allows recovery', () => {
@@ -89,4 +101,14 @@ test('transport remembers a falsy sink failure and does not call the sink again'
         expect(thrown).toBe(true);
     }
     expect(calls).toBe(1);
+});
+
+test('prefix filtering and multi-document managers also reject malformed UTF-8', () => {
+    const sinks = [new PrefixedJsonParser('START'), new PrefixFilter(new JsonParser(), 'START')];
+    const prefix = new TextEncoder().encode('START"');
+    const bytes = new Uint8Array([...prefix, 0xff, 34]);
+    for (const sink of sinks) {
+        expect(() => sink.write(bytes)).toThrow();
+        expect(sink.closed).toBe(true);
+    }
 });
