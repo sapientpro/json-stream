@@ -39,8 +39,8 @@ void result;
 p.onValue([true], () => {});
 // @ts-expect-error unknown dialect
 createParser({ format: 'jsonl' });
-// @ts-expect-error readonly snapshots cannot be mutated
 p.onValue([], (_value, path) => {
+    // @ts-expect-error readonly snapshots cannot be mutated
     path.push('x');
 });
 
