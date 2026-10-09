@@ -31,17 +31,25 @@ for(const c of cases){
  let text=JSON.stringify(expected);
  if(c.name==='hex')text=text.replace(/[^\x00-\x7f]/g,ch=>'\\u'+ch.charCodeAt(0).toString(16).padStart(4,'0'));
  const chunks=[];for(let i=0;i<text.length;i+=c.size)chunks.push(text.slice(i,i+c.size));
- const run=(Parser,check=false)=>{const p=new Parser();let root,length=0,parts=check?[]:undefined;
+ // Keep construction and write call sites separate: a shared runner mixes V8 feedback
+ // from both library versions. Two closures from one factory still share function metadata.
+ const runBefore=(check=false)=>{const p=new Before();let root,length=0,parts=check?[]:undefined;
  if(c.mode==='root')p.onValue('$',v=>root=v);else p.onString('$.text',v=>{length+=v.length;parts?.push(v);});
  for(const chunk of chunks)p.write(chunk);p.end();
  if(check){if(c.mode==='root')deepStrictEqual(root,expected);else strictEqual(parts.join(''),expected.text);}
  return length;
  };
- run(Before,true);run(After,true);
- const warmEnd=performance.now()+(focus?2000:500);while(performance.now()<warmEnd){run(Before);run(After);}
- const sample=Parser=>{let n=0;const cpu=process.cpuUsage(),start=performance.now();do{run(Parser);n++;}while(performance.now()-start<(focus?50:20));const elapsed=performance.now()-start,usage=process.cpuUsage(cpu);return {wall:elapsed/n,cpu:(usage.user+usage.system)/1000/n};};
+ const runAfter=(check=false)=>{const p=new After();let root,length=0,parts=check?[]:undefined;
+ if(c.mode==='root')p.onValue('$',v=>root=v);else p.onString('$.text',v=>{length+=v.length;parts?.push(v);});
+ for(const chunk of chunks)p.write(chunk);p.end();
+ if(check){if(c.mode==='root')deepStrictEqual(root,expected);else strictEqual(parts.join(''),expected.text);}
+ return length;
+ };
+ runBefore(true);runAfter(true);
+ const warmEnd=performance.now()+(focus?2000:500);while(performance.now()<warmEnd){runBefore();runAfter();}
+ const sample=run=>{let n=0;const cpu=process.cpuUsage(),start=performance.now();do{run();n++;}while(performance.now()-start<(focus?50:20));const elapsed=performance.now()-start,usage=process.cpuUsage(cpu);return {wall:elapsed/n,cpu:(usage.user+usage.system)/1000/n};};
  const before=[],after=[],bcpu=[],acpu=[];
- for(let n=0;n<(focus?11:9);n++){let b,a;if(n%2){a=sample(After);b=sample(Before);}else{b=sample(Before);a=sample(After);}before.push(b.wall);after.push(a.wall);bcpu.push(b.cpu);acpu.push(a.cpu);}
+ for(let n=0;n<(focus?11:9);n++){let b,a;if(n%2){a=sample(runAfter);b=sample(runBefore);}else{b=sample(runBefore);a=sample(runAfter);}before.push(b.wall);after.push(a.wall);bcpu.push(b.cpu);acpu.push(a.cpu);}
  const b=median(before),a=median(after);
  results.push({...c,bytes:Buffer.byteLength(text),beforeMs:b,afterMs:a,speedup:(b/a-1)*100,beforeCpu:median(bcpu),afterCpu:median(acpu),before,after});
 }
