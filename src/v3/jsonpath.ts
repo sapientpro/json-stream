@@ -1,7 +1,7 @@
-import { Any } from './types.js';
+import { Any, Rest } from './types.js';
 import type { Path, Selector } from './types.js';
 const ROOT_PATH: Path = Object.freeze([]);
-/** Compile the streaming child-selector subset of RFC 9535 once. */
+/** Compile the streaming selector subset of RFC 9535 once. */
 export function compileJsonPath(query: string): Path {
     // The root needs no selector parsing or helper closures.
     if (query === '$')
@@ -89,11 +89,19 @@ export function compileJsonPath(query: string): Path {
         ws();
         if (i === query.length)
             fail();
-        if (query[i] === '.') {
-            ++i;
+        let recursive = false;
+        if (query[i] === '.' && query[i + 1] === '.') {
+            recursive = true;
+            path.push(Rest);
+            i += 2;
+            if (query[i] !== '[' && query[i] !== '*' && !nameFirst(query.charCodeAt(i))) fail();
+        }
+        if (query[i] === '.' || recursive && query[i] !== '[') {
+            if (!recursive) ++i;
             if (query[i] === '*') {
                 ++i;
-                path.push(Any);
+                // A terminal recursive wildcard has the same semantics as terminal Rest.
+                if (!recursive || i < query.length) path.push(Any);
                 continue;
             }
             if (!nameFirst(query.charCodeAt(i)))
@@ -127,6 +135,7 @@ export function compileJsonPath(query: string): Path {
             ws();
             if (query[i++] !== ']')
                 fail();
+            if (recursive && i === query.length && path[path.length - 1] === Any) path.pop();
         }
         else
             fail();

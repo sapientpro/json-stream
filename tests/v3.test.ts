@@ -36,7 +36,7 @@ for (const Parser of [JsonParser, Json5Parser]) describe(Parser.name, () => {
     p.write('{"a":[1,2]}'); p.end();
     expect(saved).toEqual(['a',0]);
     expect(found.map((x:any)=>x[1])).toEqual([['a',0],['a',1],['a']]);
-    expect(()=>captureRoot(new Parser()).onValue([Rest,'a'],()=>{})).toThrow();
+    expect(()=>captureRoot(new Parser()).onValue([Rest,'a'],()=>{})).not.toThrow();
   });
   test('string fragments survive every byte cut and cancellation preserves retained root', () => {
     const bytes=enc.encode('{"s":"😀\\uD83D\\uDE00\\nxyz","empty":""}');
@@ -125,7 +125,7 @@ describe('JSONPath subset',()=>{
     const p=new JsonParser({});const values: unknown[]=[];
     p.onValue('$.*[0]',(v,path)=>values.push([v,path]));p.write('{"array":[7],"object":{"0":8}}');p.end();expect(values).toEqual([[7,['array',0]]]);
   });
-  test.each(['$..id','$[?(@.x)]','$[0:2]','$[-1]','$[0,1]','$ ','$["\\uD800"]','$["\\uDC00"]'])('rejects unsupported/invalid query %s',query=>expect(()=>compileJsonPath(query)).toThrow());
+  test.each(['$..','$[?(@.x)]','$[0:2]','$[-1]','$[0,1]','$ ','$["\\uD800"]','$["\\uDC00"]'])('rejects unsupported/invalid query %s',query=>expect(()=>compileJsonPath(query)).toThrow());
 });
 
 describe('Node adapters',()=>{

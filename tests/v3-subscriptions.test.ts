@@ -29,7 +29,7 @@ describe.each([JsonParser, Json5Parser])('%s subscription-driven values', Parser
         parser.write('{"items":[{"id":2}],"a.b":{"0":3}}'); parser.end();
         expect(found).toEqual([[2,['items',0,'id']],[2,['items',0,'id']],[3,['a.b','0']]]);
     });
-    test.each(['items.id', '', '$..id', '$[0:2]', '$[?(@.id)]'])('rejects ambiguous or unsupported string %j', path => {
+    test.each(['items.id', '', '$..', '$[0:2]', '$[?(@.id)]'])('rejects ambiguous or unsupported string %j', path => {
         const parser = new Parser();
         expect(() => parser.onValue(path, () => {})).toThrow(SyntaxError);
         expect(() => parser.onString(path, () => {})).toThrow(SyntaxError);

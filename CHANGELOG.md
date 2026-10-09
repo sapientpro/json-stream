@@ -4,6 +4,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+- Support recursive JSONPath selectors (`$..id`, `$..*`, `$..[0]`) and typed `Rest` with suffixes through cached subscription contexts. Recursive callbacks emit each concrete node once in value-completion order.
+
 - Reuse cached value-consumer decisions for JSON5 numeric conversion, finish
   plain quoted keys directly and recognize complete JSON5 literals in place.
   Preserve validation of unselected values and incremental token boundaries.
