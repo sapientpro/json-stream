@@ -4,6 +4,13 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+- Include a zero-based record index and original error cause in JSONL/prefix
+  parsing failures; remove the obsolete UTF-8 policy parameter.
+- Add seeded differential tests for both dialects, emitter routes, fragments,
+  paths, input cuts and mutated syntax to the regular test suite.
+- Add scoped Biome formatting/lint checks to development and CI; package the
+  architecture document and capability matrix linked from the README.
+
 - Keep one approximate current-throughput snapshot in public documentation;
   move historical experiments, reports and raw measurements into local `notes/`.
 

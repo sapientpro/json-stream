@@ -7,7 +7,11 @@ import { compileJsonPath } from './jsonpath.js';
 import { makeErrorReporter } from './channel.js';
 import type { FormatOptions, PathInput, PathSegment, Subscription } from './types.js';
 
-export type RecordCallback<T> = (value: T, path: readonly PathSegment[], recordIndex: number) => void;
+export type RecordCallback<T> = (
+    value: T,
+    path: readonly PathSegment[],
+    recordIndex: number,
+) => void;
 export type RecordObserver<T> = {
     next: RecordCallback<T>;
     end?: (path: readonly PathSegment[], recordIndex: number) => void;
@@ -31,18 +35,26 @@ abstract class RecordManager extends InputFramer {
     protected touched = false;
     private bound = false;
     protected readonly options: FormatOptions;
-    constructor(options: FormatOptions = {}, fatalUtf8 = true) {
-        super(fatalUtf8);
-        this.options = {...options};
+    constructor(options: FormatOptions = {}) {
+        super();
+        this.options = { ...options };
         this.report = makeErrorReporter(options.onObserverError);
         // Validate options eagerly, then reuse this instance for the first record.
         this.parser = this.newParser();
     }
-    get recordCount(): number { return this.count; }
-    onValue<T = any>(path: PathInput, callback: RecordCallback<T> | RecordObserver<T>): Subscription {
+    get recordCount(): number {
+        return this.count;
+    }
+    onValue<T = any>(
+        path: PathInput,
+        callback: RecordCallback<T> | RecordObserver<T>,
+    ): Subscription {
         return this.register(path, callback, false);
     }
-    onString(path: PathInput, callback: RecordCallback<string> | RecordObserver<string>): Subscription {
+    onString(
+        path: PathInput,
+        callback: RecordCallback<string> | RecordObserver<string>,
+    ): Subscription {
         return this.register(path, callback, true);
     }
     onRecord<T = any>(callback: (value: T, recordIndex: number) => void): Subscription {
@@ -52,7 +64,10 @@ abstract class RecordManager extends InputFramer {
         return new Promise((resolve, reject) => {
             let subscription: Subscription;
             subscription = this.onValue<T>(path, {
-                next: value => { subscription.unsubscribe(); resolve(value); },
+                next: (value) => {
+                    subscription.unsubscribe();
+                    resolve(value);
+                },
                 error: reject,
                 complete: () => reject(new Error('No value matched the selector')),
             });
@@ -61,48 +76,74 @@ abstract class RecordManager extends InputFramer {
     stringStream(path: PathInput): ReadableStream<string> {
         return createStringStream(this, path, this.options.maxBufferedChunks);
     }
-    private register<T>(path: PathInput, callback: RecordCallback<T> | RecordObserver<T>, fragments: boolean): Subscription {
-        if (this._started || this._closed) throw new Error('Register callbacks before the first write');
-        const observer = typeof callback === 'function' ? {next: callback} : callback;
-        if (!observer || typeof observer.next !== 'function') throw new TypeError('A next callback is required');
+    private register<T>(
+        path: PathInput,
+        callback: RecordCallback<T> | RecordObserver<T>,
+        fragments: boolean,
+    ): Subscription {
+        if (this._started || this._closed)
+            throw new Error('Register callbacks before the first write');
+        const observer = typeof callback === 'function' ? { next: callback } : callback;
+        if (!observer || typeof observer.next !== 'function')
+            throw new TypeError('A next callback is required');
         const saved = typeof path === 'string' ? compileJsonPath(path) : [...path];
         // Use the parser's selector validation; it has not consumed any input yet.
-        const validation = fragments ? this.parser!.onString(saved, () => {}) : this.parser!.onValue(saved, () => {});
+        const validation = fragments
+            ? this.parser!.onString(saved, () => {})
+            : this.parser!.onValue(saved, () => {});
         validation.unsubscribe();
-        const binding: Binding = {active: true, path: saved, fragments, observer};
+        const binding: Binding = { active: true, path: saved, fragments, observer };
         this.bindings.push(binding);
-        return {unsubscribe: () => {
-            binding.active = false;
-            binding.current?.unsubscribe();
-            binding.current = undefined;
-            binding.observer = null;
-        }};
+        return {
+            unsubscribe: () => {
+                binding.active = false;
+                binding.current?.unsubscribe();
+                binding.current = undefined;
+                binding.observer = null;
+            },
+        };
     }
     private newParser(): JsonScanner | Json5Scanner {
-        const {format = 'json', ...options} = this.options;
+        const { format = 'json', ...options } = this.options;
         if (format === 'json') return new JsonScanner(options);
         if (format === 'json5') return new Json5Scanner(options);
-        throw new TypeError('Unsupported input format: ' + format);
+        throw new TypeError(`Unsupported input format: ${format}`);
     }
     protected activeParser(): JsonScanner | Json5Scanner {
         if (!this.touched) {
             this.parser ??= this.newParser();
-            if (!this.bound) for (const binding of this.bindings) {
-                if (!binding.active) continue;
-                const observer = {
-                    next: (value: any, path: readonly PathSegment[]) => {
-                        if (!this._closed && binding.active) binding.observer?.next(value, path, this.count);
-                    },
-                    end: (path: readonly PathSegment[]) => {
-                        if (!this._closed && binding.active) binding.observer?.end?.(path, this.count);
-                    },
-                };
-                binding.current = binding.fragments ? this.parser.onString(binding.path, observer) : this.parser.onValue(binding.path, observer);
-            }
+            if (!this.bound)
+                for (const binding of this.bindings) {
+                    if (!binding.active) continue;
+                    const observer = {
+                        next: (value: any, path: readonly PathSegment[]) => {
+                            if (!this._closed && binding.active)
+                                binding.observer?.next(value, path, this.count);
+                        },
+                        end: (path: readonly PathSegment[]) => {
+                            if (!this._closed && binding.active)
+                                binding.observer?.end?.(path, this.count);
+                        },
+                    };
+                    binding.current = binding.fragments
+                        ? this.parser.onString(binding.path, observer)
+                        : this.parser.onValue(binding.path, observer);
+                }
             this.bound = true;
             this.touched = true;
         }
         return this.parser!;
+    }
+    protected contextError(error: Error): Error {
+        const ErrorType =
+            error instanceof SyntaxError
+                ? SyntaxError
+                : error instanceof RangeError
+                  ? RangeError
+                  : error instanceof TypeError
+                    ? TypeError
+                    : Error;
+        return new ErrorType(`${error.message} (record index ${this.count})`, { cause: error });
     }
     protected finishRecord(): void {
         const parser = this.activeParser();
@@ -126,20 +167,24 @@ abstract class RecordManager extends InputFramer {
             try {
                 if (error) observer?.error?.(error);
                 else observer?.complete?.();
+            } catch (reason) {
+                this.report(reason);
             }
-            catch (reason) { this.report(reason); }
         }
     }
 }
 
 /** LF-framed values. JSON5 is an explicit single-physical-line extension. */
 export class JsonLinesParser extends RecordManager {
-    constructor(options: FormatOptions = {}) { super({...options, strictEnd: true}, true); }
+    constructor(options: FormatOptions = {}) {
+        super({ ...options, strictEnd: true });
+    }
     private first = true;
     protected consume(text: string): void {
         if (this.first && text.length) {
             this.first = false;
-            if (text.charCodeAt(0) === 0xfeff) throw new SyntaxError('JSON Lines must not start with a BOM');
+            if (text.charCodeAt(0) === 0xfeff)
+                throw new SyntaxError('JSON Lines must not start with a BOM');
         }
         let pos = 0;
         while (pos < text.length && !this._closed) {
@@ -152,16 +197,22 @@ export class JsonLinesParser extends RecordManager {
             pos = end + 1;
         }
     }
-    protected finishInput(): void { if (this.touched) this.finishRecord(); }
+    protected finishInput(): void {
+        if (this.touched) this.finishRecord();
+    }
 }
 
 /** Seek an exact start marker for every JSON/JSON5 document. */
 export class PrefixedJsonParser extends RecordManager {
     private tail = '';
     private seeking = true;
-    constructor(private readonly marker: string, options: FormatOptions = {}) {
-        super({...options, strictEnd: false});
-        if (typeof marker !== 'string' || !marker.length) throw new TypeError('Prefix marker must be nonempty');
+    constructor(
+        private readonly marker: string,
+        options: FormatOptions = {},
+    ) {
+        super({ ...options, strictEnd: false });
+        if (typeof marker !== 'string' || !marker.length)
+            throw new TypeError('Prefix marker must be nonempty');
     }
     protected consume(text: string): void {
         // A split marker requires one bounded-prefix concatenation per input chunk.
@@ -193,5 +244,8 @@ export class PrefixedJsonParser extends RecordManager {
         if (!this.seeking) this.finishRecord();
         else if (!this.count) throw new SyntaxError('Prefix marker not found');
     }
-    protected terminate(error?: Error): void { this.tail = ''; super.terminate(error); }
+    protected terminate(error?: Error): void {
+        this.tail = '';
+        super.terminate(error);
+    }
 }

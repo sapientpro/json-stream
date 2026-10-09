@@ -13,18 +13,31 @@ export abstract class InputFramer implements ByteInputSink {
     private running = false;
     private failure?: Error;
     private stream?: WritableStream<string | Uint8Array>;
-    constructor(private readonly fatalUtf8 = true) { }
-    get closed(): boolean { return this._closed; }
-    get finished(): boolean { return this._finished; }
-    get writable(): WritableStream<string | Uint8Array> { return this.stream ??= createWritableStream(this); }
+    get closed(): boolean {
+        return this._closed;
+    }
+    get finished(): boolean {
+        return this._finished;
+    }
+    get writable(): WritableStream<string | Uint8Array> {
+        return (this.stream ??= createWritableStream(this));
+    }
     write(chunk: string | Uint8Array): void {
         this.check();
         const mode = typeof chunk === 'string' ? 'text' : 'bytes';
         if (this.mode && this.mode !== mode) throw new TypeError('Do not mix text and byte input');
         this.mode = mode;
         this._started = true;
-        this.run(() => this.consume(typeof chunk === 'string' ? chunk :
-            (this.decoder ??= new TextDecoder('utf-8', {ignoreBOM: true, fatal: this.fatalUtf8})).decode(chunk, {stream: true})));
+        this.run(() =>
+            this.consume(
+                typeof chunk === 'string'
+                    ? chunk
+                    : (this.decoder ??= new TextDecoder('utf-8', {
+                          ignoreBOM: true,
+                          fatal: true,
+                      })).decode(chunk, { stream: true }),
+            ),
+        );
     }
     end(): void {
         if (this.running) throw new Error('end() re-entered');
@@ -57,13 +70,20 @@ export abstract class InputFramer implements ByteInputSink {
     }
     private run(action: () => void): void {
         this.running = true;
-        try { action(); }
-        catch (reason) {
-            const error = reason instanceof Error ? reason : new Error(String(reason));
+        try {
+            action();
+        } catch (reason) {
+            const error = this.contextError(
+                reason instanceof Error ? reason : new Error(String(reason)),
+            );
             this.destroy(error);
             throw error;
+        } finally {
+            this.running = false;
         }
-        finally { this.running = false; }
+    }
+    protected contextError(error: Error): Error {
+        return error;
     }
     protected abstract consume(text: string): void;
     protected abstract finishInput(): void;
@@ -74,12 +94,19 @@ export abstract class InputFramer implements ByteInputSink {
 export class PrefixFilter extends InputFramer {
     private tail = '';
     private found = false;
-    constructor(private readonly target: InputSink, private readonly marker: string) {
+    constructor(
+        private readonly target: InputSink,
+        private readonly marker: string,
+    ) {
         super();
-        if (typeof marker !== 'string' || !marker.length) throw new TypeError('Prefix marker must be nonempty');
+        if (typeof marker !== 'string' || !marker.length)
+            throw new TypeError('Prefix marker must be nonempty');
     }
     protected consume(text: string): void {
-        if (this.found) { this.target.write(text); return; }
+        if (this.found) {
+            this.target.write(text);
+            return;
+        }
         const input = this.tail + text;
         const at = input.indexOf(this.marker);
         if (at < 0) {
@@ -94,5 +121,8 @@ export class PrefixFilter extends InputFramer {
         if (!this.found) throw new SyntaxError('Prefix marker not found');
         this.target.end();
     }
-    protected terminate(error?: Error): void { this.tail = ''; this.target.destroy(error); }
+    protected terminate(error?: Error): void {
+        this.tail = '';
+        this.target.destroy(error);
+    }
 }
