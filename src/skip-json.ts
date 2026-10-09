@@ -167,7 +167,7 @@ export class JsonSubtreeValidator {
                 if (pos === len) return pos;
                 continue;
             }
-            let code = buf.charCodeAt(pos);
+            const code = buf.charCodeAt(pos);
             if (isSpace(code)) {
                 ++pos;
                 continue;

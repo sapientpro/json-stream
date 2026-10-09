@@ -5,11 +5,13 @@ const { createParser, createDecodedInput, JsonLinesParser, PrefixedJsonParser } 
 const createCompactParser = (options) => createParser({ ...options, memoryMode: 'compact' });
 class JsonParser {
     constructor(options = {}) {
+        // biome-ignore lint/correctness/noConstructorReturn: test factory shim preserves the constructor-based verification matrix.
         return createCompactParser({ ...options, format: 'json' });
     }
 }
 class Json5Parser {
     constructor(options = {}) {
+        // biome-ignore lint/correctness/noConstructorReturn: test factory shim preserves the constructor-based verification matrix.
         return createCompactParser({ ...options, format: 'json5' });
     }
 }

@@ -22,7 +22,7 @@ function fixture(name) {
     switch (name) {
         case 'llm':
             value = {
-                text: 'Пояснення 😀.\nКод: const x = \"value\"; C:\\tmp\\file\n'.repeat(1000),
+                text: 'Пояснення 😀.\nКод: const x = "value"; C:\\tmp\\file\n'.repeat(1000),
             };
             break;
         case 'ascii':
@@ -32,7 +32,7 @@ function fixture(name) {
             value = { text: 'Привіт 世界 😀🎉 '.repeat(24000) };
             break;
         case 'escapes':
-            text = '{"text":"' + 'a\\n\\t\\\"\\\\\\u0414\\uD83D\\uDE00'.repeat(15000) + '"}';
+            text = '{"text":"' + 'a\\n\\t\\"\\\\\\u0414\\uD83D\\uDE00'.repeat(15000) + '"}';
             break;
         case 'numbers':
             value = Array.from({ length: 50000 }, (_, i) => i - 25000);
@@ -114,7 +114,7 @@ async function adapter(id, mode, bytes, capture = false) {
                 length = 0;
             const parts = [];
             if (mode === 'items')
-                parser.onValue(['items', Any], (value, path) => {
+                parser.onValue(['items', Any], (value) => {
                     count++;
                     sum += value.id;
                     if (capture) parts.push(value);
