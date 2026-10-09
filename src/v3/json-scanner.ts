@@ -5,9 +5,6 @@ import { EMPTY_CONTEXT, stepContext } from './selectors.js';
 import { State } from './state.js';
 import { IS_V8, unicodeUnit, readHex4, readLiteral, isSpace } from './lexical.js';
 // Use the native scanner only after a short prefix; tiny strings need no match allocation.
-const IS_BUN = typeof (globalThis as {
-    Bun?: unknown;
-}).Bun !== 'undefined';
 const STRING_END = IS_V8 ? /["\\]/g : /["\\\u0000-\u001f]/g;
 const STRING_CONTROL = /[\u0000-\u001f]/u;
 // Native serialization validates only bounded, raw segments; it never parses a document.
@@ -20,7 +17,6 @@ const hasStringControl = (part: string, pos: number, end: number, len: number): 
 const ESCAPES: {
     [key: string]: string;
 } = { '"': '"', '\\': '\\', '/': '/', b: '\b', f: '\f', n: '\n', r: '\r', t: '\t' };
-const HEX4 = /^[0-9a-fA-F]{4}$/;
 const JSON_NUMBER = /^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$/;
 // Keep the string scanner outside the state-machine loop.
 const scanStringEnd = (buf: string, pos: number, len: number): number => {
@@ -113,6 +109,7 @@ export class JsonScanner extends ParserCore {
         return true;
     }
     protected _release(): void {
+        this._requiredLength = 0;
         // Errors and cancellation may skip document-end validation.
         if (!this._documentDone) this._validateEnd();
         // Avoid introducing a super home-object context in scanner hot methods.
@@ -122,8 +119,11 @@ export class JsonScanner extends ParserCore {
     protected declare _keyCache: (string | undefined)[];
     protected declare _keyMisses: number;
     protected _numPhase = 0;
+    // Zero waits for the escape kind; positive values count missing Unicode digits.
+    private _requiredLength = 0;
     protected _resetScanner(): void {
         this._skip?.release();
+        this._requiredLength = 0;
         this._numPhase = 0;
         if (this._keyCache) {
             this._readObjectKey = this._readObjectKeyCached;
@@ -312,7 +312,9 @@ export class JsonScanner extends ParserCore {
                         pos += 2;
                     }
                     else {
-                        ++pos;
+                        this._acc = ch === 'u' ? buf.slice(pos + 2) : '';
+                        this._requiredLength = ch === 'u' ? 4 - this._acc.length : 0;
+                        pos = len;
                         this._state = State.ESC;
                     }
                 }
@@ -530,59 +532,52 @@ export class JsonScanner extends ParserCore {
                     break;
                 }
                 case State.ESC: {
-                    if (pos >= len) {
-                        this._flushChunk();
-                        this._pos = pos;
-                        return;
-                    }
-                    const ch = buf[pos]!;
-                    if (ch === 'u') {
-                        if (pos + 5 <= len) {
-                            const value = readHex4(buf, pos + 1);
-                            pos += 5;
-                            if (value < 0) {
+                    if (this._requiredLength === 0) {
+                        if (pos === len) {
+                            this._flushChunk();
+                            this._pos = pos;
+                            return;
+                        }
+                        const ch = buf[pos]!;
+                        if (ch !== 'u') {
+                            const escaped = ESCAPES[ch];
+                            if (escaped === undefined) {
                                 this._pos = pos;
                                 this._fail(this._syntaxError());
                             }
-                            if (this._retainString || this._strSinks.length)
-                                this._str += unicodeUnit(value);
+                            if (this._retainString || this._strSinks.length) this._str += escaped;
+                            ++pos;
                             this._state = State.STR;
                             break;
                         }
                         ++pos;
-                        this._acc = '';
-                        this._state = State.UESC;
-                        break;
+                        this._requiredLength = 4;
                     }
-                    if (!'"\\/bfnrt'.includes(ch)) {
+                    let value: number;
+                    if (this._requiredLength === 4 && pos + 4 <= len) {
+                        // All digits are in the new chunk: read them without copying.
+                        value = readHex4(buf, pos);
+                        pos += 4;
+                    }
+                    else {
+                        const take = Math.min(this._requiredLength, len - pos);
+                        this._acc += buf.slice(pos, pos + take);
+                        pos += take;
+                        this._requiredLength -= take;
+                        if (this._requiredLength) {
+                            this._flushChunk();
+                            this._pos = pos;
+                            return;
+                        }
+                        value = readHex4(this._acc, 0);
+                    }
+                    if (value < 0) {
                         this._pos = pos;
                         this._fail(this._syntaxError());
                     }
-                    if (this._retainString || this._strSinks.length) {
-                        this._str += ch === 'n' ? '\n' : ch === 't' ? '\t' : ch === 'r' ? '\r'
-                            : ch === 'b' ? '\b' : ch === 'f' ? '\f' : ch;
-                    }
-                    ++pos;
-                    this._state = State.STR;
-                    break;
-                }
-                case State.UESC: {
-                    const take = Math.min(4 - this._acc.length, len - pos);
-                    this._acc += buf.slice(pos, pos + take);
-                    pos += take;
-                    if (this._acc.length < 4) {
-                        this._flushChunk();
-                        this._pos = pos;
-                        return;
-                    }
-                    if (!HEX4.test(this._acc)) {
-                        this._pos = pos;
-                        this._fail(this._syntaxError());
-                    }
-                    if (this._retainString || this._strSinks.length) {
-                        this._str += unicodeUnit(parseInt(this._acc, 16));
-                    }
+                    if (this._retainString || this._strSinks.length) this._str += unicodeUnit(value);
                     this._acc = '';
+                    this._requiredLength = 0;
                     this._state = State.STR;
                     break;
                 }

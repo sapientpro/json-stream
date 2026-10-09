@@ -1,5 +1,5 @@
 import { DOCUMENT_INPUT } from './document-input.js';
-import {IS_V8} from './lexical.js';
+import {IS_BUN, IS_V8} from './lexical.js';
 import { Any, Rest } from './types.js';
 import type { Path, PathInput, PathSegment, ParserOptions, CallbackOptions, ValueCallback, CallbackObserver, Subscription, Parser } from './types.js';
 import { CopyingChannel } from './copy-channel.js';
@@ -10,7 +10,6 @@ import type { Node, Context, Frame } from './selectors.js';
 import { State } from './state.js';
 import { createWritableStream, createStringStream } from './web.js';
 import { compileJsonPath } from './jsonpath.js';
-const IS_BUN = typeof (globalThis as {Bun?: unknown}).Bun !== 'undefined';
 /** Shared incremental builder and synchronous callback lifecycle. */
 export abstract class ParserCore implements Parser {
     protected readonly _root: Node = newNode();
