@@ -18,8 +18,8 @@ These are `end()` results; `reset()`, `destroy()` and syntax errors reproduce th
 This is a retained-memory diagnostic, not a peak measurement. Sampled high counters miss transient allocations between samples. RSS also includes allocator/runtime reservations and does not fall immediately when strings become unreachable. Forced collection is confined to the diagnostic script; neither the parser nor the natural-GC throughput protocol invokes it.
 
 ```sh
-node --expose-gc scripts/v3/verify-string-memory.mjs json text none end
-bun scripts/v3/verify-string-memory.mjs json bytes none end
+node --expose-gc scripts/verify-string-memory.mjs json text none end
+bun scripts/verify-string-memory.mjs json bytes none end
 ```
 
 Positional arguments: format (`json`/`json5`), input (`text`/`bytes`), output (`none`/`root`/`selective`/`fragments`/`dense`), lifecycle (`end`/`reset`/`destroy`/`error`), optional separately built ESM entry. Root and selective/fragment outputs are validated before measurement. A second measurement drops saved outputs while retaining parsers, separating consumer retention from scanner retention.

@@ -4,6 +4,8 @@ Measured on 2026-10-08; recorded parser source revision `e1d2d41`, on Apple M4 P
 Pinned versions: our 3.0.0-alpha.1, @streamparser/json 0.0.26, stream-json 3.7.0,
 json-web-streams 1.2.0. JSON only in these throughput tables; JSON5 and record-manager
 capabilities are listed in [the capability matrix](../benchmarks/capabilities.md).
+This is a snapshot of the recorded revision, not a measurement of the latest
+main. The capability matrix tracks our newer unreleased API independently.
 
 ## Protocol and interpretation
 

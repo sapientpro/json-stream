@@ -1,14 +1,19 @@
 # 3.0 candidate performance
 
+For later merged changes, see [JSON5 value fast paths](v3-json5-values-performance.md)
+and [recursive JSONPath controls](v3-recursive-jsonpath-performance.md). The
+[package comparison](v3-package-comparison.md) is a dated snapshot, not a fresh
+measurement of current main.
+
 These are historical local measurements, not release guarantees. The subscription-only API now requests complete values through `$`; the `root` workload labels below describe the older measured API. Node26.10.0/Bun1.4.2,
 UTF-8 byte input, 1KiB/64KiB chunks, serial fresh processes, parser setup and
 registration included. Callbacks consume concrete paths; fixture outputs are
 checked. JSON fixture sizes and workload/mode definitions live in
-`scripts/v3/benchmark-worker.mjs`. Reproduce a released checkout with:
+`scripts/benchmark-worker.mjs`. Reproduce a released checkout with:
 
 ```sh
-node scripts/v3/benchmark.mjs --engine node --baseline /path/to/2.0.1/dist/esm/parser.js
-node scripts/v3/benchmark.mjs --engine bun --baseline /path/to/2.0.1/dist/esm/parser.js
+node scripts/benchmark.mjs --engine node --baseline /path/to/2.0.1/dist/esm/parser.js
+node scripts/benchmark.mjs --engine bun --baseline /path/to/2.0.1/dist/esm/parser.js
 ```
 
 The broad matrix below predates input framing/reset. Three alternating process
@@ -184,7 +189,7 @@ All numbers are decimal MB/s. Alternating fresh processes, serial workers; parse
 
 Before: fresh parser/bindings per record; prefix manager repeatedly sliced the remaining input. After: validating reset with persistent channels/selector caches, offset-based prefix input, direct core write and strict JSONL UTF-8 decoding. This is an end-to-end implementation comparison, not an isolated measurement of each change.
 
-Two alternating fresh processes per dataset/size, 12 warmups, 7 samples ×3 complete inputs; workers serial. Payload decimal MB/s excludes markers; record values/paths/fragments/counts checked. Reproduce with `node scripts/v3/benchmark-records.mjs node` and the same command with `bun`.
+Two alternating fresh processes per dataset/size, 12 warmups, 7 samples ×3 complete inputs; workers serial. Payload decimal MB/s excludes markers; record values/paths/fragments/counts checked. Reproduce with `node scripts/benchmark-records.mjs node` and the same command with `bun`.
 
 | engine | case | chunk | JSONL before → after MB/s | prefix before → after MB/s |
 |---|---|---:|---:|---:|

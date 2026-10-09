@@ -54,7 +54,7 @@ Freeze the PR34 ESM directory with a `package.json` containing `{"type":"module"
 then use the existing driver, for example:
 
 ```sh
-node scripts/v3/benchmark.mjs --engine node --baseline /absolute/path/to/pr34/index.js \
+node scripts/benchmark.mjs --engine node --baseline /absolute/path/to/pr34/index.js \
   --baseline-api callback --baseline-label pr34 --same-path --cpu \
   --pairs 5 --warmups 128 --iterations 32 --format json --input bytes \
   --sizes 65536 --cases 'discarded metadata/ids,objects/items' \

@@ -80,7 +80,7 @@ Build and 402 tests across 22 suites pass. Node/Bun format oracles pass 44,800 c
 Build main separately and pass its ESM entry:
 
 ```sh
-node scripts/v3/benchmark.mjs --engine node --baseline /path/to/main/dist/esm/v3/index.js --baseline-api callback --baseline-label main --cases llm/string --chunk-unit codepoint --chunk-pattern 1,3,8,2,16,4,32,5,48,7 --input text --pairs 3 --warmups 256 --iterations 64
+node scripts/benchmark.mjs --engine node --baseline /path/to/main/dist/esm/v3/index.js --baseline-api callback --baseline-label main --cases llm/string --chunk-unit codepoint --chunk-pattern 1,3,8,2,16,4,32,5,48,7 --input text --pairs 3 --warmups 256 --iterations 64
 ```
 
 Use `--runtime` for Node22/24, `--input bytes` and `--engine bun` for controls. Use `--format json5 --syntax json5` for baseline comparisons with the JSON5 scanner and syntax. Raw results and rejected prototypes remain ignored local notes. No CPU profiling tools, API, dependencies, package versions, tags or releases are added.

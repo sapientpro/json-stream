@@ -1,22 +1,24 @@
 # Capability matrix
 
-Audited against the installed versions below on 2026-10-08. These are pinned
-comparison versions, not claims about the newest releases. “Adapter” means
+Competitor capabilities were audited against the pinned installed versions on
+2026-10-08, not necessarily their newest releases. Our column describes unreleased
+`main` through PR #46 (updated 2026-10-09), independently of the older measured
+package-comparison snapshot. “Adapter” means
 composition or consumer code. See [the measured comparison](../docs/v3-package-comparison.md)
 for runtime coverage and Unicode boundary probes. `json-stream-lite` is excluded
 from ongoing comparisons as requested; archived release reports remain unchanged.
 
-| Capability | @sapientpro/json-stream 3.0.0-alpha.1 | @streamparser/json 0.0.26 | stream-json 3.7.0 | json-web-streams 1.2.0 |
+| Capability | @sapientpro/json-stream main (unreleased) | @streamparser/json 0.0.26 | stream-json 3.7.0 | json-web-streams 1.2.0 |
 |---|---|---|---|---|
-| Input | Text / UTF-8 bytes | Text / UTF-8 bytes | Text core; byte decoder / transports | Text; TextDecoderStream for bytes |
+| Input | Text core; UTF-8 in adapters | Text / UTF-8 bytes | Text core; byte decoder / transports | Text; TextDecoderStream for bytes |
 | Browser / Node transports | Web and Node wrappers | Core; separate wrappers | Web / Node pipelines | Web Streams |
 | Runtime dependencies | 0 | 0 | stream-chain | Standard Schema spec + JSONPath |
 | TypeScript declarations | Yes | Yes | Yes | Yes |
 | Synchronous push | write/end; callbacks run inside write | write/end | Public jsonParser core | No; TransformStream |
 | Selected completed values | onValue / getValue | onValue + paths | Filters + assembler/streamers | JSONParseStream queries |
 | Root retention | Only when subscribed to $ | paths + keepStack | Assembler / streamers | Selected value is buffered |
-| JSONPath | Child-selector subset: $, names, typed [0], [*] | Root/dotted names/wildcards subset | Path / regex / predicate filters | Root/names/wildcards subset |
-| Recursive matches | Terminal Rest in typed selector arrays | Not in documented subset | Regex / predicate filters | Not in documented subset |
+| JSONPath | Subset: $, names, typed [0], [*], recursive .. selectors | Root/dotted names/wildcards subset | Path / regex / predicate filters | Root/names/wildcards subset |
+| Recursive matches | JSONPath ..name / ..* / ..[0]; typed Rest with suffixes | Not in documented subset | Regex / predicate filters | Not in documented subset |
 | Filters / slices in JSONPath | Explicitly rejected | Not documented | Consumer filter pipeline | Not in documented subset |
 | Independent decoded string fragments | onString; concrete path and end callback | Cumulative partial previews | stringChunk tokens; filter by path | No public API |
 | String Web stream | stringStream(path) | Adapter | Token/Web pipeline | No |
@@ -26,7 +28,7 @@ from ongoing comparisons as requested; archived release reports remain unchanged
 | JSON5 | Separate scanner | No documented mode | JSONC, not JSON5 | No documented mode |
 | JSONL | Strict incremental manager; one physical line per record | separator option; not identical JSONL validation | JSONL components | multi values; not identical JSONL validation |
 | Multiple prefixed documents | PrefixedJsonParser / PrefixFilter | Preprocess | Preprocess / pipelines | Preprocess / multi |
-| Reset keeping consumers | reset() before end(); input type stays fixed | No documented equivalent | New pipeline instance | New stream instance |
+| Reset keeping consumers | reset() before end(); consumers stay registered | No documented equivalent | New pipeline instance | New stream instance |
 | Backpressure | Caller paces writes; wrappers regulate input; callbacks not awaited | Caller paces push core; wrappers | Stream pipelines / public sync core | Web stream backpressure |
 | Pending string queue bound | maxBufferedChunks; overflow unsubscribes | Consumer/wrapper policy | Pipeline queue policy | No fragment stream |
 | Streaming stringify | No | No | Stringer / disassembler | No |
@@ -34,8 +36,11 @@ from ongoing comparisons as requested; archived release reports remain unchanged
 | Depth limit | maxDepth | No documented option | No documented parser option | No documented option |
 
 JSONPath support here means each package's stated subset, not full RFC 9535.
-Our numeric indexes distinguish array elements from numeric object keys. `Rest`
-is a typed-array feature, not support for JSONPath descendant syntax `$..name`.
+Our numeric indexes distinguish array elements from numeric object keys.
+`$..name` compiles to `[Rest, 'name']`; `$..*` compiles to `[Rest]`.
+Recursive callbacks emit each concrete node once per registration, in
+value-completion order; full RFC ordered nodelist/multiplicity behavior is not
+provided.
 
 Backpressure is a scheduling/memory policy, not a single speed characteristic.
 The benchmark includes Web stream scheduling for json-web-streams and uses public

@@ -51,7 +51,7 @@ CPU samples on the variable fixture identified write/flush/scanning as major tex
 Build PR24 separately and pass its ESM entry as the baseline:
 
 ```sh
-node scripts/v3/benchmark.mjs --engine bun --baseline /path/to/pr24/dist/esm/v3/index.js --baseline-api callback --baseline-label PR24 --cases llm/string --chunk-unit codepoint --chunk-pattern 1,3,8,2,16,4,32,5,48,7 --input text --pairs 3 --warmups 120 --iterations 32
+node scripts/benchmark.mjs --engine bun --baseline /path/to/pr24/dist/esm/v3/index.js --baseline-api callback --baseline-label PR24 --cases llm/string --chunk-unit codepoint --chunk-pattern 1,3,8,2,16,4,32,5,48,7 --input text --pairs 3 --warmups 120 --iterations 32
 ```
 
 Use `--input bytes` for separately encoded UTF-8 chunks, `--engine node` for V8 controls, or `--chunk-unit codepoint --sizes 1,8,32,48` for fixed lengths. Raw byte splits remain available through the default chunk unit and `--input bytes`. Results include chunk count and writes per second. No API, package version, tag or publication changes.

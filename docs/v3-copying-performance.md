@@ -1,6 +1,6 @@
 # Compact memory-mode performance
 
-Measured 2026-10-09 on Node 26.11.0 and Bun 1.4.2. These are unreleased PR38 controls. The baseline is the unchanged main40 core (main 16a3d15), before integrating the memory option. Fast is the new default; compact enables copying. JSON5 uses its own scanner in all variants.
+Measured 2026-10-09 on Node 26.11.0 and Bun 1.4.2. These are historical controls for PR #38, merged as `3341785`; the feature remains unreleased since the alpha.2 tag. The baseline is the unchanged main40 core (main 16a3d15), before integrating the memory option. Fast is the new default; compact enables copying. JSON5 uses its own scanner in all variants.
 
 ## Final implementation: default and enabled costs
 
@@ -40,6 +40,6 @@ These are separate maxima across probes, not quantities to add. Bun heap and ext
 
 ## Reproduce and historical data
 
-See [API, limits and commands](v3-copying.md). `scripts/v3/benchmark-memory-mode.mjs --baseline /path/to/built/v3/index.js` reruns the three-variant final timing matrix serially, with default output under ignored notes. The memory diagnostic accepts `128 unicode compact` after the module path, and lifecycle `end`, `reset`, `destroy` or `error`.
+See [API, limits and commands](v3-copying.md). `scripts/benchmark-memory-mode.mjs --baseline /path/to/built/v3/index.js` reruns the three-variant final timing matrix serially, with default output under ignored notes. The memory diagnostic accepts `128 unicode compact` after the module path, and lifecycle `end`, `reset`, `destroy` or `error`.
 
 [Historical facade measurements](v3-copying-facade-performance.md) describe the removed, unreleased `/copying` API and its split/join versus two-part-join experiment. Those measurements and immutable samples are preserved for provenance; they do not measure the current integrated option or prove its default entry unchanged.

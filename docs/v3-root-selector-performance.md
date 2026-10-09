@@ -58,7 +58,7 @@ Keep a built baseline checkout at `7b3a811`, then build this checkout. Run worke
 serially on an otherwise idle machine:
 
 ```sh
-node scripts/v3/benchmark.mjs --engine node --baseline /path/to/baseline/dist/esm/v3/index.js --baseline-api callback --baseline-label main --format json --cases scalar/root,empty/root,small/root --sizes 65536 --input text --pairs 3 --warmups 20000 --iterations 100000 --output /tmp/root-setup-node.json
+node scripts/benchmark.mjs --engine node --baseline /path/to/baseline/dist/esm/v3/index.js --baseline-api callback --baseline-label main --format json --cases scalar/root,empty/root,small/root --sizes 65536 --input text --pairs 3 --warmups 20000 --iterations 100000 --output /tmp/root-setup-node.json
 ```
 
 For Bun use `--engine bun`; for the JSON5 byte-input control use

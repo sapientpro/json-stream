@@ -2,7 +2,7 @@
 
 Use `memoryMode: 'compact'` when keeping short string results or streamed
 fragments from large input chunks retains too much source storage. The default
-is `'fast'`. This option is not part of the published `3.0.0-alpha.2` release.
+is `'fast'`. This option is not part of the `3.0.0-alpha.2` tag.
 
 ```ts
 import {JsonParser, Json5Parser, JsonLinesParser, PrefixedJsonParser} from '@sapientpro/json-stream';
@@ -75,12 +75,12 @@ point and its configurable thresholds are not exported.
 npm run build
 npm run test:copying
 # Compare normal and compact retained string-fragment storage:
-node --expose-gc scripts/v3/verify-string-memory.mjs json text fragments end dist/esm/v3/index.js
-node --expose-gc scripts/v3/verify-string-memory.mjs json text fragments end dist/esm/v3/index.js 128 unicode compact
+node --expose-gc scripts/verify-string-memory.mjs json text fragments end dist/esm/index.js
+node --expose-gc scripts/verify-string-memory.mjs json text fragments end dist/esm/index.js 128 unicode compact
 # Direct parser throughput, natural GC:
-node scripts/v3/benchmark.mjs --engine node --format json --input text --memory-mode compact --sizes 32,65536 --cases 'llm/string,short strings/scalar'
+node scripts/benchmark.mjs --engine node --format json --input text --memory-mode compact --sizes 32,65536 --cases 'llm/string,short strings/scalar'
 # Same-path normal/compact controls against an independently built v3 baseline:
-node scripts/v3/benchmark-memory-mode.mjs --baseline /path/to/baseline/v3/index.js --output /tmp/memory-mode.json
+node scripts/benchmark-memory-mode.mjs --baseline /path/to/baseline/v3/index.js --output /tmp/memory-mode.json
 ```
 
 The memory diagnostic's optional final argument is `fast` or `compact`; width and

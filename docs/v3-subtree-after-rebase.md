@@ -1,6 +1,10 @@
 # Subtree skipping after main41 rebase
 
-2026-10-09. Baseline main3ec857c, including merged PR38/40/41. PR39 remains draft. Runtime adaptation resolves shared character-code imports and moves byte input in tests/diagnostics through createDecodedInput. Managed tails, final chunks, reset, compact and prefix/JSONL behavior are checked. Public parser API is unchanged by PR39.
+Historical rebase report. PR #39 subsequently merged as `e12b3a7`; the
+measurements, rejected variants and follow-up ideas below retain their original
+context and are not a current merge-readiness assessment.
+
+2026-10-09. Baseline main3ec857c, including merged PR38/40/41. PR39 was still draft during these measurements. Runtime adaptation resolves shared character-code imports and moves byte input in tests/diagnostics through createDecodedInput. Managed tails, final chunks, reset, compact and prefix/JSONL behavior are checked. Public parser API is unchanged by PR39.
 
 ## Fresh broad controls
 
@@ -97,4 +101,4 @@ The offset/public-write cleanup is separate: private DOCUMENT_INPUT keeps the or
 
 ## Reproduce
 
-Build main3ec857c separately and this branch. Run scripts/v3/benchmark.mjs with --baseline /path/to/main41/dist/esm/v3/index.js --baseline-api callback --same-path --input text --pairs 3 --warmups 128 --iterations 32 --cpu; choose --format json, --sizes 32,128 and --cases llm/string for the main regression. Other rows can be reproduced using the workload/subscription and size from the table. The complete runner, variants and intermediate raw data remain under ignored notes/analysis/v3-subtree-after-memory/main41.
+Build main3ec857c separately and this branch. Run scripts/benchmark.mjs with --baseline /path/to/main41/dist/esm/v3/index.js --baseline-api callback --same-path --input text --pairs 3 --warmups 128 --iterations 32 --cpu; choose --format json, --sizes 32,128 and --cases llm/string for the main regression. Other rows can be reproduced using the workload/subscription and size from the table. The complete runner, variants and intermediate raw data remain under ignored notes/analysis/v3-subtree-after-memory/main41.

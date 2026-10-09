@@ -17,12 +17,12 @@ Natural GC remains the default. `--cpu` does not expose or force collection; no 
 Build the current checkout with `npm run build`. Run serially:
 
 ```sh
-node scripts/v3/benchmark.mjs --engine node --format json \
+node scripts/benchmark.mjs --engine node --format json \
   --cases 'discarded metadata/ids,discarded metadata/root' \
   --sizes 1024 --pairs 3 --warmups 1024 --iterations 256 --cpu \
   --output /tmp/discarded-node.json
 
-node scripts/v3/benchmark.mjs --engine bun --format json \
+node scripts/benchmark.mjs --engine bun --format json \
   --cases 'discarded metadata/ids,discarded metadata/root' \
   --sizes 1024 --pairs 3 --warmups 1024 --iterations 256 --cpu \
   --output /tmp/discarded-bun.json
@@ -33,7 +33,7 @@ For comparisons, add `--baseline /absolute/path/to/baseline/dist/esm/v3/index.js
 Keep string delivery as a separate control:
 
 ```sh
-node scripts/v3/benchmark.mjs --engine bun --format json --cases llm/string \
+node scripts/benchmark.mjs --engine bun --format json --cases llm/string \
   --input bytes --chunk-unit codepoint --chunk-pattern 1,3,8,2,16,4,32,5,48,7 \
   --pairs 3 --warmups 1024 --iterations 256 --cpu \
   --output /tmp/llm-token-bun.json

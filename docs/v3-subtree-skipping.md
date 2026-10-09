@@ -1,10 +1,14 @@
-# Validation-only subtree skipping — draft experiment
+# Validation-only subtree skipping — historical experiment
 
-This draft changes the strict JSON implementation without adding public options
+Status update: PR #39 was merged as `e12b3a7`. The original measurements and
+rejected variants below are preserved; they describe the experiment at their
+recorded revisions, not the latest `main`. See the [API](v3.md) for current behavior.
+
+At the time of this report, this draft changed the strict JSON implementation without adding public options
 or changing callbacks, value retention, decoded string streaming or transports.
-It is not part of the alpha.2 release and is **not ready to merge**.
+It was not part of the alpha.2 tag and was initially **not ready to merge**.
 
-Current main41 rebase controls, rejected continuation experiment and profile findings:
+Later main41 rebase controls, rejected continuation experiment and profile findings:
 [updated report](v3-subtree-after-rebase.md). The original alpha.2 measurements below
 are historical; they do not describe the rebased baseline.
 
@@ -186,12 +190,12 @@ Build alpha.2 in a separate checkout to provide the baseline module below.
 ```sh
 npm run build
 npm test -- --runInBand
-node scripts/v3/verify-subtrees.mjs
-bun scripts/v3/verify-subtrees.mjs
-deno run --allow-read scripts/v3/verify-subtrees.mjs
-node --expose-gc scripts/v3/verify-subtree-memory.mjs text end
-bun scripts/v3/verify-subtree-memory.mjs bytes error
-node scripts/v3/benchmark.mjs --engine node --baseline /path/to/alpha2/dist/esm/v3/index.js --baseline-api callback --baseline-label alpha2 --same-path --format json --input bytes --sizes 128,65536 --pairs 3 --warmups 128 --iterations 24 --cpu --cases 'discarded metadata/ids,objects/missing,llm/string'
+node scripts/verify-subtrees.mjs
+bun scripts/verify-subtrees.mjs
+deno run --allow-read scripts/verify-subtrees.mjs
+node --expose-gc scripts/verify-subtree-memory.mjs text end
+bun scripts/verify-subtree-memory.mjs bytes error
+node scripts/benchmark.mjs --engine node --baseline /path/to/alpha2/dist/esm/v3/index.js --baseline-api callback --baseline-label alpha2 --same-path --format json --input bytes --sizes 128,65536 --pairs 3 --warmups 128 --iterations 24 --cpu --cases 'discarded metadata/ids,objects/missing,llm/string'
 ```
 
 Use `--engine bun` for Bun and `--input text` for text. For JSON5 controls use

@@ -36,7 +36,7 @@ Validation: 508 tests; 9,884 fast/compact portable boundary checks each Node/Bun
 Build main3341785 separately, then build this branch. For example:
 
 ```sh
-node scripts/v3/benchmark.mjs --engine bun --baseline /path/to/main38/dist/esm/v3/index.js --baseline-api callback --baseline-label main38 --same-path --format json --input text --sizes 65536 --cases escapes/string --pairs 3 --warmups 128 --iterations 32 --cpu --output /tmp/boundaries-bun.json
+node scripts/benchmark.mjs --engine bun --baseline /path/to/main38/dist/esm/v3/index.js --baseline-api callback --baseline-label main38 --same-path --format json --input text --sizes 65536 --cases escapes/string --pairs 3 --warmups 128 --iterations 32 --cpu --output /tmp/boundaries-bun.json
 # Add --memory-mode compact for compact-versus-compact controls.
 ```
 
