@@ -1,6 +1,6 @@
 # Compact memory-mode performance
 
-Measured 2026-10-09 on Node 26.11.0 and Bun 1.4.2. These are historical controls for PR #38, merged as `3341785`; the feature remains unreleased since the alpha.2 tag. The baseline is the unchanged main40 core (main 16a3d15), before integrating the memory option. Fast is the new default; compact enables copying. JSON5 uses its own scanner in all variants.
+Measured 2026-10-09 on Node 26.11.0 and Bun 1.4.2. These are historical controls for PR #38, merged as `3341785`; the feature is included in alpha.3. The baseline is the unchanged main40 core (main 16a3d15), before integrating the memory option. Fast is the new default; compact enables copying. JSON5 uses its own scanner in all variants.
 
 ## Final implementation: default and enabled costs
 
