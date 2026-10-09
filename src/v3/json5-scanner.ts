@@ -2,7 +2,7 @@ import { CharCode } from './char-code.js';
 import { ParserCore } from './core.js';
 import { EMPTY_CONTEXT, stepContext } from './selectors.js';
 import { State } from './state.js';
-import { unicodeUnit, hexDigit, readHex4, isSpace, decodeIdentifier } from './lexical.js';
+import { unicodeUnit, hexDigit, readHex4, readLiteral, isSpace, decodeIdentifier } from './lexical.js';
 const IDENT = 14, SKIP_LF = 15;
 const JSON5_TOKEN_END = /[\t\n\v\f\r \u00a0\ufeff\u2028\u2029\p{Zs},:{}\[\]\/]/gu;
 const JSON5_SPACE = /[\t\n\v\f\r \u00a0\ufeff\u2028\u2029\p{Zs}]/u;
@@ -51,6 +51,10 @@ export class Json5Scanner extends ParserCore {
         else {
             if (!JSON5_NUMBER.test(text))
                 this._failAt(pos);
+            if (!this._context.hasValues && this._stack[this._stack.length - 1]?.container === undefined) {
+                this._emit(undefined);
+                return;
+            }
             const negative = text[0] === '-', unsigned = text[0] === '-' || text[0] === '+' ? text.slice(1) : text;
             this._emit(negative ? -Number(unsigned) : Number(unsigned));
         }
@@ -62,6 +66,33 @@ export class Json5Scanner extends ParserCore {
         const last = buf.charCodeAt(end);
         // A Unicode whitespace match may occupy a surrogate pair.
         if (last >= 0xDC00 && last <= 0xDFFF) --end;
+        return end;
+    }
+    protected _readObjectKey(buf: string, pos: number, len: number): number {
+        const quote = this._quote, limit = Math.min(len, pos + 16);
+        let end = pos;
+        while (end < limit) {
+            const code = buf.charCodeAt(end);
+            if (code === quote || code === CharCode.BACKSLASH || code === 13 || code === 10) break;
+            ++end;
+        }
+        if (end === limit && end < len) {
+            const pattern = quote === CharCode.QUOTE ? JSON5_DOUBLE_END : JSON5_SINGLE_END;
+            pattern.lastIndex = end;
+            const match = pattern.exec(buf);
+            end = match ? match.index : len;
+        }
+        if (end < len && buf.charCodeAt(end) === quote) {
+            const key = this._retainString ? this._flatten(buf.slice(pos, end)) : undefined;
+            const frame = this._stack[this._stack.length - 1]!;
+            frame.key = key!;
+            if (frame.context !== EMPTY_CONTEXT) this._path.push(key!);
+            this._pos = end + 1;
+            this._state = State.COLON;
+            return end + 1;
+        }
+        if (this._retainString) this._str += buf.slice(pos, end);
+        this._state = State.STR;
         return end;
     }
     protected _run(): void {
@@ -285,6 +316,21 @@ export class Json5Scanner extends ParserCore {
                                 break;
                             }
                         }
+                        else if (code === 116 || code === 102 || code === 110) {
+                            const literal = readLiteral(buf, pos, len);
+                            if (literal) {
+                                const end = pos + (literal === 2 ? 5 : 4), next = buf.charCodeAt(end);
+                                const terminal = next === CharCode.COMMA || next === CharCode.RBRACE || next === CharCode.RBRACKET ||
+                                    next === CharCode.COLON || next === CharCode.LBRACE || next === CharCode.LBRACKET || next === 47 ||
+                                    isSpace(next) || next === 11 || next === 12 || next >= 128 && JSON5_SPACE.test(buf[end]!);
+                                if (terminal) {
+                                    pos = end;
+                                    this._pos = pos;
+                                    this._emit(literal === 1 ? true : literal === 2 ? false : null);
+                                    break;
+                                }
+                            }
+                        }
                         this._acc = '';
                         this._state = State.NUM;
                     }
@@ -300,7 +346,8 @@ export class Json5Scanner extends ParserCore {
                         this._quote = code;
                         this._keyMode = true;
                         this._retainString = this._needsKey();
-                        this._state = State.STR;
+                        if (this._hasChunks) this._state = State.STR;
+                        else pos = this._readObjectKey(buf, pos, len);
                     }
                     else {
                         this._acc = '';

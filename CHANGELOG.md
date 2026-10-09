@@ -4,6 +4,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+- Reuse cached value-consumer decisions for JSON5 numeric conversion, finish
+  plain quoted keys directly and recognize complete JSON5 literals in place.
+  Preserve validation of unselected values and incremental token boundaries.
+
 - Decode JSON5 string escapes within the current scanner iteration and collect
   split Unicode/hex escapes in bounded slices, preserving incremental string
   delivery, JSON5 escape rules and surrogate boundaries.

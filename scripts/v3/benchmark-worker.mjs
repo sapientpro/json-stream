@@ -60,6 +60,7 @@ const run=(capture=false)=>{
  else if(['ids','root+ids'].includes(job.mode))add(['items',Any,'id']);
  else if(job.mode==='items')add(['items',Any]);
  else if(job.mode==='fanout')for(let i=0;i<8;i++)add(['items',Any]);
+ else if(job.mode==='descendants')add([Any,'missing']);
  else if(job.mode==='missing')for(let i=0;i<100;i++)add(['never'+i,Any,'id']);
  else if(job.mode==='overlap'){add([Rest]);add(['items',Any,'id']);add(['items',Any]);}
  else if(job.mode==='string'){if(job.legacy)p.chunks('text').subscribe(v=>consume(v,['text']));else p.onString(['text'],consume);}
@@ -73,7 +74,7 @@ if(job.mode==='scalar')deepStrictEqual(probe.values,expectedValues);
 if(job.mode==='ids')deepStrictEqual(probe.values,expectedIds);
 if(job.mode==='items')deepStrictEqual(probe.values,value.items);
 if(job.mode==='string')strictEqual(probe.values.join(''),value.text);
-if(job.mode==='missing')strictEqual(probe.count,0);
+if(job.mode==='missing'||job.mode==='descendants')strictEqual(probe.count,0);
 if(job.mode==='cancel')strictEqual(probe.count,32);
 const summary=({root,count,sum,length,pathSum,lastPath})=>({root,count,sum,length,pathSum,lastPath});
 const expected=summary(probe);
