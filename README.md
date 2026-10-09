@@ -31,6 +31,7 @@ controls input pacing. Use JSONL or prefix managers to consume multiple document
 - [Architecture and tradeoffs](docs/v3-architecture.md)
 - [Performance measurements](docs/v3-performance.md)
 - [Current package comparison: Node, Bun and Deno](docs/v3-package-comparison.md)
+- [Long-stream lifecycle and memory checks](docs/v3-long-stream-memory.md)
 - [Package capability matrix](benchmarks/capabilities.md)
 - [Subscription API before/after measurements](docs/v3-subscriptions-performance.md)
 
