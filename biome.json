@@ -1,0 +1,36 @@
+{
+    "files": {
+        "includes": [
+            "src/channel.ts",
+            "src/framing.ts",
+            "src/records.ts",
+            "tests/differential.test.ts",
+            "tests/record-errors.test.ts"
+        ]
+    },
+    "formatter": {
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "lineWidth": 100
+    },
+    "javascript": {
+        "formatter": {
+            "quoteStyle": "single"
+        }
+    },
+    "linter": {
+        "rules": {
+            "preset": "recommended",
+            "style": {
+                "noNonNullAssertion": "off"
+            },
+            "suspicious": {
+                "noExplicitAny": "off",
+                "noAssignInExpressions": "off"
+            }
+        }
+    },
+    "assist": {
+        "enabled": false
+    }
+}

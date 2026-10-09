@@ -44,9 +44,15 @@ explicitly rejected. See [supported paths and streaming semantics](docs/v3.md#pa
 ```sh
 npm run build
 npm test -- --runInBand
+npm run check
 npm run test:formats
 npm run benchmark
 ```
+
+Biome provides `lint`, `format`, `format:check` and `check`. Its explicit file list
+currently covers callback channels, framing/record managers and their new tests;
+expand it as other files are cleaned up. Lazy assignments, existing generic `any`
+defaults and checked array-index assertions are allowed.
 
 Benchmarks include setup and use natural GC, serial workers and correctness checks. See [current throughput and reproduction](docs/performance.md). Detailed reports and raw samples stay in ignored `notes/`.
 The current implementation lives in `src/`, with tests in `tests/` and tools in

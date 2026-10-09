@@ -60,12 +60,17 @@
     "benchmark:v3": "npm run benchmark --",
     "benchmark:competitors:deno": "npm run build && node scripts/competitors.mjs --engine deno --checks && node scripts/competitors.mjs --engine deno --secondary && node scripts/competitors-report.mjs --engines node,bun,deno",
     "test:copying": "node scripts/verify-copying.mjs && bun scripts/verify-copying.mjs",
-    "prepublishOnly": "npm run build && npm run test"
+    "prepublishOnly": "npm run build && npm run test",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "check": "biome check ."
   },
   "engines": {
     "node": ">=22"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.15",
     "@streamparser/json": "0.0.26",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.6",
@@ -82,7 +87,9 @@
     "CHANGELOG.md",
     "docs/v3.md",
     "docs/v3-copying.md",
-    "docs/performance.md"
+    "docs/performance.md",
+    "docs/v3-architecture.md",
+    "benchmarks/capabilities.md"
   ],
   "typesVersions": {
     "*": {
