@@ -186,7 +186,7 @@ if(process.argv[2]==='--worker') {
  const chosen=option('--cases');const selected=chosen?cases.filter(x=>chosen.split(',').includes(x.dataset+'/'+x.mode)):cases;
  if(!selected.length)throw Error('No matching cases');
  const versions=Object.fromEntries(packages.map(id=>[id,JSON.parse(readFileSync(path.join(root,id==='sapient'?'package.json':`node_modules/${names[id]}/package.json`),'utf8')).version]));
- const output=option('--output',`benchmarks/results/v3-competitors-${engine}${checks?'-checks':''}.json`);mkdirSync(path.dirname(output),{recursive:true});
+ const output=option('--output',`notes/benchmarks/results/v3-competitors-${engine}${checks?'-checks':''}.json`);mkdirSync(path.dirname(output),{recursive:true});
  let sourceRevision;try{sourceRevision=execFileSync('git',['rev-parse','--short','HEAD'],{cwd:root,encoding:'utf8'}).trim();}catch{sourceRevision='unavailable';}
  const results=[],total=selected.length*packages.length*repetitions;
  for(let repetition=0;repetition<repetitions;repetition++)for(const c of selected)for(const id of [...packages.slice(repetition%4),...packages.slice(0,repetition%4)]){

@@ -112,3 +112,16 @@ for (const Parser of [JsonParser, Json5Parser]) test(Parser.name + ' compact tra
     expect(final.end(document+suffix)).toBe(suffix.length);
     expect(final.finished).toBe(true);
 });
+
+for (const Parser of [JsonParser, Json5Parser]) for (const memoryMode of ['fast', 'compact'] as const)
+    for (const strictEnd of [true, false]) {
+        test(`${Parser.name} ${memoryMode} strict=${strictEnd} public write ignores forEach arguments`, () => {
+            const parser = new Parser({memoryMode, strictEnd, collectJson: true});
+            let value: unknown;
+            parser.onValue('$', v => value = v);
+            ['{"a":', '[10,20]}'].forEach(parser.write, parser);
+            parser.end();
+            expect(value).toEqual({a: [10,20]});
+            expect(parser.json).toBe('{"a":[10,20]}');
+        });
+    }

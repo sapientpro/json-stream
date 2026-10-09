@@ -2,6 +2,20 @@
 
 This project follows [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+- Keep one approximate current-throughput snapshot in public documentation;
+  move historical experiments, reports and raw measurements into local `notes/`.
+
+- Ignore additional arguments to public `write`, including the index supplied by
+  `Array.forEach`; reserve cursor input for internal document managers.
+- Preserve BOM during transport decoding and reject malformed/truncated UTF-8
+  consistently across core transports and framing adapters.
+- Report the same depth-limit error for selected and skipped JSON subtrees.
+- Give JSON5 identifier and line-continuation states distinct enum values.
+- Publish only user-facing API/memory documentation; move build/test preparation
+  from dependency installation to `prepublishOnly`, with explicit CI checks.
+
 ## 3.0.0-alpha.3 — 2026-10-09
 
 - **Breaking since alpha.2:** core parsers now accept strings only. UTF-8 decoding

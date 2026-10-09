@@ -64,9 +64,8 @@ mode unless retained source storage is a measured problem.
 
 The mode is selected at construction/subscription time. Normal `write()` and
 `CallbackChannel.next()` have no memory-mode condition, although setup and code
-layout can still affect normal-mode timings. See the
-[performance controls and raw samples](v3-copying-performance.md), including
-regressions. This replaces the earlier, unreleased `/copying` facade; that entry
+layout can still affect normal-mode timings. See [approximate parser throughput](performance.md) for the default mode;
+compact mode is not included in that table. This replaces the earlier, unreleased `/copying` facade; that entry
 point and its configurable thresholds are not exported.
 
 ## Reproduce

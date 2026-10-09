@@ -1,4 +1,4 @@
-# Candidate architecture
+# Parser architecture
 
 `src/core.ts` owns builders, retention, selector contexts, concrete paths,
 consumer lifecycle. It accepts strings only. `json-scanner.ts` and
@@ -33,16 +33,14 @@ Web and Node wrappers own incremental UTF-8 decoding and input pacing.
 The synchronous `createDecodedInput` adapter shares the same decoding lifecycle: it
 flushes at EOF, releases the decoder after failure/cancellation, and rejects mixed
 text/byte writes before consuming them. JSONL and prefix managers retain their own
-transport policies, including strict JSONL UTF-8 and BOM rejection. String output
+transport decoding. All adapters reject invalid UTF-8 and preserve BOM for
+the selected grammar; JSONL rejects an initial BOM. String output
 streams own their queues and unsubscribe on cancellation/overflow. No asynchronous
 callback work suspends the scanner inside a write. A future resumable output API
 would need an explicit suspension contract rather than implicitly awaiting user
 callbacks.
 
-A generated implementation which inlined the common core into private fields was
-measured and removed: ordinary Node scalar workloads lost roughly 4–6%, and Bun
-root construction lost about 12% compared with inheritance. This candidate shares
-source and runtime methods instead. Current selector plans/bindings are per-parser;
+Current selector plans/bindings are per-parser;
 reusable immutable compiled plans are a separate potential optimization, especially
 for parsing many independent documents. `compileJsonPath()` returns an immutable
 path, not a reusable mutable execution context.

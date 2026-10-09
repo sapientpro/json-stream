@@ -110,3 +110,13 @@ for (const memoryMode of ['fast','compact'] as const) test('managed tails after 
         }
     }
 });
+
+test('maxDepth errors have the same message with retained and ignored subtrees at every cut', () => {
+    for (const text of ['[[[1]]]', '{"a":{"b":{}}}']) for (let cut = 0; cut <= text.length; ++cut)
+        for (const selector of [undefined, '$', '$.missing']) {
+            const parser = new JsonParser({maxDepth: 2});
+            if (selector) parser.onValue(selector, () => {});
+            expect(() => {parser.write(text.slice(0,cut)); parser.end(text.slice(cut));})
+                .toThrow('Json nesting deeper than 2');
+        }
+});

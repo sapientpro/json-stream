@@ -14,6 +14,7 @@ export class JsonSubtreeValidator {
     private limit = 0;
     done = false;
     error = -1;
+    depthExceeded = false;
 
     start(array: boolean, limit: number): void {
         this.stack.length = 0;
@@ -22,6 +23,7 @@ export class JsonSubtreeValidator {
         this.limit = limit;
         this.done = false;
         this.error = -1;
+        this.depthExceeded = false;
     }
     release(): void {
         STRING_STOP.lastIndex = 0;
@@ -126,7 +128,7 @@ export class JsonSubtreeValidator {
             }
             this.stack[top] = expect === Expect.ObjectValue ? Expect.ObjectNext : Expect.ArrayNext;
             if (code === 123 || code === 91) {
-                if (this.stack.length >= this.limit) {this.error = pos; return pos;}
+                if (this.stack.length >= this.limit) {this.depthExceeded = true; this.error = pos; return pos;}
                 this.stack.push(code === 91 ? Expect.ArrayFirst : Expect.ObjectFirst); ++pos;
             }
             else if (code === 34) {this.token = Token.String; ++pos;}

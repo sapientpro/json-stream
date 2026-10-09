@@ -31,7 +31,7 @@ abstract class RecordManager extends InputFramer {
     protected touched = false;
     private bound = false;
     protected readonly options: FormatOptions;
-    constructor(options: FormatOptions = {}, fatalUtf8 = false) {
+    constructor(options: FormatOptions = {}, fatalUtf8 = true) {
         super(fatalUtf8);
         this.options = {...options};
         this.report = makeErrorReporter(options.onObserverError);

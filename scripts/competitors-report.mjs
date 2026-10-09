@@ -1,11 +1,13 @@
 import {readFileSync, writeFileSync, mkdirSync} from 'node:fs';
 import path from 'node:path';
 const args=process.argv.slice(2),option=(k,d)=>args.includes(k)?args[args.indexOf(k)+1]:d;
+const inputDirectory=option('--input-dir','notes/benchmarks/results');
+const reportPath=option('--output','notes/benchmarks/package-comparison.md');
 const engines=option('--engines','node,bun').split(',');
 const packages=['sapient','streamparser','stream-json','json-web-streams'];
 const median=xs=>[...xs].sort((a,b)=>a-b)[Math.floor(xs.length/2)];
 const key=r=>[r.dataset,r.mode,r.input,r.size].join('/');
-const first=JSON.parse(readFileSync(`benchmarks/results/v3-competitors-${engines[0]}.json`));
+const first=JSON.parse(readFileSync(`${inputDirectory}/v3-competitors-${engines[0]}.json`));
 const measuredDate=new Date(first.date).toLocaleDateString('en-CA',{timeZone:'Europe/Kyiv'});
 const revision=first.sourceRevision??'not recorded';
 let doc=`# Streaming package comparison, 3.0 alpha
@@ -13,7 +15,7 @@ let doc=`# Streaming package comparison, 3.0 alpha
 Measured on ${measuredDate}; recorded parser source revision \`${revision}\`, on ${first.cpu}.
 Pinned versions: our ${first.versions.sapient}, @streamparser/json ${first.versions.streamparser}, stream-json ${first.versions['stream-json']},
 json-web-streams ${first.versions['json-web-streams']}. JSON only in these throughput tables; JSON5 and record-manager
-capabilities are listed in [the capability matrix](../benchmarks/capabilities.md).
+capabilities are listed in [the capability matrix](https://github.com/sapientpro/json-stream/blob/main/benchmarks/capabilities.md).
 This is a snapshot of the recorded revision, not a measurement of the latest
 main. The capability matrix tracks our newer API independently.
 
@@ -52,7 +54,7 @@ a close result as a win.
 `;
 const todos=[];
 for(const engine of engines){
- const file=`benchmarks/results/v3-competitors-${engine}.json`,data=JSON.parse(readFileSync(file));
+ const file=`${inputDirectory}/v3-competitors-${engine}.json`,data=JSON.parse(readFileSync(file));
  const groups=Map.groupBy(data.results,key);
  for(const [k,rows]of groups)for(const id of packages)if(rows.filter(r=>r.id===id).length!==data.protocol.repetitions)throw Error(`Incomplete ${engine} ${k} ${id}`);
  const ok=data.results.filter(r=>r.status==='ok').length,failed=data.results.filter(r=>r.status==='failed').length,unsupported=data.results.filter(r=>r.status==='unsupported').length;
@@ -78,7 +80,7 @@ for(const engine of engines){
  doc+='\n';
  const failures=data.results.filter(r=>r.status==='failed');if(failures.length)doc+='Failures and stack traces are preserved in the raw result file. Failed cases are not ranked.\n\n';
 }
-const checkSummary=['| Runtime | Passed | Unsupported | Failed |','|---|---:|---:|---:|',...engines.map(engine=>{const d=JSON.parse(readFileSync(`benchmarks/results/v3-competitors-${engine}-checks.json`));return `| ${engine} | ${d.results.filter(r=>r.status==='ok').length} | ${d.results.filter(r=>r.status==='unsupported').length} | ${d.results.filter(r=>r.status==='failed').length} |`;})].join('\n');
+const checkSummary=['| Runtime | Passed | Unsupported | Failed |','|---|---:|---:|---:|',...engines.map(engine=>{const d=JSON.parse(readFileSync(`${inputDirectory}/v3-competitors-${engine}-checks.json`));return `| ${engine} | ${d.results.filter(r=>r.status==='ok').length} | ${d.results.filter(r=>r.status==='unsupported').length} | ${d.results.filter(r=>r.status==='failed').length} |`;})].join('\n');
 doc+=`## Why workloads differ
 
 The source explains architectural differences; it does not establish how many
@@ -132,11 +134,11 @@ Deno subset after the primary run (Deno must already be installed). Runtime vers
 are stored in every result file. Fresh workers run serially; do not run several
 benchmark commands concurrently or rebuild while a benchmark is active.
 
-Raw worker samples for this run are checked in under
-[benchmarks/v3-comparison-data](../benchmarks/v3-comparison-data). Normal reruns write
-to ignored \`benchmarks/results\`. The report generator reads those outputs; archived
-2.x release reports are preserved. Per-case follow-up tasks are kept under ignored
-\`notes/todo/performance/package-comparison-${measuredDate}.md\`.
+Raw worker samples are written to ignored \`notes/benchmarks/results\` by default.
+This detailed report also stays under ignored \`notes/benchmarks\`; only the compact
+current-throughput snapshot belongs in \`docs/performance.md\`. Use \`--input-dir\`
+and \`--output\` to select another sample directory or report destination.
+Per-case follow-up tasks can be written with \`--todo\`.
 
 Implementation references:
 
@@ -144,6 +146,7 @@ Implementation references:
 - [stream-json source](https://github.com/uhop/stream-json): core parser, assembler, pick and streamArray.
 - [@streamparser/json source](https://github.com/juanjoDiaz/streamparser-json/tree/main/packages/json): tokenizer, partial options and buffers.
 `;
-writeFileSync('docs/v3-package-comparison.md',doc);
+mkdirSync(path.dirname(reportPath),{recursive:true});
+writeFileSync(reportPath,doc);
 const todo=option('--todo');if(todo){mkdirSync(path.dirname(todo),{recursive:true});writeFileSync(todo,`# Package comparison follow-ups, ${measuredDate}\n\nThese are hypotheses and measurement tasks, not diagnosed causes. Native aggregate parsing remains optional future work.\n\n`+todos.join('\n\n')+'\n');}
 console.log(`Wrote report for ${engines.join(', ')} and ${todos.length} per-case follow-ups${todo?' to '+todo:''}.`);

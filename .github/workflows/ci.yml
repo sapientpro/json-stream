@@ -18,8 +18,9 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-      # `prepare` runs build + test
       - run: npm ci
+      - run: npm run build
+      - run: npm test -- --runInBand
       - run: node scripts/smoke.mjs
       - run: node scripts/verify.mjs
       - run: node scripts/verify-copying.mjs
@@ -57,6 +58,7 @@ jobs:
           cache: npm
       - uses: oven-sh/setup-bun@v2
       - run: npm ci
+      - run: npm run build
       - run: bunx jest
       - run: bun scripts/smoke.mjs
       - run: bun scripts/verify.mjs
@@ -74,6 +76,8 @@ jobs:
           cache: npm
       - uses: denoland/setup-deno@v2
       - run: npm ci
+      - run: npm run build
+      - run: deno run --allow-read scripts/verify.mjs
       - run: deno run --allow-read scripts/smoke.mjs
       - run: deno run --allow-read scripts/verify-copying.mjs
       - run: deno run --allow-read scripts/verify-boundaries.mjs
