@@ -64,8 +64,12 @@ Prefix seeking is removed from both core scanners. The prefix manager passes a
 private cursor into the original chunk instead of repeatedly slicing the remaining input;
 Bun copied those tails and became dramatically slower at 64KiB. Reusable plans
 across independent parser instances remain a potential follow-up. Slices,
-filters, unions, recursive JSONPath and negative indexes are rejected in this
-candidate. Extend queries only when semantics fit incremental parsing.
+filters, unions and negative indexes are rejected in this
+candidate. Recursive descent is implemented in subscription contexts: the Rest
+state persists at each depth while its suffix advances independently. Exact suffix
+edges are included in transition caches, with separate numeric indexes and property
+names. Converging recursive routes deduplicate subscription nodes before dispatch;
+terminal-only Rest keeps the existing transition path. Neither scanner changes.
 
 ## Native string validation
 

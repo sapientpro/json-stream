@@ -84,8 +84,6 @@ export abstract class ParserCore implements Parser {
         if (this._started || this._done || this._failure)
             throw new Error('Register callbacks before the first write');
         const segments = typeof path === 'string' ? compileJsonPath(path) : [...path];
-        if (segments.some((key, i) => key === Rest && i !== segments.length - 1))
-            throw new TypeError('Rest must be the last selector segment');
         const observer = typeof callback === 'function' ? { next: callback } : callback;
         if (!observer || typeof observer.next !== 'function')
             throw new TypeError('A next callback is required');
@@ -266,6 +264,7 @@ export abstract class ParserCore implements Parser {
         }
         let node = this._root;
         for (const key of segments) {
+            if (node.tail) node.continuation = true;
             node = key === Any ? node.any ??= newNode()
                 : key === Rest ? node.rest ??= newNode()
                     : typeof key === 'number' ? node.indexes[key] ??= newNode()
