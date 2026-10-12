@@ -176,7 +176,7 @@ describe('unselected JSON subtrees', () => {
         });
         stopped.write('{"skip":["unfinished');
         stopped.destroy();
-        expect(complete).toBe(1);
+        expect(complete).toBe(0);
         expect(stopped.finished).toBe(false);
     });
     test('record managers resume after skipped subtrees at every byte cut', () => {

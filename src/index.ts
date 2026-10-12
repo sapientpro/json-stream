@@ -1,6 +1,7 @@
 import { JsonScanner as JsonParser } from './json-scanner.js';
 import { Json5Scanner as Json5Parser } from './json5-scanner.js';
 import type { FormatOptions, Parser } from './types.js';
+import { validateOptionsObject } from './options.js';
 export { JsonParser, Json5Parser };
 export { Any, Rest } from './types.js';
 export { compileJsonPath } from './jsonpath.js';
@@ -20,7 +21,9 @@ export type {
     Subscription,
 } from './types.js';
 /** Pick the frontend once. No format checks are added to the plain JSON loop. */
-export function createParser({ format = 'json', ...options }: FormatOptions = {}): Parser {
+export function createParser(input: FormatOptions = {}): Parser {
+    validateOptionsObject(input);
+    const { format = 'json', ...options } = input;
     if (format === 'json') return new JsonParser(options);
     if (format === 'json5') return new Json5Parser(options);
     throw new TypeError('Unsupported input format: ' + format);

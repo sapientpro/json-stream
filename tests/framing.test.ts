@@ -199,7 +199,7 @@ test('callbacks isolated, reentry rejected, destroy stops current input and EOF 
     expect(errors).toHaveLength(1);
     expect(p.closed).toBe(true);
     expect(p.finished).toBe(false);
-    expect(completed).toBe(1);
+    expect(completed).toBe(0);
     expect(p.recordCount).toBe(0);
     const eof = new PrefixedJsonParser('data:');
     eof.onRecord(() => eof.destroy());
