@@ -16,6 +16,7 @@ import type { CopyPolicy } from './copy-channel.js';
 import {
     CallbackChannel,
     createAbortError,
+    validateDestroyError,
     makeErrorReporter,
     validateBufferLimit,
 } from './channel.js';
@@ -297,6 +298,7 @@ export abstract class ParserCore implements Parser {
     }
     protected _resetScanner(): void {}
     destroy(error?: Error | null): void {
+        validateDestroyError(error);
         if (this.closed) return;
         this._fail(error ?? createAbortError(), false);
     }
