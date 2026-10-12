@@ -8,6 +8,7 @@ import {
     IS_BUN,
     unicodeUnit,
     hexDigit,
+    invalidHexOffset,
     readHex4,
     readLiteral,
     isSpace,
@@ -247,7 +248,7 @@ export class Json5Scanner extends ParserCore {
                                 b = hexDigit(buf.charCodeAt(pos + 1));
                             value = (a | b) < 0 ? -1 : (a << 4) | b;
                         }
-                        if (value < 0) this._failAt(pos);
+                        if (value < 0) this._failAt(pos + invalidHexOffset(buf, pos));
                         if (this._retainString || this._strSinks.length)
                             this._str += unicodeUnit(value);
                         pos += length;
@@ -314,7 +315,7 @@ export class Json5Scanner extends ParserCore {
                         b = hexDigit(text.charCodeAt(at + 1));
                     value = (a | b) < 0 ? -1 : (a << 4) | b;
                 }
-                if (value < 0) this._failAt(pos);
+                if (value < 0) this._failAt(pos - this._hexLength + invalidHexOffset(text, at));
                 if (this._retainString || this._strSinks.length) this._str += unicodeUnit(value);
                 this._acc = '';
                 this._state = State.STR;

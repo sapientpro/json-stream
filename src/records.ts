@@ -64,7 +64,7 @@ abstract class RecordManager extends InputFramer {
         return this.onValue<T>([], (value, _path, index) => callback(value, index));
     }
     getValue<T = any>(path: PathInput = '$'): Promise<T> {
-        return new Promise((resolve, reject) => {
+        const result = new Promise<T>((resolve, reject) => {
             let subscription: Subscription;
             subscription = this.onValue<T>(path, {
                 next: (value) => {
@@ -75,6 +75,8 @@ abstract class RecordManager extends InputFramer {
                 complete: () => reject(new Error('No value matched the selector')),
             });
         });
+        void result.catch(() => {});
+        return result;
     }
     stringStream(path: PathInput): ReadableStream<string> {
         return createStringStream(this, path, this.options.maxBufferedChunks);

@@ -239,3 +239,18 @@ strictEqual((await cancellation).name, 'AbortError');
 console.log(
     'PASS: Node non-Error failures settle consumers and Web abort cancels without a reason',
 );
+for (const make of [
+    () => new JsonParser(),
+    () => new Json5Parser(),
+    () => new JsonLinesParser(),
+    () => new PrefixedJsonParser('data:'),
+]) {
+    const parser = make();
+    const result = parser.getValue();
+    const error = new Error('handled upstream failure');
+    parser.destroy(error);
+    // An ignored value promise must survive a full turn before a handler is added.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await rejects(result, (reason) => reason === error);
+}
+console.log('PASS: ignored value rejections remain observable without unhandled rejections');

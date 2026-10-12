@@ -151,7 +151,7 @@ export abstract class ParserCore implements Parser {
         return this._register(path, callback, true);
     }
     getValue<T = any>(path: PathInput = '$'): Promise<T> {
-        return new Promise((resolve, reject) => {
+        const result = new Promise<T>((resolve, reject) => {
             let subscription: {
                 unsubscribe(): void;
             };
@@ -164,6 +164,10 @@ export abstract class ParserCore implements Parser {
                 complete: () => reject(new Error('No value matched the selector')),
             });
         });
+        // Failure is also reported by write/end and transports. Observe this branch
+        // without changing the original promise returned to awaiting consumers.
+        void result.catch(() => {});
+        return result;
     }
     stringStream(path: PathInput): ReadableStream<string> {
         return createStringStream(this, path, this._subjectOptions.maxBufferedChunks);

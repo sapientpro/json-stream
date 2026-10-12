@@ -23,6 +23,11 @@ from 2.x, including callbacks, subscription-driven retention and string-only cor
   successful consumer completion; successful EOF still completes consumers.
 - Validate parser option containers, `collectJson`, `onObserverError`, and framing input types.
 - Observe pipeline and value promises together in the Node documentation example.
+- Internally observe `getValue()` rejections while preserving rejection for awaiting
+  consumers, including record managers; ignored value promises no longer produce
+  an unhandled rejection.
+- Report the first invalid hex digit in JSON/JSON5 string escapes consistently
+  across chunk boundaries.
 
 - Add optional `compileSelectors()` plans for repeated subscription layouts across
   independent JSON/JSON5 parsers, with per-parser callbacks and cancellation,

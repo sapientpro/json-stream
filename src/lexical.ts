@@ -43,6 +43,12 @@ export const hexDigit = (code: number): number => {
     if (code >= 97 && code <= 102) return code - 87;
     return -1;
 };
+// Called only after hex validation fails; locate the first invalid code unit.
+export const invalidHexOffset = (text: string, start: number): number => {
+    let offset = 0;
+    while (hexDigit(text.charCodeAt(start + offset)) >= 0) ++offset;
+    return offset;
+};
 export const readHex4 = (buf: string, pos: number): number => {
     const a = hexDigit(buf.charCodeAt(pos)),
         b = hexDigit(buf.charCodeAt(pos + 1));
