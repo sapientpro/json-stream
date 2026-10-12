@@ -27,6 +27,7 @@ jobs:
       - run: node scripts/verify-copying.mjs
       - run: node scripts/verify-boundaries.mjs
       - run: node scripts/verify-subtrees.mjs
+      - run: node scripts/verify-plans.mjs
       - run: npx --yes @arethetypeswrong/cli --pack .
       - name: Smoke test the packed tarball
         run: |
@@ -66,6 +67,7 @@ jobs:
       - run: bun scripts/verify-copying.mjs
       - run: bun scripts/verify-boundaries.mjs
       - run: bun scripts/verify-subtrees.mjs
+      - run: bun scripts/verify-plans.mjs
 
   deno:
     runs-on: ubuntu-latest
@@ -83,3 +85,4 @@ jobs:
       - run: deno run --allow-read scripts/verify-copying.mjs
       - run: deno run --allow-read scripts/verify-boundaries.mjs
       - run: deno run --allow-read scripts/verify-subtrees.mjs
+      - run: deno run --allow-read scripts/verify-plans.mjs

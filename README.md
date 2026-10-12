@@ -34,6 +34,7 @@ explicitly rejected. See [supported paths and streaming semantics](docs/v3.md#pa
 - [Streaming strings and pacing](docs/v3.md#streaming-strings-and-pacing)
 - [Web and Node transports](docs/v3.md#transports)
 - [Reset and parser reuse](docs/v3.md#reusing-a-core-parser)
+- [Reusable subscription plans](docs/v3.md#reusing-a-subscription-plan)
 - [JSON Lines and prefixed documents](docs/v3.md#json-lines-and-prefixed-documents)
 - [Architecture and tradeoffs](docs/v3-architecture.md)
 - [Approximate current throughput (MB/s)](docs/performance.md)

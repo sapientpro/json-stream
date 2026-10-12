@@ -33,3 +33,6 @@ export type { InputSink } from './types.js';
 
 export { createDecodedInput } from './decoded-input.js';
 export type { ByteInputSink } from './types.js';
+
+export { compileSelectors } from './selector-plan.js';
+export type { SelectorDefinition, SelectorPlan } from './selector-plan.js';

@@ -6,7 +6,9 @@ const captureRoot = (parser) => {
 const capturedRoot = (parser) => (parser.rootReady ? capturedValues.get(parser) : undefined);
 const { deepStrictEqual, strictEqual, throws } = require('node:assert');
 const name = process.argv[2];
-const { JsonParser, Json5Parser, Any, compileJsonPath } = require(name ?? '../dist/cjs/index.js');
+const { JsonParser, Json5Parser, Any, compileJsonPath, compileSelectors } = require(
+    name ?? '../dist/cjs/index.js',
+);
 const { JsonStream } = require(name ? name + '/node' : '../dist/cjs/node.js');
 (async () => {
     for (const Parser of [JsonParser, Json5Parser]) {
@@ -105,3 +107,21 @@ for (const Parser of [JsonParser, Json5Parser]) {
     deepStrictEqual(first, tree);
     deepStrictEqual(capturedRoot(reuse), [{}, [1, 2], { next: true }, []]);
 }
+
+const plan = compileSelectors(['$.id', { path: '$.text', kind: 'string' }]);
+for (const Parser of [JsonParser, Json5Parser]) {
+    const parser = new Parser(),
+        values = [],
+        fragments = [];
+    const subscriptions = plan.bind(parser, [
+        (value) => values.push(value),
+        (text) => fragments.push(text),
+    ]);
+    parser.write('{"id":1,"text":"a"}');
+    parser.reset();
+    subscriptions[0].unsubscribe();
+    parser.end('{"id":2,"text":"b"}');
+    deepStrictEqual(values, [1]);
+    deepStrictEqual(fragments, ['a', 'b']);
+}
+console.log('PASS: reusable selector plans, fragments, reset and per-parser cancellation');
