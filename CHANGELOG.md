@@ -4,6 +4,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+- Validate unreachable JSON5 object subtrees without building values on known
+  V8 runtimes; preserve grammar, depth limits, incremental cuts and selected output.
+  Bun and standalone skipped arrays keep the ordinary JSON5 scanner.
+
 - Include a zero-based record index and original error cause in JSONL/prefix
   parsing failures; remove the obsolete UTF-8 policy parameter.
 - Add seeded differential tests for both dialects, emitter routes, fragments,

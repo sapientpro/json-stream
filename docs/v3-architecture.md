@@ -29,6 +29,15 @@ A V8 root-value subscription uses the same simple builder with full retention,
 without child selector transitions or concrete paths. This selection stays fixed for
 the document. It applies to both dialects without a released 2.x fallback.
 
+Unreachable strict-JSON containers use a validation-only stack. JSON5 applies
+this path to unreachable object-rooted subtrees on known V8 runtimes, including
+arrays nested inside those objects. Standalone skipped arrays, Bun and unknown
+browser engines keep the ordinary JSON5 scanner. Both paths still check grammar
+and depth limits across input cuts. Retained ancestors and reachable descendant
+subscriptions prevent skipping; selected values and string fragments use their
+normal delivery paths. A discarded subtree that spans writes temporarily selects
+its own runner and returns to the ordinary scanner at the closing delimiter.
+
 Web and Node wrappers own incremental UTF-8 decoding and input pacing.
 The synchronous `createDecodedInput` adapter shares the same decoding lifecycle: it
 flushes at EOF, releases the decoder after failure/cancellation, and rejects mixed
