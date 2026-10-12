@@ -4,6 +4,11 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+- Add optional `compileSelectors()` plans for repeated subscription layouts across
+  independent JSON/JSON5 parsers, with per-parser callbacks and cancellation,
+  compact memory mode and lazy-context fallback. Add differential verification
+  and a dedicated setup/short-document benchmark.
+
 - Scan JSON5 comment bodies in spans instead of one character at a time, in both
   the ordinary scanner and discarded objects; preserve split delimiters, all four
   line endings and EOF validation. Add comment workloads to the benchmark suite.

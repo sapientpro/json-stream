@@ -46,3 +46,25 @@ Run benchmarks one at a time on an otherwise idle machine. Outputs and detailed
 experiment reports belong in ignored `notes/`; update this snapshot only from
 verified current results. `--gc forced` is a separate diagnostic workload and must
 not be mixed into this table. Production code never invokes GC.
+
+## Repeated subscription layouts
+
+`compileSelectors()` is optional and targets many independent short documents
+with the same consumers. It reuses selector topology and prepared transitions,
+while channels and cancellation remain per parser. Large/root-only documents
+may not benefit; JSONL already reuses its parser with `reset()`.
+
+Measure complete construction/binding/write/end cycles separately:
+
+```sh
+npm run build
+node scripts/benchmark-plans.mjs --engine node
+node scripts/benchmark-plans.mjs --engine bun
+# Optional comparison with another built 3.x checkout:
+node scripts/benchmark-plans.mjs --engine node --baseline /path/to/checkout/dist/esm/index.js
+```
+
+The benchmark reports microseconds per document and MB/s, includes reused
+JSONPath arrays as a control, warms each worker and runs serially with natural GC.
+Plan compilation is excluded from per-document timing; compile once and reuse.
+Raw measurements are written under ignored `notes/`.

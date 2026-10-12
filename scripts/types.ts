@@ -6,6 +6,9 @@ import {
     Rest,
     createParser,
     compileJsonPath,
+    compileSelectors,
+    type SelectorPlan,
+    type SelectorDefinition,
     createDecodedInput,
     type Parser,
     type Subscription,
@@ -106,3 +109,25 @@ void remaining;
 void finalRemaining;
 // @ts-expect-error final parser chunks must also be strings
 new JsonParser().end(new Uint8Array());
+
+const layout = [
+    '$.id',
+    { path: ['choices', Any, 'text'], kind: 'string' },
+] as const satisfies readonly SelectorDefinition[];
+const plan: SelectorPlan = compileSelectors(layout);
+const handles: Subscription[] = plan.bind(new Json5Parser(), [
+    (value: number, path) => {
+        value.toFixed();
+        path.length;
+    },
+    {
+        next: (text: string) => {
+            text.toUpperCase();
+        },
+    },
+]);
+handles[0]?.unsubscribe();
+// @ts-expect-error unknown selector kind
+compileSelectors([{ path: '$.text', kind: 'fragments' }]);
+// @ts-expect-error plan callbacks are functions or observers
+plan.bind(new JsonParser(), [42]);

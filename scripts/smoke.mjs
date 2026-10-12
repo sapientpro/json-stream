@@ -7,8 +7,15 @@ const capturedRoot = (parser) => (parser.rootReady ? capturedValues.get(parser) 
 import { deepStrictEqual, strictEqual, throws, rejects } from 'node:assert';
 import { finished } from 'node:stream/promises';
 const packageName = process.argv[2];
-const { JsonParser, Json5Parser, createParser, Any, compileJsonPath, createDecodedInput } =
-    await import(packageName ?? new URL('../dist/esm/index.js', import.meta.url).href);
+const {
+    JsonParser,
+    Json5Parser,
+    createParser,
+    Any,
+    compileJsonPath,
+    createDecodedInput,
+    compileSelectors,
+} = await import(packageName ?? new URL('../dist/esm/index.js', import.meta.url).href);
 const { JsonStream, createNodeWritable } = await import(
     packageName ? packageName + '/node' : new URL('../dist/esm/node.js', import.meta.url).href
 );
@@ -165,3 +172,36 @@ for (const Parser of [JsonParser, Json5Parser]) {
     throws(() => new Parser().end('{}[]'), SyntaxError);
 }
 console.log('PASS: strict and managed document boundaries, tail counts, final chunks');
+
+const plan = compileSelectors(['$.id', { path: '$.text', kind: 'string' }]);
+for (const Parser of [JsonParser, Json5Parser]) {
+    const parser = new Parser(),
+        values = [],
+        fragments = [];
+    const subscriptions = plan.bind(parser, [
+        (value) => values.push(value),
+        (text) => fragments.push(text),
+    ]);
+    parser.write('{"id":1,"text":"a"}');
+    parser.reset();
+    subscriptions[0].unsubscribe();
+    parser.end('{"id":2,"text":"b"}');
+    deepStrictEqual(values, [1]);
+    deepStrictEqual(fragments, ['a', 'b']);
+}
+console.log('PASS: reusable selector plans, fragments, reset and per-parser cancellation');
+
+// Plans contain descriptors only, so ESM and CJS consumers can exchange them.
+const { createRequire } = await import('node:module');
+const cjs = createRequire(import.meta.url)(packageName ?? '../dist/cjs/index.js');
+for (const [compile, Parser] of [
+    [compileSelectors, cjs.JsonParser],
+    [cjs.compileSelectors, Json5Parser],
+]) {
+    const parser = new Parser(),
+        values = [];
+    compile(['$.id']).bind(parser, [(value) => values.push(value)]);
+    parser.end('{"id":42}');
+    deepStrictEqual(values, [42]);
+}
+console.log('PASS: selector plans cross ESM/CJS entry points');

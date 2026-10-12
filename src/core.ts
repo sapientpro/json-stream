@@ -19,9 +19,12 @@ import type { Node, Context, Frame } from './selectors.js';
 import { State } from './state.js';
 import { createWritableStream, createStringStream } from './web.js';
 import { compileJsonPath } from './jsonpath.js';
+import { BIND_SELECTORS, bindSelectors } from './selector-plan.js';
+import type { CompiledSelectors } from './selector-plan.js';
 /** Shared incremental builder and synchronous callback lifecycle. */
 export abstract class ParserCore implements Parser {
-    protected readonly _root: Node = newNode();
+    protected _root: Node = newNode();
+    declare protected _preparedContext: Context | undefined;
     protected _tracking = false;
     protected _retainAll = false;
     protected _rootContext!: Context;
@@ -311,6 +314,67 @@ export abstract class ParserCore implements Parser {
             if (key === Rest) node.tail = true;
         }
         return node;
+    }
+    protected _registerPrepared<T>(
+        path: PathInput,
+        callback: ValueCallback<T> | CallbackObserver<T>,
+        fragments: boolean,
+    ) {
+        this._preparedContext = undefined;
+        this._register = ParserCore.prototype._register;
+        this._writeInput = ParserCore.prototype._writeInput;
+        return this._register(path, callback, fragments);
+    }
+    /** A prepared graph is nonempty and has descendants, so root-only substitution cannot apply. */
+    protected _writePrepared(chunk: string, offset = -1): number {
+        if (
+            this._running ||
+            this._state === State.FAILED ||
+            this._done ||
+            typeof chunk !== 'string'
+        )
+            return ParserCore.prototype._writeInput.call(this, chunk, offset);
+        this._context = this._rootContext = this._preparedContext!;
+        this._preparedContext = undefined;
+        this._tracking = true;
+        if (IS_V8 && this._hasChunks) this._flushChunk = this._flushTextChunk;
+        this._started = true;
+        this._register = ParserCore.prototype._register;
+        this._writeInput = ParserCore.prototype._writeInput;
+        return this._writeInput(chunk, offset);
+    }
+    protected _releasePrepared(): void {
+        this._preparedContext = undefined;
+        this._release = ParserCore.prototype._release;
+        this._release();
+    }
+    [BIND_SELECTORS](data: CompiledSelectors, observers: CallbackObserver<any>[]) {
+        if (this._started || this._done || this._failure)
+            throw new Error('Register callbacks before the first write');
+        if (!data.paths.length) return [];
+        if (
+            data.shape.length === 1 ||
+            this._root.callbacks ||
+            this._root.fragments ||
+            this._root.any ||
+            this._root.rest ||
+            Object.keys(this._root.children).length ||
+            Object.keys(this._root.indexes).length
+        ) {
+            return observers.map((observer, i) =>
+                this._register(data.paths[i]!, observer, data.strings[i]!),
+            );
+        }
+        const bound = bindSelectors(data, observers, this._reportCallback, this._copyPolicy);
+        this._root = bound.root;
+        this._preparedContext = bound.context;
+        if (bound.context) {
+            this._register = this._registerPrepared;
+            this._writeInput = this._writePrepared;
+            this._release = this._releasePrepared;
+        }
+        this._hasChunks = bound.hasChunks;
+        return bound.subscriptions;
     }
     protected _syntaxError(): SyntaxError {
         return new SyntaxError('Json syntax error at ' + (this._consumed + this._pos));

@@ -49,10 +49,15 @@ callback work suspends the scanner inside a write. A future resumable output API
 would need an explicit suspension contract rather than implicitly awaiting user
 callbacks.
 
-Current selector plans/bindings are per-parser;
-reusable immutable compiled plans are a separate potential optimization, especially
-for parsing many independent documents. `compileJsonPath()` returns an immutable
-path, not a reusable mutable execution context.
+`compileSelectors()` optionally compiles reusable selector topology and transition
+descriptors for many independent documents. Binding clones nodes and contexts and
+creates channels owned by that parser. Prepared contexts use the same scanner
+and emit paths as ordinary contexts; no per-value binding lookup is added. Exact
+properties and numeric indexes remain separate, and recursive states are interned
+by their ordered node IDs to terminate cycles. Graph preparation has state/edge
+budgets and falls back to ordinary lazy contexts for complex layouts. Additional
+registration before input invalidates the prepared graph; reset preserves the
+bound contexts. `compileJsonPath()` returns only an immutable path.
 
 JSON5 adds its grammar before further architecture decisions: comments, single
 quotes, identifier keys, trailing commas, additional whitespace and escapes,
