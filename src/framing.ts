@@ -1,6 +1,7 @@
 import { BYTE_INPUT } from './decoded-input.js';
 import type { InputSink, ByteInputSink } from './types.js';
 import { createWritableStream } from './web.js';
+import { createAbortError } from './channel.js';
 
 /** Transport decoding and lifecycle shared by optional input framers only. */
 export abstract class InputFramer implements ByteInputSink {
@@ -24,6 +25,8 @@ export abstract class InputFramer implements ByteInputSink {
     }
     write(chunk: string | Uint8Array): void {
         this.check();
+        if (typeof chunk !== 'string' && !(chunk instanceof Uint8Array))
+            throw new TypeError('Input must be a string or Uint8Array');
         const mode = typeof chunk === 'string' ? 'text' : 'bytes';
         if (this.mode && this.mode !== mode) throw new TypeError('Do not mix text and byte input');
         this.mode = mode;
@@ -58,10 +61,10 @@ export abstract class InputFramer implements ByteInputSink {
     }
     destroy(error?: Error | null): void {
         if (this._closed) return;
-        this.failure = error ?? undefined;
+        this.failure = error ?? createAbortError();
         this._closed = true;
         this.decoder = undefined;
-        this.terminate(error ?? undefined);
+        this.terminate(this.failure);
     }
     private check(): void {
         if (this.running) throw new Error('write() re-entered');

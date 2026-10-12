@@ -81,7 +81,12 @@ the number of unconsumed UTF-16 units; the remaining input goes back to marker s
 Prefix seeking is removed from both core scanners. The prefix manager passes a
 private cursor into the original chunk instead of repeatedly slicing the remaining input;
 Bun copied those tails and became dramatically slower at 64KiB. Reusable plans
-across independent parser instances remain a potential follow-up. Slices,
+are available through `compileSelectors()`, with channels and cancellation owned
+by each bound parser. Lazy recursive transitions also intern ordered states per
+parser, bounded by 4,096 states and 65,536 transition slots. Once the cache is
+full, uncached transitions preserve matching without growing the retained graph.
+Plan compilation applies its budget while discovering each state and falls back
+to lazy transitions if the prepared graph would exceed that budget. Slices,
 filters, unions and negative indexes are rejected in this
 candidate. Recursive descent is implemented in subscription contexts: the Rest
 state persists at each depth while its suffix advances independently. Exact suffix

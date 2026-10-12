@@ -2,7 +2,7 @@ import { CallbackChannel } from './channel.js';
 import { CopyingChannel } from './copy-channel.js';
 import type { CopyPolicy } from './copy-channel.js';
 import { compileJsonPath } from './jsonpath.js';
-import { childrenOf, EMPTY_CONTEXT, makeContext, newNode, stepContext } from './selectors.js';
+import { childrenOf, EMPTY_CONTEXT, makeRootContext, newNode, stepContext } from './selectors.js';
 import type { Context, Node } from './selectors.js';
 import { Any, Rest } from './types.js';
 import type {
@@ -148,7 +148,10 @@ export function selectNode(root: Node, path: Path): Node {
                   : typeof key === 'number'
                     ? (node.indexes[key] ??= newNode())
                     : (node.children[key] ??= newNode());
-        if (key === Rest) node.tail = true;
+        if (key === Rest) {
+            node.tail = true;
+            root.hasRest = true;
+        }
     }
     return node;
 }
@@ -157,33 +160,47 @@ function compileTransitions(root: Node, ids: Map<Node, number>): Transition[] {
     const contexts: Context[] = [],
         seen = new Map<string, number>();
     const keyOf = (context: Context) => context.nodes.map((node) => ids.get(node)!).join(',');
+    let edges = 0,
+        exceeded = false;
     const intern = (context: Context): number => {
         if (context === EMPTY_CONTEXT) return -1;
         const key = keyOf(context);
         const cached = seen.get(key);
         if (cached !== undefined) return cached;
+        const slots = Object.keys(context.edges).length + Object.keys(context.indexes).length + 1;
+        if (contexts.length >= 4096 || edges + slots > 65536) {
+            exceeded = true;
+            return -1;
+        }
+        edges += slots;
         const id = contexts.length;
         seen.set(key, id);
         contexts.push(context);
         return id;
     };
-    intern(makeContext([root]));
-    let edges = 0;
+    intern(makeRootContext(root));
     for (let i = 0; i < contexts.length; ++i) {
         // Recursive selectors can produce many combinations. Fall back to lazy contexts,
         // preserving matching semantics instead of imposing a new selector restriction.
-        if (contexts.length > 4096) return [];
+        if (exceeded) return [];
         const context = contexts[i]!;
         const properties = Object.keys(context.edges),
             indexes = Object.keys(context.indexes);
-        if ((edges += properties.length + indexes.length + 1) > 65536) return [];
-        for (const key of properties) intern(stepContext(context, key));
-        for (const key of indexes) intern(stepContext(context, Number(key)));
+        for (const key of properties) {
+            intern(stepContext(context, key));
+            if (exceeded) return [];
+        }
+        for (const key of indexes) {
+            intern(stepContext(context, Number(key)));
+            if (exceeded) return [];
+        }
         // A string not present among exact edges represents the shared wildcard fallback.
         let fallback = '';
         while (Object.hasOwn(context.edges, fallback)) fallback += '\0';
         intern(stepContext(context, fallback));
+        if (exceeded) return [];
     }
+    if (exceeded) return [];
     const idOf = (context: Context) => (context === EMPTY_CONTEXT ? -1 : seen.get(keyOf(context))!);
     return contexts.map((context) => ({
         nodes: context.nodes.map((node) => ids.get(node)!),
@@ -214,6 +231,7 @@ export function bindSelectors(
         for (const [key, id] of shape.indexes) node.indexes[Number(key)] = nodes[id]!;
         node.any = shape.any === undefined ? undefined : nodes[shape.any];
         node.rest = shape.rest === undefined ? undefined : nodes[shape.rest];
+        if (shape.rest !== undefined) nodes[0]!.hasRest = true;
     });
     const subscriptions = observers.map((observer, i) => {
         const node = nodes[data.bindings[i]!]!,

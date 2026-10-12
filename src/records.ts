@@ -5,6 +5,8 @@ import { InputFramer } from './framing.js';
 import { createStringStream } from './web.js';
 import { compileJsonPath } from './jsonpath.js';
 import { makeErrorReporter } from './channel.js';
+import { markLargeSource } from './core.js';
+import { validateOptionsObject } from './options.js';
 import type { FormatOptions, PathInput, PathSegment, Subscription } from './types.js';
 
 export type RecordCallback<T> = (
@@ -37,6 +39,7 @@ abstract class RecordManager extends InputFramer {
     protected readonly options: FormatOptions;
     constructor(options: FormatOptions = {}) {
         super();
+        validateOptionsObject(options);
         this.options = { ...options };
         this.report = makeErrorReporter(options.onObserverError);
         // Validate options eagerly, then reuse this instance for the first record.
@@ -177,6 +180,7 @@ abstract class RecordManager extends InputFramer {
 /** LF-framed values. JSON5 is an explicit single-physical-line extension. */
 export class JsonLinesParser extends RecordManager {
     constructor(options: FormatOptions = {}) {
+        validateOptionsObject(options);
         super({ ...options, strictEnd: true });
     }
     private first = true;
@@ -187,10 +191,15 @@ export class JsonLinesParser extends RecordManager {
                 throw new SyntaxError('JSON Lines must not start with a BOM');
         }
         let pos = 0;
+        const largeSource = this.options.memoryMode === 'compact' && text.length >= 65536;
         while (pos < text.length && !this._closed) {
             const end = text.indexOf('\n', pos);
             const part = text.slice(pos, end < 0 ? text.length : end);
-            if (part.length) this.activeParser().write(part);
+            if (part.length) {
+                const parser = this.activeParser();
+                if (largeSource) markLargeSource(parser);
+                parser.write(part);
+            }
             if (this._closed) return;
             if (end < 0) return;
             this.finishRecord();
@@ -210,6 +219,7 @@ export class PrefixedJsonParser extends RecordManager {
         private readonly marker: string,
         options: FormatOptions = {},
     ) {
+        validateOptionsObject(options);
         super({ ...options, strictEnd: false });
         if (typeof marker !== 'string' || !marker.length)
             throw new TypeError('Prefix marker must be nonempty');

@@ -122,7 +122,7 @@ test('transport rejects mixed input before consuming it and allows recovery', ()
     input.end();
     expect(root).toBe('😀');
 });
-test('transport cancellation drops pending UTF-8 and completes consumers only once', () => {
+test('transport cancellation drops pending UTF-8 without successful completion', () => {
     const parser = new JsonParser();
     let completed = 0;
     parser.onValue('$', { next: () => {}, complete: () => completed++ });
@@ -131,7 +131,7 @@ test('transport cancellation drops pending UTF-8 and completes consumers only on
     input.destroy();
     input.destroy();
     input.end();
-    expect(completed).toBe(1);
+    expect(completed).toBe(0);
     expect(parser.closed).toBe(true);
     expect(() => input.write('')).toThrow(/closed/);
 });

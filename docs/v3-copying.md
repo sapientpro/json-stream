@@ -36,7 +36,8 @@ including lone surrogates, are preserved.
 These thresholds are fixed in this version. `reset()` validates the current
 document and clears large-input tracking, preserving active consumers. JSONL and
 prefix managers apply the policy to their own record parsers; they also accept
-byte input.
+byte input. JSONL accounts for the whole decoded transport chunk before slicing
+individual lines, so short records from a large chunk activate copying too.
 
 This is **not a deep-copy mode**. Containers, nested strings inside container
 results, path keys, long scalar strings and `collectJson` storage are unchanged.

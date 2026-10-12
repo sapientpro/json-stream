@@ -136,7 +136,7 @@ test('destroy in a fast literal callback stops further processing', () => {
         values.push(value);
         p.destroy();
     });
-    expect(() => p.end('[true, invalid]')).not.toThrow();
+    expect(() => p.end('[true, invalid]')).toThrow('Parsing was canceled');
     expect(values).toEqual([true]);
     expect(p.closed).toBe(true);
 });

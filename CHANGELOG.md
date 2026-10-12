@@ -4,6 +4,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+- Bound and intern lazy recursive selector contexts, including long-lived record
+  managers and fallback plans; enforce prepared-plan budgets during discovery.
+- Account for large transport chunks when copying short JSONL results in compact mode.
+- Breaking preview change: report cancellation through `AbortError` instead of
+  successful consumer completion; successful EOF still completes consumers.
+- Validate parser option containers, `collectJson`, `onObserverError`, and framing input types.
+- Observe pipeline and value promises together in the Node documentation example.
+
 - Add optional `compileSelectors()` plans for repeated subscription layouts across
   independent JSON/JSON5 parsers, with per-parser callbacks and cancellation,
   compact memory mode and lazy-context fallback. Add differential verification

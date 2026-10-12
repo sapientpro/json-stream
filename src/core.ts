@@ -13,14 +13,20 @@ import type {
 } from './types.js';
 import { CopyingChannel } from './copy-channel.js';
 import type { CopyPolicy } from './copy-channel.js';
-import { CallbackChannel, makeErrorReporter, validateBufferLimit } from './channel.js';
-import { EMPTY_CONTEXT, newNode, makeContext, stepContext, childrenOf } from './selectors.js';
+import {
+    CallbackChannel,
+    createAbortError,
+    makeErrorReporter,
+    validateBufferLimit,
+} from './channel.js';
+import { EMPTY_CONTEXT, newNode, makeRootContext, stepContext, childrenOf } from './selectors.js';
 import type { Node, Context, Frame } from './selectors.js';
 import { State } from './state.js';
 import { createWritableStream, createStringStream } from './web.js';
 import { compileJsonPath } from './jsonpath.js';
 import { BIND_SELECTORS, bindSelectors } from './selector-plan.js';
 import type { CompiledSelectors } from './selector-plan.js';
+import { validateOptionsObject } from './options.js';
 /** Shared incremental builder and synchronous callback lifecycle. */
 export abstract class ParserCore implements Parser {
     protected _root: Node = newNode();
@@ -61,6 +67,7 @@ export abstract class ParserCore implements Parser {
     protected readonly _framed: boolean = false;
     declare protected _copyPolicy: CopyPolicy | undefined;
     constructor(options: ParserOptions = {}) {
+        validateOptionsObject(options);
         if ('retainRoot' in options)
             throw new TypeError('retainRoot was removed; subscribe to $ for the complete value');
         const {
@@ -70,6 +77,7 @@ export abstract class ParserCore implements Parser {
             maxBufferedChunks = Infinity,
             onObserverError,
         } = options;
+        if (typeof collectJson !== 'boolean') throw new TypeError('collectJson must be a boolean');
         validateBufferLimit(maxBufferedChunks);
         this._subjectOptions = { maxBufferedChunks, onObserverError };
         this._reportCallback = makeErrorReporter(onObserverError);
@@ -173,7 +181,7 @@ export abstract class ParserCore implements Parser {
         if (typeof chunk !== 'string')
             throw new TypeError('Parser input must be a string; use a stream wrapper for bytes');
         if (!this._started) {
-            this._context = this._rootContext = makeContext([this._root]);
+            this._context = this._rootContext = makeRootContext(this._root);
             this._tracking = this._rootContext !== EMPTY_CONTEXT;
             const rootOnly =
                 !this._hasChunks &&
@@ -289,8 +297,8 @@ export abstract class ParserCore implements Parser {
     }
     protected _resetScanner(): void {}
     destroy(error?: Error | null): void {
-        if (error) this._fail(error, false);
-        else this._complete();
+        if (this.closed) return;
+        this._fail(error ?? createAbortError(), false);
     }
     protected _node(path: Path): Node {
         const segments = path;
@@ -311,7 +319,10 @@ export abstract class ParserCore implements Parser {
                       : typeof key === 'number'
                         ? (node.indexes[key] ??= newNode())
                         : (node.children[key] ??= newNode());
-            if (key === Rest) node.tail = true;
+            if (key === Rest) {
+                node.tail = true;
+                this._root.hasRest = true;
+            }
         }
         return node;
     }
@@ -698,6 +709,12 @@ export abstract class ParserCore implements Parser {
     get closed(): boolean {
         return this._done || this._state === State.FAILED;
     }
+}
+
+/** JSONL slices records internally; compact mode must still know their source was large. */
+export function markLargeSource(parser: ParserCore): void {
+    const policy = (parser as unknown as { _copyPolicy?: CopyPolicy })._copyPolicy;
+    if (policy) policy.large = true;
 }
 
 /** Install compact input tracking once; ordinary writes have no policy branch. */

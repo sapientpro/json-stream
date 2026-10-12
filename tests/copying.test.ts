@@ -175,7 +175,7 @@ for (const format of ['json', 'json5'] as const)
                 },
             });
             other.destroy();
-            expect(complete).toBe(1);
+            expect(complete).toBe(0);
         });
         test('objects retain their original shared identity', () => {
             const parser = createCompactParser({ format });

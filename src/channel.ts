@@ -4,6 +4,8 @@ export function validateBufferLimit(limit: number): void {
         throw new RangeError('maxBufferedChunks must be a positive safe integer or Infinity');
 }
 export function makeErrorReporter(handler?: (error: unknown) => void): (error: unknown) => void {
+    if (handler !== undefined && typeof handler !== 'function')
+        throw new TypeError('onObserverError must be a function');
     return (error) => {
         if (!handler) {
             queueMicrotask(() => {
@@ -19,6 +21,11 @@ export function makeErrorReporter(handler?: (error: unknown) => void): (error: u
             });
         }
     };
+}
+export function createAbortError(): Error {
+    const error = new Error('Parsing was canceled');
+    error.name = 'AbortError';
+    return error;
 }
 export class CallbackChannel<T> {
     #sinks: {
