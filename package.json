@@ -1,6 +1,6 @@
 {
   "name": "@sapientpro/json-stream",
-  "version": "3.0.0-alpha.3",
+  "version": "3.0.0-beta.1",
   "description": "Incremental JSON and JSON5 parser with selective value callbacks and streaming strings",
   "license": "MIT",
   "author": {

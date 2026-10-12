@@ -3,7 +3,7 @@ import { JsonSubtreeValidator } from './skip-json.js';
 import { ParserCore } from './core.js';
 import { EMPTY_CONTEXT, stepContext } from './selectors.js';
 import { State } from './state.js';
-import { IS_V8, unicodeUnit, readHex4, readLiteral, isSpace } from './lexical.js';
+import { IS_V8, unicodeUnit, readHex4, readLiteral, isSpace, invalidHexOffset } from './lexical.js';
 // Use the native scanner only after a short prefix; tiny strings need no match allocation.
 const STRING_END = IS_V8 ? /["\\]/g : /["\\\u0000-\u001f]/g;
 const STRING_CONTROL = /[\u0000-\u001f]/u;
@@ -314,7 +314,7 @@ export class JsonScanner extends ParserCore {
                     if (ch === 'u' && pos + 6 <= len) {
                         const value = readHex4(buf, pos + 2);
                         if (value < 0) {
-                            this._pos = pos;
+                            this._pos = pos + 2 + invalidHexOffset(buf, pos + 2);
                             this._fail(this._syntaxError());
                         }
                         if (this._retainString || this._strSinks.length)
@@ -612,7 +612,12 @@ export class JsonScanner extends ParserCore {
                         value = readHex4(this._acc, 0);
                     }
                     if (value < 0) {
-                        this._pos = pos;
+                        this._pos =
+                            pos -
+                            4 +
+                            (this._acc
+                                ? invalidHexOffset(this._acc, 0)
+                                : invalidHexOffset(buf, pos - 4));
                         this._fail(this._syntaxError());
                     }
                     if (this._retainString || this._strSinks.length)
