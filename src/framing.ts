@@ -1,7 +1,7 @@
 import { BYTE_INPUT } from './decoded-input.js';
 import type { InputSink, ByteInputSink } from './types.js';
 import { createWritableStream } from './web.js';
-import { createAbortError } from './channel.js';
+import { createAbortError, validateDestroyError } from './channel.js';
 
 /** Transport decoding and lifecycle shared by optional input framers only. */
 export abstract class InputFramer implements ByteInputSink {
@@ -60,6 +60,7 @@ export abstract class InputFramer implements ByteInputSink {
         });
     }
     destroy(error?: Error | null): void {
+        validateDestroyError(error);
         if (this._closed) return;
         this.failure = error ?? createAbortError();
         this._closed = true;

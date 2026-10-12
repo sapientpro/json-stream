@@ -4,6 +4,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+- Reject invalid `destroy()` arguments before mutating parser, framing or
+  decoded-input state; accept only `Error`, `null` or `undefined`.
 - Bound and intern lazy recursive selector contexts, including long-lived record
   managers and fallback plans; enforce prepared-plan budgets during discovery.
 - Account for large transport chunks when copying short JSONL results in compact mode.

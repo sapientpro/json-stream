@@ -22,6 +22,15 @@ export function makeErrorReporter(handler?: (error: unknown) => void): (error: u
         }
     };
 }
+// Native decoder errors and errors from other realms may fail instanceof Error.
+const isError =
+    (Error as ErrorConstructor & { isError?: (value: unknown) => boolean }).isError ??
+    ((value: unknown) =>
+        value instanceof Error || Object.prototype.toString.call(value) === '[object Error]');
+export function validateDestroyError(error: unknown): void {
+    if (error !== undefined && error !== null && !isError(error))
+        throw new TypeError('destroy error must be an Error, null or undefined');
+}
 export function createAbortError(): Error {
     const error = new Error('Parsing was canceled');
     error.name = 'AbortError';
