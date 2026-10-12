@@ -36,6 +36,12 @@ const versions = baseline
           { label: '3.0 JSON5', module, format: 'json5' },
       ];
 let cases = [
+    ['comment blocks', 'root'],
+    ['comment blocks', 'ids'],
+    ['comment lines', 'root'],
+    ['comment lines', 'ids'],
+    ['short comments', 'root'],
+    ['short comments', 'ids'],
     ['integers', 'root'],
     ['integers', 'scalar'],
     ['decimals', 'root'],
@@ -69,6 +75,8 @@ let cases = [
     ['scalar', 'root'],
     ['empty', 'root'],
 ];
+if (option('--syntax', 'json') !== 'json5')
+    cases = cases.filter(([data]) => !data.startsWith('comment ') && data !== 'short comments');
 if (option('--cases')) {
     const chosen = new Set(option('--cases').split(','));
     cases = cases.filter(([data, mode]) => chosen.has(data + '/' + mode));

@@ -60,6 +60,12 @@ hexadecimal/nonfinite/signed/leading-or-trailing-dot numbers. Plain JSON keeps
 strict separators, escapes, numbers and trailers. EOF is validated separately from
 root commitment. A callback can see a completed value before a later syntax error.
 
+JSON5 comments keep their own incremental state without buffering comment text.
+Block bodies use native `indexOf('*/')`, carrying a trailing-star state across
+writes. Line bodies search for CR, LF, U+2028 or U+2029; EOF also ends a line
+comment. The ordinary scanner and discarded-subtree validator use the same
+boundary rules. Grammar state remains unchanged while a comment is consumed.
+
 JSONL and prefixed-document managers share record consumer bindings and reuse one
 parser via `reset()`, preserving subscriptions and bounded selector transition caches. JSONL splits at LF and forwards partial lines immediately.
 Strict input keeps the ordinary write method. Non-strict input selects a managed

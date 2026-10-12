@@ -18,6 +18,7 @@ const JSON5_SPACE = /[\t\n\v\f\r \u00a0\ufeff\u2028\u2029\p{Zs}]/u;
 const JSON5_NUMBER =
     /^[+-]?(?:Infinity|NaN|0[xX][0-9a-fA-F]+|(?:(?:0|[1-9][0-9]*)(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?)$/;
 const JSON5_DOUBLE_END = /["\\\r\n]/g;
+const JSON5_LINE_END = /[\r\n\u2028\u2029]/g;
 const JSON5_SINGLE_END = /['\\\r\n]/g;
 /** JSON5 frontend; separate from the plain JSON hot loop. */
 export class Json5Scanner extends ParserCore {
@@ -43,6 +44,44 @@ export class Json5Scanner extends ParserCore {
         if (skip.done) this._emit(undefined);
         return pos;
     }
+    /** Consume one comment while preserving the enclosing grammar state. */
+    protected _readComment(buf: string, pos: number, len: number): number {
+        while (this._comment && pos < len) {
+            const code = buf.charCodeAt(pos++);
+            if (this._comment === 1) {
+                if (code === 47) this._comment = 2;
+                else if (code === 42) this._comment = 3;
+                else this._failAt(pos);
+            } else if (this._comment === 2) {
+                JSON5_LINE_END.lastIndex = pos - 1;
+                if (!JSON5_LINE_END.test(buf)) pos = len;
+                else {
+                    pos = JSON5_LINE_END.lastIndex;
+                    this._comment = 0;
+                }
+            } else {
+                // A trailing star may pair with the next chunk's first slash.
+                if (this._comment === 4 && code === 47) this._comment = 0;
+                else {
+                    let start = pos - 1;
+                    const limit = Math.min(len, start + 8);
+                    while (start < limit) {
+                        if (buf.charCodeAt(start) === 42 && buf.charCodeAt(start + 1) === 47) break;
+                        ++start;
+                    }
+                    const end = start < limit ? start : buf.indexOf('*/', start);
+                    if (end >= 0) {
+                        pos = end + 2;
+                        this._comment = 0;
+                    } else {
+                        this._comment = buf.charCodeAt(len - 1) === 42 ? 4 : 3;
+                        pos = len;
+                    }
+                }
+            }
+        }
+        return pos;
+    }
     protected _runDiscard(): void {
         this._pos = this._skipInput(this._buf, this._pos, this._buf.length);
         if (this._state === State.SKIP || this.closed) return;
@@ -60,6 +99,8 @@ export class Json5Scanner extends ParserCore {
     }
     protected _validateEnd(): boolean {
         this._skip?.release();
+        JSON5_LINE_END.lastIndex = 0;
+        JSON5_LINE_END.test('\n');
         // Release the token scanner's last RegExp subject after the document.
         JSON5_TOKEN_END.lastIndex = 0;
         JSON5_TOKEN_END.test(' ');
@@ -282,20 +323,7 @@ export class Json5Scanner extends ParserCore {
             // Comments and whitespace occur only between grammar tokens.
             if (this._comment) {
                 if (pos === len) break;
-                const code = buf.charCodeAt(pos++);
-                if (this._comment === 1) {
-                    if (code === 47) this._comment = 2;
-                    else if (code === 42) this._comment = 3;
-                    else this._failAt(pos);
-                } else if (this._comment === 2) {
-                    if (code === 10 || code === 13 || code === 0x2028 || code === 0x2029)
-                        this._comment = 0;
-                } else if (this._comment === 3) {
-                    if (code === 42) this._comment = 4;
-                } else {
-                    if (code === 47) this._comment = 0;
-                    else if (code !== 42) this._comment = 3;
-                }
+                pos = this._readComment(buf, pos, len);
                 continue;
             }
             if (pos === len) break;
