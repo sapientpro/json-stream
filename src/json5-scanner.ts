@@ -1,8 +1,11 @@
 import { CharCode } from './char-code.js';
 import { ParserCore } from './core.js';
+import { Json5SubtreeValidator } from './skip-json5.js';
 import { EMPTY_CONTEXT, stepContext } from './selectors.js';
 import { State } from './state.js';
 import {
+    IS_V8,
+    IS_BUN,
     unicodeUnit,
     hexDigit,
     readHex4,
@@ -18,15 +21,45 @@ const JSON5_DOUBLE_END = /["\\\r\n]/g;
 const JSON5_SINGLE_END = /['\\\r\n]/g;
 /** JSON5 frontend; separate from the plain JSON hot loop. */
 export class Json5Scanner extends ParserCore {
+    declare protected _skip: Json5SubtreeValidator | undefined;
+    protected _skipContainer(isArray: boolean): boolean {
+        // Small skipped arrays and Bun's ordinary builder win in paired controls.
+        if (!IS_V8 || isArray) return false;
+        (this._skip ??= new Json5SubtreeValidator()).start(
+            isArray,
+            this._maxDepth - this._stack.length,
+        );
+        this._state = State.SKIP;
+        return true;
+    }
+    private _skipInput(buf: string, pos: number, len: number): number {
+        const skip = this._skip!;
+        pos = skip.run(buf, pos, len);
+        if (skip.error >= 0) {
+            if (skip.depthExceeded)
+                this._fail(new SyntaxError('Json nesting deeper than ' + this._maxDepth));
+            this._failAt(skip.error);
+        }
+        if (skip.done) this._emit(undefined);
+        return pos;
+    }
+    protected _runDiscard(): void {
+        this._pos = this._skipInput(this._buf, this._pos, this._buf.length);
+        if (this._state === State.SKIP || this.closed) return;
+        this._run = Json5Scanner.prototype._run;
+        this._run();
+    }
     protected _quote = CharCode.QUOTE;
     protected _comment = 0;
     protected _hexLength = 4;
     protected _resetScanner(): void {
+        this._skip?.release();
         this._quote = CharCode.QUOTE;
         this._comment = 0;
         this._hexLength = 4;
     }
     protected _validateEnd(): boolean {
+        this._skip?.release();
         // Release the token scanner's last RegExp subject after the document.
         JSON5_TOKEN_END.lastIndex = 0;
         JSON5_TOKEN_END.test(' ');
@@ -293,6 +326,14 @@ export class Json5Scanner extends ParserCore {
                     if (code === CharCode.LBRACE || code === CharCode.LBRACKET) {
                         ++pos;
                         this._open(code === CharCode.LBRACKET);
+                        if (!IS_BUN && (this._state as number) === State.SKIP) {
+                            pos = this._skipInput(buf, pos, len);
+                            if ((this._state as number) === State.SKIP) {
+                                this._pos = pos;
+                                this._run = this._runDiscard;
+                                return;
+                            }
+                        }
                     } else if (code === CharCode.RBRACKET && this._stack.at(-1)?.isArray) {
                         ++pos;
                         this._close();
