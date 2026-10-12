@@ -1,5 +1,5 @@
 import type { InputSink, ByteInputSink } from './types.js';
-import { validateDestroyError } from './channel.js';
+import { normalizeError, validateDestroyError } from './channel.js';
 
 // Framing adapters already own decoding, including JSONL's fatal UTF-8 policy.
 export const BYTE_INPUT = Symbol('byte-input');
@@ -37,7 +37,7 @@ export function createDecodedInput(target: InputSink): ByteInputSink {
                 failure = { error };
                 decoder = undefined;
                 closed = true;
-                target.destroy(error as Error);
+                target.destroy(normalizeError(error));
                 throw error;
             } finally {
                 running = false;
@@ -54,7 +54,7 @@ export function createDecodedInput(target: InputSink): ByteInputSink {
                 target.end();
             } catch (error) {
                 failure = { error };
-                target.destroy(error as Error);
+                target.destroy(normalizeError(error));
                 throw error;
             } finally {
                 running = false;

@@ -4,8 +4,18 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+## 3.0.0-beta.1 — 2026-10-12
+
+First beta of the 3.0 API. Install with `npm install @sapientpro/json-stream@beta`;
+2.0.1 remains the stable release. See [the migration guide](docs/v3.md) for changes
+from 2.x, including callbacks, subscription-driven retention and string-only core input.
+
 - Reject invalid `destroy()` arguments before mutating parser, framing or
   decoded-input state; accept only `Error`, `null` or `undefined`.
+- Normalize non-Error Node stream destruction reasons before canceling the parser,
+  preserving the original reason as the error cause and settling waiting consumers.
+- Preserve non-Error failures from custom decoded-input sinks while normalizing
+  their destruction reason; use `AbortError` for Web input aborts without a reason.
 - Bound and intern lazy recursive selector contexts, including long-lived record
   managers and fallback plans; enforce prepared-plan budgets during discovery.
 - Account for large transport chunks when copying short JSONL results in compact mode.
@@ -144,8 +154,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 - Cover synchronous earliest string delivery, surrogate protection, cancellation,
   reset, record framing and selected paths across byte boundaries.
 
-See [the migration guide](docs/v3.md). Install prereleases using the `alpha` npm tag;
-2.0.1 remains the stable release.
+See [the migration guide](docs/v3.md). Alpha releases use the `alpha` npm tag;
+beta releases use `beta`. 2.0.1 remains the stable release.
 Performance comparisons and compatibility checks are recorded separately; do not
 assume every workload is faster than 2.0.1.
 

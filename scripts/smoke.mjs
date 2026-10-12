@@ -205,3 +205,37 @@ for (const [compile, Parser] of [
     deepStrictEqual(values, [42]);
 }
 console.log('PASS: selector plans cross ESM/CJS entry points');
+
+// Native Node streams accept arbitrary failure reasons; parser consumers must settle.
+for (const make of [
+    () => {
+        const stream = new JsonStream();
+        return { parser: stream, stream };
+    },
+    () => {
+        const parser = new JsonParser();
+        return { parser, stream: createNodeWritable(parser) };
+    },
+]) {
+    const { parser, stream } = make();
+    const result = parser.getValue().catch((error) => error);
+    let streamError;
+    stream.on('error', (error) => {
+        streamError = error;
+    });
+    const closed = new Promise((resolve) => stream.once('close', resolve));
+    stream.write('[1,');
+    stream.destroy('upstream failed');
+    await closed;
+    const error = await result;
+    strictEqual(error instanceof Error, true);
+    strictEqual(error.cause, 'upstream failed');
+    strictEqual(streamError, 'upstream failed');
+}
+const aborted = new JsonParser();
+const cancellation = aborted.getValue().catch((error) => error);
+await aborted.writable.abort();
+strictEqual((await cancellation).name, 'AbortError');
+console.log(
+    'PASS: Node non-Error failures settle consumers and Web abort cancels without a reason',
+);

@@ -31,6 +31,16 @@ export function validateDestroyError(error: unknown): void {
     if (error !== undefined && error !== null && !isError(error))
         throw new TypeError('destroy error must be an Error, null or undefined');
 }
+/** Stream producers may throw arbitrary values; parser destruction requires an Error. */
+export function normalizeError(reason: unknown): Error {
+    try {
+        if (isError(reason)) return reason as Error;
+        return new Error(String(reason), { cause: reason });
+    } catch {
+        // Even a reason with a throwing toString must not leave consumers pending.
+        return new Error('Non-Error stream failure', { cause: reason });
+    }
+}
 export function createAbortError(): Error {
     const error = new Error('Parsing was canceled');
     error.name = 'AbortError';

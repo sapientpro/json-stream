@@ -3,9 +3,15 @@
 Incremental JSON and JSON5 parsing with selective value callbacks, streaming
 strings, JSONPath selectors and Web/Node input adapters. No runtime dependencies.
 
-This README documents the **3.0.0-alpha.3 preview**, with breaking changes from
-2.x and earlier alphas. Core parsers accept strings; transports decode bytes.
+This README documents the **3.0.0-beta.1 prerelease**, with breaking changes from
+2.x and the alpha releases. Core parsers accept strings; transports decode bytes.
 For the stable 2.x API, see [2.0.1](https://github.com/sapientpro/json-stream/tree/2.0.1).
+
+Install the beta explicitly; the stable 2.x release remains on `latest`:
+
+```sh
+npm install @sapientpro/json-stream@beta
+```
 
 ```ts
 import {JsonParser} from '@sapientpro/json-stream';

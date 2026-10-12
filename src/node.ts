@@ -1,6 +1,7 @@
 import { createDecodedInput } from './decoded-input.js';
 import { Writable } from 'node:stream';
 import { createParser } from './index.js';
+import { normalizeError } from './channel.js';
 import type {
     InputSink,
     Parser,
@@ -33,7 +34,7 @@ export function createNodeWritable(parser: InputSink): Writable {
             }
         },
         destroy(error, done) {
-            input.destroy(error);
+            input.destroy(error == null ? error : normalizeError(error));
             done(error);
         },
     });
@@ -80,7 +81,7 @@ export class JsonStream extends Writable {
             destroy: (error, done) => {
                 pending = false;
                 pendingValue = undefined;
-                input.destroy(error);
+                input.destroy(error == null ? error : normalizeError(error));
                 done(error);
             },
         });

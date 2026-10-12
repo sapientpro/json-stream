@@ -2,12 +2,12 @@
 
 Competitor capabilities were audited against the pinned installed versions on
 2026-10-08, not necessarily their newest releases. Our column describes
-`3.0.0-alpha.3` (updated 2026-10-09), independently of the older measured
+`3.0.0-beta.1` (updated 2026-10-12), independently of the older measured
 package-comparison snapshot. “Adapter” means
 composition or consumer code. See [approximate current parser throughput](../docs/performance.md). `json-stream-lite` is excluded
 from ongoing comparisons as requested; archived release reports remain unchanged.
 
-| Capability | @sapientpro/json-stream 3.0.0-alpha.3 | @streamparser/json 0.0.26 | stream-json 3.7.0 | json-web-streams 1.2.0 |
+| Capability | @sapientpro/json-stream 3.0.0-beta.1 | @streamparser/json 0.0.26 | stream-json 3.7.0 | json-web-streams 1.2.0 |
 |---|---|---|---|---|
 | Input | Text core; UTF-8 in adapters | Text / UTF-8 bytes | Text core; byte decoder / transports | Text; TextDecoderStream for bytes |
 | Browser / Node transports | Web and Node wrappers | Core; separate wrappers | Web / Node pipelines | Web Streams |
