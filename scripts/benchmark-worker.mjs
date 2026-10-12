@@ -26,6 +26,13 @@ const objects = () => ({
     })),
 });
 const fixtures = {
+    'comment blocks': () => ({
+        items: Array.from({ length: 128 }, (_, id) => ({ id, metadata: { value: id } })),
+    }),
+    'comment lines': () => ({
+        items: Array.from({ length: 128 }, (_, id) => ({ id, metadata: { value: id } })),
+    }),
+    'short comments': objects,
     scalar: () => 123,
     empty: () => ({}),
     integers: () => Array.from({ length: 40000 }, (_, i) => i),
@@ -77,6 +84,22 @@ if (job.syntax === 'json5')
         text
             .replace(/"(items|id|name|active|tags|score|text|key[0-9]+)":/g, '$1:')
             .replace(/\}$/, ' ,}');
+if (job.dataset.startsWith('comment ') || job.dataset === 'short comments') {
+    if (job.syntax !== 'json5') throw new Error('Comment workloads require --syntax json5');
+    if (job.dataset === 'short comments') text = text.replace(/\bid:/g, '/*a*//*b*/id:');
+    else {
+        let index = 0;
+        const payload = 'comment body '.repeat(640);
+        text = text.replace(
+            /"value":/g,
+            () =>
+                (job.dataset === 'comment blocks'
+                    ? '/*' + payload + '**/'
+                    : '//' + payload + ['\n', '\r\n', '\u2028', '\u2029', '\r'][index++ % 5]) +
+                '"value":',
+        );
+    }
+}
 const bytes = new TextEncoder().encode(text),
     input = job.input === 'text' ? text : bytes,
     chunks = [];

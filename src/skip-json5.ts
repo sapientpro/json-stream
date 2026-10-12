@@ -23,6 +23,7 @@ const SPACE = /[\t\n\v\f\r \u00a0\ufeff\u2028\u2029\p{Zs}]/u;
 const TOKEN_END = /[\t\n\v\f\r \u00a0\ufeff\u2028\u2029\p{Zs},:{}[\]/]/gu;
 const DOUBLE_END = /["\\\r\n]/g;
 const SINGLE_END = /['\\\r\n]/g;
+const LINE_END = /[\r\n\u2028\u2029]/g;
 const NUMBER =
     /^[+-]?(?:Infinity|NaN|0[xX][0-9a-fA-F]+|(?:(?:0|[1-9][0-9]*)(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?)$/;
 
@@ -53,9 +54,9 @@ export class Json5SubtreeValidator {
     release(): void {
         this.stack.length = 0;
         this.acc = '';
-        for (const pattern of [TOKEN_END, DOUBLE_END, SINGLE_END]) {
+        for (const pattern of [TOKEN_END, DOUBLE_END, SINGLE_END, LINE_END]) {
             pattern.lastIndex = 0;
-            pattern.test(' ');
+            pattern.test('\n');
         }
     }
     run(buf: string, pos: number, len: number): number {
@@ -157,13 +158,31 @@ export class Json5SubtreeValidator {
                         return pos;
                     }
                 } else if (this.comment === 2) {
-                    if (code === 10 || code === 13 || code === 0x2028 || code === 0x2029)
+                    LINE_END.lastIndex = pos - 1;
+                    if (!LINE_END.test(buf)) pos = len;
+                    else {
+                        pos = LINE_END.lastIndex;
                         this.comment = 0;
-                } else if (this.comment === 3) {
-                    if (code === 42) this.comment = 4;
+                    }
                 } else {
-                    if (code === 47) this.comment = 0;
-                    else if (code !== 42) this.comment = 3;
+                    if (this.comment === 4 && code === 47) this.comment = 0;
+                    else {
+                        let start = pos - 1;
+                        const limit = Math.min(len, start + 8);
+                        while (start < limit) {
+                            if (buf.charCodeAt(start) === 42 && buf.charCodeAt(start + 1) === 47)
+                                break;
+                            ++start;
+                        }
+                        const end = start < limit ? start : buf.indexOf('*/', start);
+                        if (end >= 0) {
+                            pos = end + 2;
+                            this.comment = 0;
+                        } else {
+                            this.comment = buf.charCodeAt(len - 1) === 42 ? 4 : 3;
+                            pos = len;
+                        }
+                    }
                 }
                 continue;
             }

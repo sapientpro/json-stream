@@ -4,6 +4,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+- Scan JSON5 comment bodies in spans instead of one character at a time, in both
+  the ordinary scanner and discarded objects; preserve split delimiters, all four
+  line endings and EOF validation. Add comment workloads to the benchmark suite.
+
 - Validate unreachable JSON5 object subtrees without building values on known
   V8 runtimes; preserve grammar, depth limits, incremental cuts and selected output.
   Bun and standalone skipped arrays keep the ordinary JSON5 scanner.
