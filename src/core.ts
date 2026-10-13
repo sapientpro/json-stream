@@ -98,12 +98,15 @@ export abstract class ParserCore implements Parser {
             throw new TypeError('Invalid memoryMode');
         if (memoryMode === 'compact') initializeCompact(this);
     }
+    /** Collected decoded input; empty unless collectJson is enabled. */
     get json(): string {
         return this._json;
     }
+    /** True only after successful end(), including trailing-input validation. */
     get finished(): boolean {
         return this._documentDone;
     }
+    /** Root structure completed; later input or EOF may still be invalid. */
     get rootReady(): boolean {
         return this._rootAvailable;
     }
@@ -134,6 +137,7 @@ export abstract class ParserCore implements Parser {
             ? new CopyingChannel<T>(this._reportCallback, this._copyPolicy)
             : new CallbackChannel<T>(this._reportCallback)).add(observer);
     }
+    /** Subscribe before input to complete selected values; T does not validate their shape. */
     onValue<T = any>(
         path: PathInput,
         callback: ValueCallback<T> | CallbackObserver<T>,
@@ -142,6 +146,7 @@ export abstract class ParserCore implements Parser {
     } {
         return this._register(path, callback, false);
     }
+    /** Subscribe before input to decoded string fragments; end(path) separates matched strings. */
     onString(
         path: PathInput,
         callback: ValueCallback<string> | CallbackObserver<string>,
@@ -150,6 +155,9 @@ export abstract class ParserCore implements Parser {
     } {
         return this._register(path, callback, true);
     }
+    /** First selected value, not successful document EOF. A resolved promise stays resolved
+     * after later input errors. Subscribe before input; T is not runtime schema validation.
+     */
     getValue<T = any>(path: PathInput = '$'): Promise<T> {
         const result = new Promise<T>((resolve, reject) => {
             let subscription: {
@@ -169,12 +177,15 @@ export abstract class ParserCore implements Parser {
         void result.catch(() => {});
         return result;
     }
+    /** Concatenates matched string fragments; canceling unsubscribes only this consumer. */
     stringStream(path: PathInput): ReadableStream<string> {
         return createStringStream(this, path, this._subjectOptions.maxBufferedChunks);
     }
+    /** Web text/UTF-8 input adapter; do not mix text and bytes on the same adapter. */
     get writable(): WritableStream<Uint8Array | string> {
         return (this._writable ??= createWritableStream(this));
     }
+    /** Consume text synchronously. Return unread UTF-16 units; strict mode returns zero or throws. */
     write(chunk: string): number {
         return this._writeInput(chunk);
     }
@@ -252,6 +263,7 @@ export abstract class ParserCore implements Parser {
     [DOCUMENT_INPUT](text: string, offset: number): number {
         return this._writeInput(text, offset);
     }
+    /** Consume optional final text and validate EOF; return that chunk's unread count. */
     end(chunk?: string): number {
         const unread = chunk === undefined ? 0 : this.write(chunk);
         this._finishDocument(true);
@@ -301,6 +313,7 @@ export abstract class ParserCore implements Parser {
         this._resetScanner();
     }
     protected _resetScanner(): void {}
+    /** Cancel with an Error or a default AbortError; does not emit successful completion. */
     destroy(error?: Error | null): void {
         validateDestroyError(error);
         if (this.closed) return;
@@ -712,6 +725,7 @@ export abstract class ParserCore implements Parser {
     protected _validateEnd(): boolean {
         return true;
     }
+    /** Ended, failed or canceled; check finished separately for successful EOF. */
     get closed(): boolean {
         return this._done || this._state === State.FAILED;
     }

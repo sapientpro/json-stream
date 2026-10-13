@@ -16,6 +16,7 @@ export type RecordCallback<T> = (
 ) => void;
 export type RecordObserver<T> = {
     next: RecordCallback<T>;
+    /** For string subscriptions only: one matched string ended in this record. */
     end?: (path: readonly PathSegment[], recordIndex: number) => void;
     error?: (error: unknown) => void;
     complete?: () => void;
@@ -45,24 +46,31 @@ abstract class RecordManager extends InputFramer {
         // Validate options eagerly, then reuse this instance for the first record.
         this.parser = this.newParser();
     }
+    /** Successfully validated records; earlier delivered values are not transactional. */
     get recordCount(): number {
         return this.count;
     }
+    /** Register before input; callbacks receive the value, owned path and zero-based record index. */
     onValue<T = any>(
         path: PathInput,
         callback: RecordCallback<T> | RecordObserver<T>,
     ): Subscription {
         return this.register(path, callback, false);
     }
+    /** Register before input for decoded fragments; end(path, index) separates matched strings. */
     onString(
         path: PathInput,
         callback: RecordCallback<string> | RecordObserver<string>,
     ): Subscription {
         return this.register(path, callback, true);
     }
+    /** Subscribe to each complete root value; this builds the whole record. */
     onRecord<T = any>(callback: (value: T, recordIndex: number) => void): Subscription {
         return this.onValue<T>([], (value, _path, index) => callback(value, index));
     }
+    /** First match across records, not whole-input success. A resolved promise stays resolved
+     * after later failures. Register before input; T is not runtime validation.
+     */
     getValue<T = any>(path: PathInput = '$'): Promise<T> {
         const result = new Promise<T>((resolve, reject) => {
             let subscription: Subscription;
@@ -78,6 +86,7 @@ abstract class RecordManager extends InputFramer {
         void result.catch(() => {});
         return result;
     }
+    /** Concatenates matching fragments across records without string/record boundary markers. */
     stringStream(path: PathInput): ReadableStream<string> {
         return createStringStream(this, path, this.options.maxBufferedChunks);
     }

@@ -254,3 +254,24 @@ for (const make of [
     await rejects(result, (reason) => reason === error);
 }
 console.log('PASS: ignored value rejections remain observable without unhandled rejections');
+for (const kind of ['decoded', 'lines', 'prefixed', 'filter']) {
+    const parser = captureRoot(
+        kind === 'lines'
+            ? new JsonLinesParser()
+            : kind === 'prefixed'
+              ? new PrefixedJsonParser('data:')
+              : new JsonParser(),
+    );
+    const input =
+        kind === 'filter' ? new PrefixFilter(parser, 'data:') : createDecodedInput(parser);
+    const prefix = kind === 'prefixed' || kind === 'filter' ? 'data:' : '';
+    const bytes = new TextEncoder().encode(prefix + '{"text":"€😀"}');
+    const cut = bytes.indexOf(0xf0) + 1;
+    input.write(bytes.subarray(0, cut));
+    input.end(bytes.subarray(cut));
+    deepStrictEqual(capturedValues.get(parser), { text: '€😀' });
+    strictEqual(parser.finished, true);
+}
+console.log(
+    'PASS: final byte chunks complete UTF-8 on decoded inputs, managers and prefix filters',
+);

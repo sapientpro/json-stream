@@ -4,10 +4,16 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+- Accept optional final text/UTF-8 chunks in `end(chunk?)` on record managers,
+  prefix filters and decoded-input adapters, matching core and Node input usage.
+- Reorganize the developer guide, add methods/options and error-ownership
+  references, complete string/Web/Node examples, and clarify that `getValue()`
+  resolves a first match rather than proving whole-document validity.
+
 ## 3.0.0-beta.1 — 2026-10-12
 
 First beta of the 3.0 API. Install with `npm install @sapientpro/json-stream@beta`;
-2.0.1 remains the stable release. See [the migration guide](docs/v3.md) for changes
+2.0.1 remains the stable release. See [the migration guide](docs/v3-migration.md) for changes
 from 2.x, including callbacks, subscription-driven retention and string-only core input.
 
 - Reject invalid `destroy()` arguments before mutating parser, framing or
@@ -159,7 +165,7 @@ from 2.x, including callbacks, subscription-driven retention and string-only cor
 - Cover synchronous earliest string delivery, surrogate protection, cancellation,
   reset, record framing and selected paths across byte boundaries.
 
-See [the migration guide](docs/v3.md). Alpha releases use the `alpha` npm tag;
+See [the migration guide](docs/v3-migration.md). Alpha releases use the `alpha` npm tag;
 beta releases use `beta`. 2.0.1 remains the stable release.
 Performance comparisons and compatibility checks are recorded separately; do not
 assume every workload is faster than 2.0.1.

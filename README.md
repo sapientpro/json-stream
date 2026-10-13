@@ -33,50 +33,32 @@ Selectors support names, typed array indexes, wildcards and recursive descent
 such as `$..id` and `$..*`. Filters, slices, unions and negative indexes are
 explicitly rejected. See [supported paths and streaming semantics](docs/v3.md#paths-and-jsonpath).
 
-## Documentation
+## Stream a string as it arrives
 
-- [API, retention, paths and migration from 2.x](docs/v3.md)
-- [Opt-in copying of short string results](docs/v3-copying.md)
-- [Streaming strings and pacing](docs/v3.md#streaming-strings-and-pacing)
-- [Web and Node transports](docs/v3.md#transports)
-- [Reset and parser reuse](docs/v3.md#reusing-a-core-parser)
-- [Reusable subscription plans](docs/v3.md#reusing-a-subscription-plan)
-- [JSON Lines and prefixed documents](docs/v3.md#json-lines-and-prefixed-documents)
-- [Architecture and tradeoffs](docs/v3-architecture.md)
-- [Approximate current throughput (MB/s)](docs/performance.md)
-- [Package capability matrix](benchmarks/capabilities.md)
+```ts
+import {JsonParser} from '@sapientpro/json-stream';
 
-## Development
-
-```sh
-npm run build
-npm test -- --runInBand
-npm run check
-npm run check:types
-npm run test:formats
-npm run benchmark
+const parser = new JsonParser();
+parser.onString('$.text', fragment => console.log(fragment));
+parser.write('{"text":"Hello ');
+parser.end('world 🌍"}');
 ```
 
-Biome provides `lint`, `format`, `format:check` and `check` across `src/`, `tests/`,
-`scripts/` and the Jest configuration. CI enforces formatting and lint for all of
-these files, including lint warnings. Lazy assignments, generic `any` defaults and checked array-index
-assertions are allowed. Template-literal style is optional; inline `const enum`
-codes and control characters in validation regexes are intentional. The JSON
-scanner permits constant loop conditions because digit runs exit through explicit
-bounds/character checks. Constructor-return shims in the compact-memory diagnostic
-have local, documented exceptions.
+Fragments are decoded text; their boundaries depend on input and escapes. No
+complete string is retained unless a value consumer requests it too. Values and
+fragments can arrive before a later syntax error; await input completion when
+whole-document validity matters.
 
-`check:types` checks the packed package with the version locked in `package-lock.json`.
-CodeQL scans TypeScript/JavaScript and GitHub Actions on pull requests, main pushes
-and weekly. Dependabot checks npm dependencies and Actions weekly. Third-party
-Actions are pinned to commit SHAs; official GitHub Actions use version tags.
-See the [security policy](SECURITY.md) for private vulnerability reporting.
+## Documentation
 
-Benchmarks include setup and use natural GC, serial workers and correctness checks. See [current throughput and reproduction](docs/performance.md). Detailed reports and raw samples stay in ignored `notes/`.
-The current implementation lives in `src/`, with tests in `tests/` and tools in
-`scripts/`. The 2.x implementation remains in its Git release tags rather than
-this working tree.
-`npm run benchmark` runs the current parser on Node and Bun; `benchmark:v3`
-remains a compatibility alias.
+- [Usage: values, JSONPath, strings, Web/Node input and JSONL](docs/v3.md)
+- [API reference: methods, lifecycle and option defaults](docs/v3-reference.md)
+- [Advanced: reset, document boundaries and reusable plans](docs/v3-advanced.md)
+- [Compact memory mode and its limits](docs/v3-copying.md)
+- [Migration from 2.x](docs/v3-migration.md)
+- [Approximate throughput](docs/performance.md) and [package comparison](benchmarks/capabilities.md)
+- [Architecture](docs/v3-architecture.md), [contributing](CONTRIBUTING.md) and [security policy](SECURITY.md)
+
+Documentation follows `main`; unreleased additions are marked in the reference.
 
 MIT licensed.
