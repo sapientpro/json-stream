@@ -64,12 +64,14 @@
     "lint": "biome lint --error-on-warnings .",
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "check": "biome check --error-on-warnings ."
+    "check": "biome check --error-on-warnings .",
+    "check:types": "attw --pack ."
   },
   "engines": {
     "node": ">=22"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "0.18.5",
     "@biomejs/biome": "2.5.15",
     "@streamparser/json": "0.0.26",
     "@types/jest": "^30.0.0",
@@ -82,6 +84,7 @@
     "typescript": "^5.7.3"
   },
   "files": [
+    "SECURITY.md",
     "dist/cjs",
     "dist/esm",
     "CHANGELOG.md",

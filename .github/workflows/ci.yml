@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   node:
     runs-on: ubuntu-latest
@@ -14,6 +17,8 @@ jobs:
         node-version: [22, 24]
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
@@ -28,7 +33,7 @@ jobs:
       - run: node scripts/verify-boundaries.mjs
       - run: node scripts/verify-subtrees.mjs
       - run: node scripts/verify-plans.mjs
-      - run: npx --yes @arethetypeswrong/cli --pack .
+      - run: npm run check:types
       - name: Smoke test the packed tarball
         run: |
           npm pack --pack-destination /tmp
@@ -37,7 +42,7 @@ jobs:
           cp scripts/smoke.mjs scripts/smoke.cjs scripts/types.ts scripts/copying-types.ts scripts/verify-copying.mjs scripts/verify-boundaries.mjs /tmp/consumer/
           cd /tmp/consumer
           npm init -y > /dev/null
-          npm install /tmp/sapientpro-json-stream-*.tgz
+          npm install --ignore-scripts /tmp/sapientpro-json-stream-*.tgz
           node smoke.mjs @sapientpro/json-stream
           node smoke.cjs @sapientpro/json-stream
           cp types.ts types.mts
@@ -54,14 +59,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
       - run: npm ci
       - run: npm run build
-      - run: bunx jest
+      - run: bun run --bun test --runInBand
       - run: bun scripts/smoke.mjs
       - run: bun scripts/verify.mjs
       - run: bun scripts/verify-copying.mjs
@@ -73,11 +80,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
-      - uses: denoland/setup-deno@v2
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
       - run: npm ci
       - run: npm run build
       - run: deno run --allow-read scripts/verify.mjs
