@@ -43,7 +43,8 @@ export function createDecodedInput(target: InputSink): ByteInputSink {
                 running = false;
             }
         },
-        end() {
+        end(chunk) {
+            if (chunk !== undefined) this.write(chunk);
             if (running) throw new Error('end() re-entered');
             if (failure) throw failure.error;
             if (closed) return;

@@ -97,3 +97,7 @@ terminal-only Rest keeps the existing transition path. Neither scanner changes.
 ## Native string validation
 
 On known V8 runtimes, strict JSON can use `JSON.stringify` solely to detect escapes in whole raw input segments of 8–64 Ki UTF-16 units starting with ASCII. A changed serialized length falls back to the control-character check, preserving accepted lone surrogates. This never parses or buffers a whole document. Tiny, sliced, larger and Unicode-first segments use the regular control check. Bun and unknown browser engines use the portable scanner.
+
+## Cache bounds
+
+Recursive contexts retain at most 4,096 states and 65,536 transition slots per parser. Additional transitions are evaluated without being retained; the limits do not restrict selector matching. Unknown property names reuse fallback transitions rather than adding an entry per input key. `maxDepth` separately bounds input nesting.

@@ -12,6 +12,8 @@ import {
     createDecodedInput,
     type Parser,
     type Subscription,
+    type InputSink,
+    type ByteInputSink,
 } from '@sapientpro/json-stream';
 import { JsonStream, createNodeWritable } from '@sapientpro/json-stream/node';
 const p: Parser = new JsonParser({});
@@ -101,6 +103,18 @@ p.write('{}');
 // @ts-expect-error byte input belongs to a transport adapter
 p.write(new Uint8Array());
 createDecodedInput(p).write(new Uint8Array());
+
+const textSink: InputSink = new JsonParser();
+textSink.end('{}');
+const byteSink: ByteInputSink = createDecodedInput(new JsonParser());
+byteSink.end(new Uint8Array());
+new JsonLinesParser().end('{"id":1}\n');
+new PrefixedJsonParser('@').end(new Uint8Array());
+new PrefixFilter(new JsonParser(), '@').end('@{}');
+// @ts-expect-error final chunks must be strings or bytes
+byteSink.end(42);
+// @ts-expect-error text-only sinks do not accept byte final chunks
+textSink.end(new Uint8Array());
 
 const boundary: Parser = new JsonParser({ strictEnd: false });
 const remaining: number = boundary.write('{} tail');

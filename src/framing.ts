@@ -14,9 +14,11 @@ export abstract class InputFramer implements ByteInputSink {
     private running = false;
     private failure?: Error;
     private stream?: WritableStream<string | Uint8Array>;
+    /** Ended, failed or canceled; does not imply successful EOF. */
     get closed(): boolean {
         return this._closed;
     }
+    /** True only after the entire framed input validates successfully. */
     get finished(): boolean {
         return this._finished;
     }
@@ -42,7 +44,9 @@ export abstract class InputFramer implements ByteInputSink {
             ),
         );
     }
-    end(): void {
+    /** Consume an optional final chunk, flush UTF-8 decoding, then validate input EOF. */
+    end(chunk?: string | Uint8Array): void {
+        if (chunk !== undefined) this.write(chunk);
         if (this.running) throw new Error('end() re-entered');
         if (this.failure) throw this.failure;
         if (this._closed) return;

@@ -111,24 +111,29 @@ export class JsonStream extends Writable {
     get json(): string {
         return this.#parser.json;
     }
+    /** Successful parser EOF; writableFinished is the separate native Writable lifecycle flag. */
     get parsed(): boolean {
         return this.#parser.finished;
     }
+    /** Register before input for complete selected values; T is not runtime validation. */
     onValue<T = any>(
         path: PathInput,
         callback: ValueCallback<T> | CallbackObserver<T>,
     ): Subscription {
         return this.#parser.onValue(path, callback);
     }
+    /** Register before input for decoded fragments; end(path) separates matched strings. */
     onString(
         path: PathInput,
         callback: ValueCallback<string> | CallbackObserver<string>,
     ): Subscription {
         return this.#parser.onString(path, callback);
     }
+    /** First match, not successful input completion. Await the pipeline too for validated input. */
     getValue<T = any>(path: PathInput = '$'): Promise<T> {
         return this.#parser.getValue(path);
     }
+    /** Web readable concatenating matched fragments without boundary markers. */
     stringStream(path: PathInput): ReadableStream<string> {
         return this.#parser.stringStream(path);
     }
