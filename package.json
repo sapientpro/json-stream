@@ -75,7 +75,7 @@
     "@biomejs/biome": "2.5.15",
     "@streamparser/json": "0.0.26",
     "@types/jest": "^30.0.0",
-    "@types/node": "^22.10.6",
+    "@types/node": "^26.6.5",
     "jest": "^30.5.2",
     "json-web-streams": "1.2.0",
     "json5": "2.2.3",
