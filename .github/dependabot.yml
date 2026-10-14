@@ -5,6 +5,13 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # Keep the compiler within the supported ts-jest range.
+      - dependency-name: typescript
+        versions: [">=7"]
+      # Match the oldest supported Node runtime when checking declarations.
+      - dependency-name: '@types/node'
+        versions: [">=23"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

@@ -81,7 +81,7 @@
     "json5": "2.2.3",
     "stream-json": "3.7.0",
     "ts-jest": "^29.2.5",
-    "typescript": "^7.0.2"
+    "typescript": "^6.0.3"
   },
   "files": [
     "SECURITY.md",
