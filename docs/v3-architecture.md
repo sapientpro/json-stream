@@ -87,8 +87,8 @@ parser, bounded by 4,096 states and 65,536 transition slots. Once the cache is
 full, uncached transitions preserve matching without growing the retained graph.
 Plan compilation applies its budget while discovering each state and falls back
 to lazy transitions if the prepared graph would exceed that budget. Slices,
-filters, unions and negative indexes are rejected in this
-candidate. Recursive descent is implemented in subscription contexts: the Rest
+filters, unions and negative indexes are rejected by the supported
+JSONPath subset. Recursive descent is implemented in subscription contexts: the Rest
 state persists at each depth while its suffix advances independently. Exact suffix
 edges are included in transition caches, with separate numeric indexes and property
 names. Converging recursive routes deduplicate subscription nodes before dispatch;
