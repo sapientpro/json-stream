@@ -18,7 +18,6 @@ The [3.0 usage guide](v3.md) covers the new API; the [reference](v3-reference.md
 `collectJson` and `maxDepth` remain options. `start` moves to an optional input manager; the core accepts only JSON/JSON5. `collectJson`
 retains all decoded input and therefore defeats bounded input-memory usage.
 `maxDepth` defaults to 1000 and accepts nonnegative safe integers or Infinity.
-A core parser consumes one document. Optional managers below consume multiple documents.
-
+A core parser consumes one document. Use [JSONL or prefix managers](v3.md#json-lines-and-prefixed-documents) for multiple documents.
 
 There is no `root` getter or `retainRoot` option; passing the removed option throws `TypeError`. Subscribe to `$` before writing to build a complete result.

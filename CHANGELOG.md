@@ -4,11 +4,39 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+## 3.0.0 — 2026-10-14
+
+Stable release of the new incremental JSON/JSON5 API. Install with
+`npm install @sapientpro/json-stream`. This is a breaking upgrade from 2.x;
+see [migration](docs/v3-migration.md) and the [API reference](docs/v3-reference.md).
+
+- Replace observable-style subscriptions with synchronous `onValue`/`onString`
+  callbacks, first-match `getValue()` promises and Web `stringStream()` output.
+  Register consumers before input; completed values are not replayed.
+- Drive retention through value subscriptions. Subscribe to `$` for a complete
+  document; string-fragment subscriptions alone do not collect whole strings.
+- Support strict JSON and JSON5, typed JSONPath selectors with recursive descent,
+  JSONL/prefix managers, and reusable selector plans. Filters, slices, unions and
+  negative indexes remain unsupported.
+- Keep core input string-only; Web/Node and synchronous input adapters decode
+  UTF-8, reject malformed byte input and own transport pacing.
 - Accept optional final text/UTF-8 chunks in `end(chunk?)` on record managers,
   prefix filters and decoded-input adapters, matching core and Node input usage.
-- Reorganize the developer guide, add methods/options and error-ownership
-  references, complete string/Web/Node examples, and clarify that `getValue()`
-  resolves a first match rather than proving whole-document validity.
+- Preserve subscriptions through `reset()` between documents; validate EOF and
+  trailing input separately from root availability. A fulfilled `getValue()`
+  does not prove whole-input validity and cannot be revoked by later failures.
+- Provide compact memory mode for selected short strings, bounded selector
+  caches, consistent cancellation and consumer-error handling.
+- Reorganize the guide and reference with complete string/Web/Node recipes,
+  option defaults, error ownership, migration and contributor documentation.
+- Add CodeQL, Dependabot, a private security-reporting policy, restricted CI
+  permissions and locked development tooling. Pin third-party Actions to SHA.
+  Upgrade development TypeScript to 6.0.3 and ts-jest to 29.4.14; retain Node 22 types.
+
+Validated by 519 tests, Node/Bun/Deno checks, packed-consumer type checks, and a
+live OpenAI Structured Outputs/tool-call spike covering field streaming,
+cancellation and token-limited output. See the prerelease history below for
+individual fixes and optimization details.
 
 ## 3.0.0-beta.1 — 2026-10-12
 
