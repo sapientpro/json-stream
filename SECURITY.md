@@ -16,6 +16,6 @@ not guaranteed.
 
 ## Versions
 
-Report issues affecting the latest stable 2.x release or the current 3.x
-prerelease. Prereleases are still under development; a fix may require upgrading
-to a newer prerelease. Older versions may require upgrading to receive a fix.
+Report issues affecting the latest stable release. Reports for older versions
+and prereleases are also welcome; include the exact affected version. A fix may
+require upgrading to the latest stable release.

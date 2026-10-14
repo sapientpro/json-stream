@@ -1,10 +1,9 @@
 # 3.0 API reference
 
 For complete examples, start with the [usage guide](v3.md).
-This reference follows `main`. **Unreleased since 3.0.0-beta.1:** optional final
-chunks on record managers, `PrefixFilter` and `createDecodedInput`. Until the next
-release, call `write(finalChunk); end()` on those inputs. Core `end(text?)` already
-works in beta.1.
+This reference describes **3.0.0**. Core parsers accept final text in `end(text?)`;
+record managers, `PrefixFilter` and `createDecodedInput` also accept final UTF-8
+bytes in `end(chunk?)`, following the same input mode as `write()`.
 
 ## Choose an input
 
