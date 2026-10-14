@@ -52,7 +52,7 @@ jobs:
           node verify-copying.mjs @sapientpro/json-stream
           node verify-boundaries.mjs @sapientpro/json-stream
           "$GITHUB_WORKSPACE/node_modules/.bin/tsc" --noEmit --strict --skipLibCheck --target es2022 --module NodeNext --moduleResolution NodeNext --typeRoots "$GITHUB_WORKSPACE/node_modules/@types" --types node types.mts types.cts copying-types.mts copying-types.cts
-          "$GITHUB_WORKSPACE/node_modules/.bin/tsc" --noEmit --strict --skipLibCheck --target es2022 --module commonjs --moduleResolution node --typeRoots "$GITHUB_WORKSPACE/node_modules/@types" --types node copying-types.cts
+          "$GITHUB_WORKSPACE/node_modules/.bin/tsc" --noEmit --strict --skipLibCheck --target es2022 --module commonjs --moduleResolution node --ignoreDeprecations 6.0 --typeRoots "$GITHUB_WORKSPACE/node_modules/@types" --types node copying-types.cts
           node -e "require('@sapientpro/json-stream');require('@sapientpro/json-stream/node')"
 
   bun:
