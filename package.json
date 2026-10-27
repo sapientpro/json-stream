@@ -72,7 +72,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "0.18.5",
-    "@biomejs/biome": "2.5.15",
+    "@biomejs/biome": "2.6.2",
     "@streamparser/json": "0.0.26",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.6",
