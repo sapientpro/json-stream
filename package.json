@@ -79,7 +79,7 @@
     "jest": "^30.5.2",
     "json-web-streams": "1.2.0",
     "json5": "2.2.3",
-    "stream-json": "3.7.0",
+    "stream-json": "3.8.0",
     "ts-jest": "^29.2.5",
     "typescript": "^6.0.3"
   },
